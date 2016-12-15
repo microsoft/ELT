@@ -102,7 +102,7 @@ export class AlignmentView extends EventListenerComponent<AlignmentViewProps, Al
 
     // In these events, t and pps are in the timeSeries' local time, not the reference time.
     private onTrackMouseMove(
-        event: React.MouseEvent, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number): void {
+        event: React.MouseEvent<Element>, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number): void {
         if (timeSeries.aligned) {
             const scale = d3.scale.linear()
                 .domain([timeSeries.referenceStart, timeSeries.referenceEnd])
@@ -114,7 +114,7 @@ export class AlignmentView extends EventListenerComponent<AlignmentViewProps, Al
     }
 
     private onTrackMouseDown(
-        event: React.MouseEvent, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number): void {
+        event: React.MouseEvent<Element>, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number): void {
         if (t < timeSeries.timeSeries[0].timestampStart || t > timeSeries.timeSeries[0].timestampEnd) { return; }
         const x0 = event.clientX;
         let moved = false;
@@ -146,18 +146,18 @@ export class AlignmentView extends EventListenerComponent<AlignmentViewProps, Al
     }
 
     private onTrackMouseLeave(
-        event: React.MouseEvent, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number): void {
+        event: React.MouseEvent<Element>, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number): void {
         new actions.AlignmentActions.SetSeriesTimeCursor(timeSeries, null).dispatch();
     }
 
     private onTrackMouseEnter(
-        event: React.MouseEvent, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number): void {
+        event: React.MouseEvent<Element>, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number): void {
         new actions.AlignmentActions.SetSeriesTimeCursor(timeSeries, t).dispatch();
     }
 
 
     private onTrackWheel(
-        event: React.WheelEvent, track: Track, timeSeries: AlignedTimeSeries, _: number, pps: number, deltaY: number): void {
+        event: React.WheelEvent<Element>, track: Track, timeSeries: AlignedTimeSeries, _: number, pps: number, deltaY: number): void {
         if (track === stores.alignmentLabelingStore.referenceTrack || timeSeries.aligned) {
             new actions.CommonActions.ReferenceViewPanAndZoom(0, deltaY / 1000, 'cursor').dispatch();
         } else {
@@ -197,7 +197,7 @@ export class AlignmentView extends EventListenerComponent<AlignmentViewProps, Al
     }
 
 
-    private startCreatingCorrespondence(marker: Marker, knob: 'top' | 'bottom', event: React.MouseEvent): void {
+    private startCreatingCorrespondence(marker: Marker, knob: 'top' | 'bottom', event: React.MouseEvent<Element>): void {
         // Select the marker first.
         new actions.AlignmentActions.SelectMarker(marker).dispatch();
         // Enter start creating correspondence state.

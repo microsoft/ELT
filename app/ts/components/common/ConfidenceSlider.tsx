@@ -21,7 +21,7 @@ export class ConfidenceSlider extends React.Component<ConfidenceSliderProps, {}>
     //     super();
     // }
 
-    private onMouseDown(event: React.MouseEvent): void {
+    private onMouseDown(event: React.MouseEvent<Element>): void {
         const v0 = this.props.value;
         const circleRadius = 10;
         const xScale = d3.scale.linear()

@@ -30,11 +30,11 @@ export interface TrackViewProps {
     zoomTransform?: ZoomTrasform;
 
     enableMouseEvents?: boolean;
-    onWheel?: (event: React.WheelEvent, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number, deltaY: number) => any;
-    onMouseMove?: (event: React.MouseEvent, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number) => any;
-    onMouseDown?: (event: React.MouseEvent, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number) => any;
-    onMouseEnter?: (event: React.MouseEvent, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number) => any;
-    onMouseLeave?: (event: React.MouseEvent, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number) => any;
+    onWheel?: (event: React.WheelEvent<Element>, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number, deltaY: number) => any;
+    onMouseMove?: (event: React.MouseEvent<Element>, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number) => any;
+    onMouseDown?: (event: React.MouseEvent<Element>, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number) => any;
+    onMouseEnter?: (event: React.MouseEvent<Element>, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number) => any;
+    onMouseLeave?: (event: React.MouseEvent<Element>, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number) => any;
 }
 
 export function truncatePPS(pps: number): number {
@@ -50,25 +50,25 @@ export class TrackView extends React.Component<TrackViewProps, {}> {
         interactionRect: Element
     };
 
-    private getRelativePosition(event: React.MouseEvent | React.WheelEvent): number[] {
+    private getRelativePosition(event: React.MouseEvent<Element> | React.WheelEvent<Element>): number[] {
         const x: number = event.clientX - this.refs.interactionRect.getBoundingClientRect().left;
         const y: number = event.clientY - this.refs.interactionRect.getBoundingClientRect().top;
         return [x, y];
     }
 
-    private emitMouseDown(event: React.MouseEvent, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number): void {
+    private emitMouseDown(event: React.MouseEvent<Element>, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number): void {
         if (this.props.onMouseDown !== null) { this.props.onMouseDown(event, track, timeSeries, t, pps); }
     }
-    private emitMouseMove(event: React.MouseEvent, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number): void {
+    private emitMouseMove(event: React.MouseEvent<Element>, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number): void {
         if (this.props.onMouseMove !== null) { this.props.onMouseMove(event, track, timeSeries, t, pps); }
     }
-    private emitMouseEnter(event: React.MouseEvent, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number): void {
+    private emitMouseEnter(event: React.MouseEvent<Element>, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number): void {
         if (this.props.onMouseEnter !== null) { this.props.onMouseEnter(event, track, timeSeries, t, pps); }
     }
-    private emitMouseLeave(event: React.MouseEvent, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number): void {
+    private emitMouseLeave(event: React.MouseEvent<Element>, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number): void {
         if (this.props.onMouseLeave !== null) { this.props.onMouseLeave(event, track, timeSeries, t, pps); }
     }
-    private emitWheel(event: React.WheelEvent, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number, deltaY: number): void {
+    private emitWheel(event: React.WheelEvent<Element>, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number, deltaY: number): void {
         if (this.props.onWheel !== null) { this.props.onWheel(event, track, timeSeries, t, pps, deltaY); }
     }
 
@@ -107,7 +107,7 @@ export class TrackView extends React.Component<TrackViewProps, {}> {
             const pps = truncatePPS((xEnd - xStart) / (tEnd - tStart));
 
             // Get time from mouse event.
-            const getTime = (event: React.MouseEvent | React.WheelEvent) => {
+            const getTime = (event: React.MouseEvent<Element> | React.WheelEvent<Element>) => {
                 const x = this.getRelativePosition(event)[0];
                 return tStart + (x - xStart) / pps;
             };

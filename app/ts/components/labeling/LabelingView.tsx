@@ -105,7 +105,7 @@ export class LabelingView extends EventListenerComponent<LabelingViewProps, Labe
         return [x, y];
     }
 
-    private onMouseMove(event: React.MouseEvent): void {
+    private onMouseMove(event: React.MouseEvent<Element>): void {
         const x = this.getRelativePosition(event)[0];
         const t = this.getTimeFromX(x);
         new actions.CommonActions.SetReferenceViewTimeCursor(t).dispatch();
@@ -115,7 +115,7 @@ export class LabelingView extends EventListenerComponent<LabelingViewProps, Labe
         return x / this.state.pixelsPerSecond + this.state.detailedViewStart;
     }
 
-    private onDoubleClickChangePointDetection(event: React.MouseEvent): void {
+    private onDoubleClickChangePointDetection(event: React.MouseEvent<Element>): void {
         const isInteractionRect = event.target === this.refs.interactionRect;
         const t0 = this.getTimeFromX(this.getRelativePosition(event)[0]);
         if (isInteractionRect) {
@@ -145,7 +145,7 @@ export class LabelingView extends EventListenerComponent<LabelingViewProps, Labe
         }
     }
 
-    private onMouseDownCreateLabel(event: React.MouseEvent): void {
+    private onMouseDownCreateLabel(event: React.MouseEvent<Element>): void {
         const t0 = this.getTimeFromX(this.getRelativePosition(event)[0]);
         let t1 = null;
         if (stores.labelingUiStore.currentClass === null) {
@@ -207,7 +207,7 @@ export class LabelingView extends EventListenerComponent<LabelingViewProps, Labe
         );
     }
 
-    // private onMouseDownScroll(event: React.MouseEvent) {
+    // private onMouseDownScroll(event: React.MouseEvent<Element>) {
     //     let x0 = event.screenX;
     //     let start0 = stores.alignmentLabelingUiStore.referenceViewStart;
     //     startDragging(
@@ -222,7 +222,7 @@ export class LabelingView extends EventListenerComponent<LabelingViewProps, Labe
     //     );
     // }
 
-    // private onMouseDown(event: React.MouseEvent) {
+    // private onMouseDown(event: React.MouseEvent<Element>) {
     //     new actions.LabelingActions.ClearLabelSelection().dispatch();
     //     if (event.shiftKey || event.button === 2) {
     //         this.onMouseDownCreateLabel(event);
@@ -231,7 +231,7 @@ export class LabelingView extends EventListenerComponent<LabelingViewProps, Labe
     //     }
     // }
 
-    private onMouseWheel(event: React.WheelEvent): void {
+    private onMouseWheel(event: React.WheelEvent<Element>): void {
         // Decide the zooming factor.
         new actions.CommonActions.ReferenceViewPanAndZoom(0, event.deltaY / 1000).dispatch();
     }

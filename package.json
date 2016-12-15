@@ -7,7 +7,6 @@
     "start": "cross-env NODE_ENV=production electron main.js",
     "run": "cross-env NODE_ENV=production electron main.js --debugging",
     "debug": "cross-env NODE_ENV=debug electron main.js --debugging --remote-debugging-port=9222 ",
-    "test": "cross-env NODE_ENV=production electron main.js --test",
     "build": "npm run build:ts && npm run build:worker && npm run build:less",
     "build:ts": "tsc && tsc -p app",
     "build:less": "lessc app/less/styles.less app/css/styles.compiled.css",
@@ -23,15 +22,10 @@
   "keywords": [],
   "author": "cjacobs",
   "devDependencies": {
-    "browserify": "^13.1.0",
-    "chai": "^3.5.0",
     "cross-env": "^2.0.1",
     "electron-prebuilt": "^1.3.5",
     "electron-rebuild": "^1.1.5",
-    "mocha": "^2.5.3",
-    "mocha-typescript": "^1.0.4",
     "tslint": "^3.15.1",
-    "typescript": "^1.8.10",
     "typings": "^1.0.4"
   },
   "dependencies": {
@@ -49,6 +43,7 @@
     "requirejs": "^2.2.0",
     "serialport": "^2.1.2",
     "tslint-microsoft-contrib": "^2.0.13",
+    "typescript": "^2.1.4",
     "typescript-require": "^0.2.9-1",
     "underscore": "^1.8.3"
   }

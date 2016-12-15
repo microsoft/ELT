@@ -9,8 +9,8 @@ export interface SVGTextButtonProps {
     height: number;
     text: string;
     className?: string;
-    onClick?: (event: React.MouseEvent) => void;
-    onMouseDown?: (event: React.MouseEvent) => void;
+    onClick?: (event: React.MouseEvent<Element>) => void;
+    onMouseDown?: (event: React.MouseEvent<Element>) => void;
 }
 
 export class SVGTextButton extends React.Component<SVGTextButtonProps, {}> {

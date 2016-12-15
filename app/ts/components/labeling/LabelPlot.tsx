@@ -94,7 +94,7 @@ export class LabelPlot extends React.Component<LabelPlotProps, LabelPlotState> {
     }
 
 
-        private onDragLabel(labelPlot: LabelPlot, event: React.MouseEvent, mode: string): void {
+        private onDragLabel(labelPlot: LabelPlot, event: React.MouseEvent<Element>, mode: string): void {
         if (event.shiftKey || event.button === 2) { return; }
 
         event.stopPropagation();
@@ -160,11 +160,11 @@ export class LabelPlot extends React.Component<LabelPlotProps, LabelPlotState> {
         );
     }
 
-    private onMouseEnterLabel(labelPlot: LabelPlot, event: React.MouseEvent): void {
+    private onMouseEnterLabel(labelPlot: LabelPlot, event: React.MouseEvent<Element>): void {
         stores.labelingUiStore.hoverLabel(labelPlot.props.label);
     }
 
-    private onMouseLeaveLabel(labelPlot: LabelPlot, event: React.MouseEvent): void {
+    private onMouseLeaveLabel(labelPlot: LabelPlot, event: React.MouseEvent<Element>): void {
         stores.labelingUiStore.hoverLabel(null);
     }
 

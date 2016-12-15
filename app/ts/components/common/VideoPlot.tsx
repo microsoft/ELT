@@ -396,7 +396,6 @@ export class VideoFrame extends React.Component<VideoFrameImageProps, {}> {
                 <foreignObject width={this.props.width} height={this.props.height}>
                     <span style={{ position: 'fixed', overflow: 'hidden', zIndex: -1 }}>
                         <video ref='video'
-                            x={0} y={0}
                             width={this.props.width * window.devicePixelRatio}
                             height={this.props.height * window.devicePixelRatio}
                             src={this.props.timeSeries.filename}

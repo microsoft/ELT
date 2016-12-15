@@ -61,7 +61,7 @@ export class ReferenceTrackDetail extends EventListenerComponent<ReferenceTrackD
         this.setState(this.computeState());
     }
 
-    private onMouseWheel(event: React.WheelEvent): void {
+    private onMouseWheel(event: React.WheelEvent<Element>): void {
         // Decide the zooming factor.
         new Actions.CommonActions.ReferenceViewPanAndZoom(0, event.deltaY / 1000, 'cursor').dispatch();
     }
@@ -72,7 +72,7 @@ export class ReferenceTrackDetail extends EventListenerComponent<ReferenceTrackD
         return [x, y];
     }
 
-    private onMouseMove(event: React.MouseEvent): void {
+    private onMouseMove(event: React.MouseEvent<Element>): void {
         const x = this.getRelativePosition(event)[0];
         const t = x / this.props.viewWidth * (this.state.referenceViewEnd - this.state.referenceViewStart) +
             this.state.referenceViewStart;
@@ -88,7 +88,7 @@ export class ReferenceTrackDetail extends EventListenerComponent<ReferenceTrackD
         }
     }
 
-    private onMouseDown(event: React.MouseEvent): void {
+    private onMouseDown(event: React.MouseEvent<Element>): void {
         const [x0, y0] = this.getRelativePosition(event);
         const scaleXToTime = d3.scale.linear()
             .domain([0, this.props.viewWidth])

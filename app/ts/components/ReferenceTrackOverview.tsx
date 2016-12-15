@@ -93,12 +93,12 @@ export class ReferenceTrackOverview extends EventListenerComponent<ReferenceTrac
         }
     }
 
-    private onMouseWheel(event: React.WheelEvent): void {
+    private onMouseWheel(event: React.WheelEvent<Element>): void {
         // Decide the zooming factor.
         new Actions.CommonActions.ReferenceViewPanAndZoom(0, event.deltaY / 1000, 'center').dispatch();
     }
 
-    private detailedViewCursorPosition(event: React.MouseEvent): void {
+    private detailedViewCursorPosition(event: React.MouseEvent<Element>): void {
         const x = this.getRelativePosition(event)[0];
         const t = x / this.props.viewWidth * (this.state.referenceTimestampEnd - this.state.referenceTimestampStart) +
             this.state.referenceTimestampStart;
@@ -130,7 +130,7 @@ export class ReferenceTrackOverview extends EventListenerComponent<ReferenceTrac
         }
     }
 
-    private onStartDragRanges(event: React.MouseEvent, side: string): void {
+    private onStartDragRanges(event: React.MouseEvent<Element>, side: string): void {
         const x0 = event.screenX;
         const scaling = (this.state.referenceTimestampEnd - this.state.referenceTimestampStart) / this.props.viewWidth;
         const start0 = this.state.referenceViewStart;
@@ -162,13 +162,13 @@ export class ReferenceTrackOverview extends EventListenerComponent<ReferenceTrac
         });
     }
 
-    private getRelativePosition(event: React.MouseEvent): number[] {
+    private getRelativePosition(event: React.MouseEvent<Element>): number[] {
         const x: number = event.clientX - this.refs.interactionRect.getBoundingClientRect().left;
         const y: number = event.clientY - this.refs.interactionRect.getBoundingClientRect().top;
         return [x, y];
     }
 
-    private onMouseMove(event: React.MouseEvent): void {
+    private onMouseMove(event: React.MouseEvent<Element>): void {
         const x = this.getRelativePosition(event)[0];
         const t = x / this.props.viewWidth * (this.state.referenceTimestampEnd - this.state.referenceTimestampStart) +
             this.state.referenceTimestampStart;
