@@ -1,0 +1,352 @@
+.labeling-view, .alignment-view {
+    .axis {
+        -webkit-user-select: none;
+        cursor: default;
+        path, line {
+            fill: none;
+            stroke: black;
+            stroke-width: 1;
+            shape-rendering: crispEdges;
+        }
+        text {
+            font-size: 10px;
+        }
+    }
+    .track-cover {
+        rect {
+            fill: rgba(255, 255, 255, 0.5);
+            pointer-events: all;
+            &:first-child {
+                cursor: -webkit-grab;
+            }
+            &:last-child {
+                cursor: -webkit-grab;
+            }
+        }
+    }
+    .brackets {
+        path {
+            fill: none;
+            stroke: none;
+            stroke-width: 5;
+            pointer-events: all;
+            stroke-linecap: square;
+            stroke-linejoin: miter;
+            cursor: ew-resize;
+            shape-rendering: crispEdges;
+            &.frame-bg {
+                stroke: white;
+                fill: none;
+                pointer-events: none;
+                stroke-width: 5;
+            }
+            &.frame-fg {
+                stroke: #888;
+                pointer-events: none;
+                stroke-width: 3;
+            }
+        }
+        rect {
+            fill: none;
+            stroke: none;
+            pointer-events: all;
+            cursor: -webkit-grab;
+        }
+    }
+}
+
+.labeling-view {
+    -webkit-user-select: none;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0px;
+    bottom: 0px;
+    cursor: default;
+    overflow: hidden;
+}
+
+.labeling-overview-view {
+    position: absolute;
+    bottom: 0; left: 0;
+    .time-cursor {
+        line {
+            stroke: black;
+            fill: none;
+            shape-rendering: crispEdges;
+            &.bg {
+                stroke: white;
+                stroke-width: 3;
+            }
+        }
+        pointer-events: none;
+    }
+}
+
+.labeling-detailed-view {
+    position: absolute;
+    top: 50px; left: 0;
+    .time-cursor {
+        line {
+            stroke: black;
+            fill: none;
+        }
+        pointer-events: none;
+    }
+    .time-hint {
+        rect {
+            fill: rgba(0, 0, 0, 0.05);
+            stroke: black;
+        }
+        pointer-events: none;
+    }
+    .labels {
+        g.label-container {
+            & > rect.top {
+                pointer-events: all;
+            }
+            & > rect.range {
+                fill-opacity: 0.3;
+                cursor: -webkit-grab;
+                pointer-events: all;
+                mix-blend-mode: darken;
+            }
+            & > rect.middle-handler {
+                fill: none; stroke: none;
+                pointer-events: all;
+                cursor: pointer;
+            }
+            & > rect.handler {
+                fill: none; stroke: none;
+                pointer-events: all;
+                cursor: ew-resize;
+            }
+            &.hovered {
+                & > rect.range {
+                    fill-opacity: 0.5;
+                }
+            }
+            &.selected {
+                & > rect.range {
+                    fill-opacity: 0.7;
+                    cursor: -webkit-grab;
+                    pointer-events: all;
+                }
+            }
+
+            &.selected, &.hovered {
+                & > line {
+                    stroke-width: 2;
+                }
+            }
+        }
+    }
+}
+
+.labeling-panel-view {
+    position: absolute;
+    right: 0; top: 0;
+    background: white;
+    padding-left: 10px;
+    padding-right: 10px;
+    box-sizing: border-box;
+
+    overflow-y: scroll;
+    overflow-x: hidden;
+
+    video {
+        width: 100%;
+    }
+
+    h4 {
+        font-size: 16px;
+        font-weight: bold;
+        margin-top: 20px;
+    }
+}
+
+.classes-list-view {
+    .list-group-item {
+
+        cursor: pointer;
+    }
+
+    .classes-list {
+        margin-bottom: 10px;
+    }
+
+    .classes-add {
+        .tinput {
+            border: 1px solid #CCC;
+            border-radius: 4px;
+            padding: 5px 10px;
+            font-size: 14px;
+            line-height: 18px;
+            vertical-align: top;
+            &:focus {
+                outline: none;
+                box-shadow: 0 0 3px #2979FF;
+            }
+        }
+        .tbtn {
+
+        }
+    }
+
+    .classes-list-item {
+        height: 28px;
+        cursor: pointer;
+        border-radius: 4px;
+        line-height: 28px;
+        font-size: 14px;
+
+        box-sizing: content-box;
+
+        &:hover {
+            background-color: #EEE;
+        }
+        &.active {
+            background-color: #DDD;
+        }
+        .badge-classname {
+            width: 24px;
+            height: 24px;
+            vertical-align: top;
+            display: inline-block;
+            margin: 2px;
+            margin-right: 8px;
+            border-radius: 4px;
+        }
+        .tbtn-small {
+            vertical-align: top;
+            line-height: 24px;
+            padding: 0;
+            margin: 2px;
+            width: 24px;
+            height: 24px;
+            font-size: 12px;
+        }
+        input {
+            border: none;
+            padding: 0;
+            font-size: 14px;
+            background-color: transparent;
+            &:focus { outline: none; }
+        }
+    }
+}
+
+.inline-classes-list-view {
+    position: relative;
+    display: inline-block;
+    vertical-align: middle;
+    height: 30px;
+    background-color: #F0F0F0;
+    margin-left: 3px;
+    border-radius: 4px;
+
+    &.active {
+        background-color: #EEE;
+        box-shadow: 0 0 3px #2979FF;
+    }
+
+    .classname {
+        display: inline-block;
+        padding-right: 10px;
+        cursor: pointer;
+        min-width: 200px;
+        height: 30px;
+        line-height: 30px;
+        cursor: pointer;
+        .badge-classname {
+            width: 24px;
+            height: 24px;
+            vertical-align: top;
+            display: inline-block;
+            margin: 3px;
+            margin-right: 8px;
+            border-radius: 4px;
+        }
+    }
+    .classes-list-view-wrapper {
+        position: absolute;
+        z-index: 10000;
+        width: 350px;
+        left: 0; top: 35px;
+        background-color: white;
+        padding: 10px;
+        border: 1px solid #CCC;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        overflow-y: scroll;
+        max-height: 500px;
+        border-radius: 4px;
+    }
+}
+
+.video-local-view {
+    rect {
+        stroke: none; fill: none;
+        cursor: pointer;
+        pointer-events: all;
+        &:hover {
+            stroke: black;
+            stroke-width: 2px;
+        }
+    }
+}
+
+.microadjuster-framedrag {
+    path {
+        stroke: black;
+        stroke-linejoin: miter;
+        stroke-linecap: butt;
+        fill: none;
+    }
+    .overlay {
+        fill: rgba(255, 255, 255, 0.5);
+        stroke: none;
+    }
+    .frame {
+        cursor: -webkit-grab;
+    }
+}
+
+.changepoints {
+    line {
+        stroke: #DDD;
+        stroke-width: 1;
+    }
+}
+
+.confidence-slider {
+    rect.histogram-bin {
+        fill: #CCC;
+        stroke: none;
+    }
+    circle {
+        fill: black;
+        stroke: none;
+        cursor: pointer;
+    }
+    line {
+        stroke: black;
+        fill: none;
+    }
+}
+
+.labeling-toolbar-view {
+    padding: 5px;
+    background-color: #F8F8F8;
+    white-space: nowrap;
+    .sep {
+        margin-left: 10px;
+        padding-right: 11px;
+        border-left: 1px solid #DDD;
+        display: inline-block;
+        width: 0;
+        height: 30px;
+        vertical-align: top;
+    }
+}
+
+@import "navigation-column.less";

@@ -1,0 +1,102 @@
+@marker-stroke-width: 1;
+@marker-handler-width: 12;
+@marker-selected-stroke-width: 1;
+@marker-connection-selected-stroke-width: 3;
+
+@marker-color: #448AFF;
+@marker-hover-color: #FF6D00;
+@marker-selected-color: #FF9100;
+@marker-interacting-color: #FF6D00;
+
+.alignment-marker {
+    line.line {
+        stroke: @marker-color;
+        fill: none;
+        pointer-events: none;
+    }
+    line.handler {
+        stroke: none;
+        fill: none;
+        stroke-width: @marker-handler-width;
+        stroke-linecap: round;
+        pointer-events: all;
+        cursor: col-resize;
+    }
+    circle.marker-handler {
+        stroke: none;
+        fill: none;
+        pointer-events: all;
+        cursor: pointer;
+    }
+    circle.marker-circle {
+        stroke: none;
+        fill: @marker-color;
+        pointer-events: none;
+    }
+    &:hover {
+        line.line {
+            stroke: @marker-hover-color;
+        }
+        circle.marker-circle {
+            fill: @marker-hover-color;
+        }
+    }
+    &.selected {
+        line.line {
+            stroke: @marker-selected-color;
+            stroke-width: @marker-selected-stroke-width;
+        }
+        circle.marker-circle {
+            fill: @marker-selected-color;
+            stroke: darken(@marker-selected-color, 10%);
+            stroke-linejoin: round;
+            stroke-width: 2;
+        }
+    }
+    &.marker-target, &.marker-start {
+        line.line {
+            stroke: @marker-interacting-color;
+        }
+        path.marker-circle {
+            fill: @marker-interacting-color;
+        }
+    }
+}
+
+.temporary-correspondence {
+    stroke: @marker-interacting-color;
+    fill: none;
+    pointer-events: none;
+}
+.marker-correspondence {
+    line {
+        stroke: @marker-color;
+        pointer-events: none;
+    }
+    line.handler {
+        stroke: none;
+        fill: none;
+        pointer-events: all;
+        cursor: pointer;
+        stroke-linecap: round;
+        stroke-width: @marker-handler-width;
+    }
+    &.selected {
+        line:not(.handler) {
+            stroke: @marker-selected-color;
+            stroke-width: @marker-connection-selected-stroke-width;
+        }
+    }
+}
+
+line.track-decoration {
+    stroke: #888;
+    shape-rendering: crispEdges;
+    fill: none;
+}
+
+rect.track-decoration {
+    stroke: #888;
+    shape-rendering: crispEdges;
+    fill: #888;
+}

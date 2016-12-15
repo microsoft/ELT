@@ -1,0 +1,31 @@
+node_modules
+
+# Emacs saves
+.~/
+.#*
+\#*\#
+
+src/build
+build
+
+# SWIG output
+*_wrap.cxx
+
+# Typescript compiler output
+*.js
+*.js.map
+
+# Less css compiler output
+app/css/styles.compiled.css
+
+# npm stuff
+npm-debug.log
+
+# Visual Studio Code files
+browse.VC.db
+
+# typings output
+typings/
+
+# Datasets
+data/
