@@ -1,11 +1,11 @@
 // The video track in the app.
 
 import * as Actions from '../actions/Actions';
-import {startDragging, Track} from '../common/common';
+import { startDragging, Track } from '../common/common';
 import * as stores from '../stores/stores';
-import {EventListenerComponent} from './common/EventListenerComponent';
-import {TimeAxis} from './common/TimeAxis';
-import {TrackView} from './common/TrackView';
+import { EventListenerComponent } from './common/EventListenerComponent';
+import { TimeAxis } from './common/TimeAxis';
+import { TrackView } from './common/TrackView';
 import * as d3 from 'd3';
 import * as React from 'react';
 
@@ -90,7 +90,7 @@ export class ReferenceTrackDetail extends EventListenerComponent<ReferenceTrackD
 
     private onMouseDown(event: React.MouseEvent<Element>): void {
         const [x0, y0] = this.getRelativePosition(event);
-        const scaleXToTime = d3.scale.linear()
+        const scaleXToTime = d3.scaleLinear()
             .domain([0, this.props.viewWidth])
             .range([this.state.referenceViewStart, this.state.referenceViewEnd]);
         const start0 = this.state.referenceViewStart;
@@ -117,18 +117,14 @@ export class ReferenceTrackDetail extends EventListenerComponent<ReferenceTrackD
     public render(): JSX.Element {
         if (!this.state.referenceTrack) { return (<g></g>); }
 
-        const scale = d3.scale.linear()
+        const scale = d3.scaleLinear()
             .domain([this.state.referenceViewStart, this.state.referenceViewEnd])
             .range([0, this.props.viewWidth]);
 
         return (
             <g className='labeling-overview-view' transform={'translate(0, 23)'}>
 
-                <TimeAxis
-                    orientation='top'
-                    scale={scale}
-                    transform={'translate(0,0)'}
-                    />
+                <TimeAxis scale={scale} transform={'translate(0,0)'} />
 
                 <g className='labels'>
                     <TrackView
@@ -138,16 +134,16 @@ export class ReferenceTrackDetail extends EventListenerComponent<ReferenceTrackD
                         zoomTransform={ts => ({
                             rangeStart: this.state.referenceViewStart,
                             pixelsPerSecond: this.state.referenceViewPPS
-                        }) }
+                        })}
                         getTimeCursor={() => stores.alignmentLabelingUiStore.referenceViewTimeCursor}
                         useMipmap={true}
                         />
                 </g>
 
                 <g
-                    onMouseMove={ event => this.onMouseMove(event) }
-                    onMouseDown={ event => this.onMouseDown(event) }
-                    onWheel={ event => this.onMouseWheel(event) }
+                    onMouseMove={event => this.onMouseMove(event)}
+                    onMouseDown={event => this.onMouseDown(event)}
+                    onWheel={event => this.onMouseWheel(event)}
                     >
                     <rect ref='interactionRect'
                         x={0} y={0} width={this.props.viewWidth} height={this.props.viewHeight}

@@ -225,10 +225,10 @@ export class AlignmentLabelingStore extends EventEmitter {
 
     // Create new non-conflicting IDs.
     public newTrackID(): string {
-        return attemptNames('track-', (x) => this.getTrackByID(x) === null);
+        return attemptNames('track-', id => this.getTrackByID(id) === undefined);
     }
     public newTimeSeriesID(): string {
-        return attemptNames('series-', (x) => this.getTimeSeriesByID(x) === null);
+        return attemptNames('series-', id => this.getTimeSeriesByID(id) === undefined);
     }
 
     // Tracks Changed event, when tracks are added/removed.

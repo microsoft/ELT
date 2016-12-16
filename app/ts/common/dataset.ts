@@ -1,5 +1,5 @@
 import * as d3 from 'd3';
-import {readFileSync} from 'fs';
+import { readFileSync } from 'fs';
 import * as fs from 'fs';
 
 // Types of input timeseries.
@@ -133,8 +133,8 @@ export function loadVideoTimeSeriesFromFile(filename: string, callback: (video: 
 // This function reads Liang's sensor data format.
 export function loadSensorTimeSeriesFromFile(filename: string): SensorTimeSeries {
     const content = readFileSync(filename, 'utf-8');
-    let rows = d3.tsv.parseRows(content);
-    rows = rows.filter((x) => x.length > 0 && x.join('').length > 0);
+    const rows = d3.tsvParseRows(content)
+        .filter((x) => x.length > 0 && x.join('').length > 0);
     const numColumns = rows[0].length;
     const columns: number[][] = [];
     const isColumnValid: boolean[] = [];
@@ -194,8 +194,8 @@ export function loadSensorTimeSeriesFromFile(filename: string): SensorTimeSeries
 // This function reads multiple sensor data from Liang's sensor data format.
 export function loadMultipleSensorTimeSeriesFromFile(filename: string): SensorTimeSeries[] {
     const content = readFileSync(filename, 'utf-8');
-    let rows = d3.tsv.parseRows(content);
-    rows = rows.filter((x) => x.length > 0 && x.join('').length > 0);
+    const rows = d3.tsvParseRows(content)
+        .filter((x) => x.length > 0 && x.join('').length > 0);
     const numColumns = rows[0].length;
     const columns: number[][] = [];
     const isColumnValid: boolean[] = [];

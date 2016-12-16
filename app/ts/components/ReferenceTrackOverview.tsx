@@ -1,14 +1,14 @@
 // The 'Overview' view that is shared by both alignment and labeling.
 
 import * as Actions from '../actions/Actions';
-import {LayoutParameters, makePathDFromPoints, startDragging, Track} from '../common/common';
-import {KeyCode} from '../common/ui/types';
+import { LayoutParameters, makePathDFromPoints, startDragging, Track } from '../common/common';
+import { KeyCode } from '../common/ui/types';
 import * as stores from '../stores/stores';
-import {EventListenerComponent} from'./common/EventListenerComponent';
-import {TimeAxis} from './common/TimeAxis';
-import {TrackView} from './common/TrackView';
-import {LabelKind} from './labeling/LabelPlot';
-import {LabelsRangePlot} from './labeling/LabelsRangePlot';
+import { EventListenerComponent } from './common/EventListenerComponent';
+import { TimeAxis } from './common/TimeAxis';
+import { TrackView } from './common/TrackView';
+import { LabelKind } from './labeling/LabelPlot';
+import { LabelsRangePlot } from './labeling/LabelsRangePlot';
 import * as d3 from 'd3';
 import * as React from 'react';
 
@@ -178,7 +178,7 @@ export class ReferenceTrackOverview extends EventListenerComponent<ReferenceTrac
     public render(): JSX.Element {
         if (!this.state.referenceTrack) { return (<g></g>); }
 
-        const xScale = d3.scale.linear()
+        const xScale = d3.scaleLinear()
             .domain([this.state.referenceTimestampStart, this.state.referenceTimestampEnd])
             .range([0, this.props.viewWidth]);
 
@@ -212,7 +212,7 @@ export class ReferenceTrackOverview extends EventListenerComponent<ReferenceTrac
                             rangeStart: this.state.referenceTimestampStart,
                             pixelsPerSecond: this.props.viewWidth /
                             (this.state.referenceTimestampEnd - this.state.referenceTimestampStart)
-                        }) }
+                        })}
                         useMipmap={true}
                         />
                 </g>
@@ -225,11 +225,11 @@ export class ReferenceTrackOverview extends EventListenerComponent<ReferenceTrac
                                     track={track}
                                     viewWidth={this.props.viewWidth}
                                     viewHeight={labelsY1 - labelsY0}
-                                    zoomTransform = {ts => ({
+                                    zoomTransform={ts => ({
                                         rangeStart: this.state.referenceTimestampStart,
                                         pixelsPerSecond: this.props.viewWidth /
                                         (this.state.referenceTimestampEnd - this.state.referenceTimestampStart)
-                                    }) }
+                                    })}
                                     useMipmap={true}
                                     filterTimeSeries={(series) => series.aligned}
                                     colorScale={this.props.mode === 'labeling' ?
@@ -243,7 +243,7 @@ export class ReferenceTrackOverview extends EventListenerComponent<ReferenceTrac
                             <LabelsRangePlot
                                 rangeStart={this.state.referenceTimestampStart}
                                 pixelsPerSecond={this.props.viewWidth /
-                                    (this.state.referenceTimestampEnd - this.state.referenceTimestampStart) }
+                                    (this.state.referenceTimestampEnd - this.state.referenceTimestampStart)}
                                 plotWidth={this.props.viewWidth}
                                 plotHeight={labelsY1 - labelsY0}
                                 labelKind={LabelKind.Overview}
@@ -253,15 +253,11 @@ export class ReferenceTrackOverview extends EventListenerComponent<ReferenceTrac
                     }
                 </g>
 
-                <TimeAxis
-                    scale={xScale}
-                    orientation='top'
-                    transform='translate(0, 0)'
-                    />
+                <TimeAxis scale={xScale} transform='translate(0, 0)' />
 
                 <g
-                    onMouseMove={ event => this.onMouseMove(event) }
-                    onWheel={ event => this.onMouseWheel(event) }
+                    onMouseMove={event => this.onMouseMove(event)}
+                    onWheel={event => this.onMouseWheel(event)}
                     >
                     <rect ref='interactionRect'
                         x={0} y={0} width={this.props.viewWidth} height={this.props.viewHeight}
@@ -271,45 +267,45 @@ export class ReferenceTrackOverview extends EventListenerComponent<ReferenceTrac
                         <rect x={0} y={0}
                             width={rangeX0}
                             height={this.props.viewHeight}
-                            onClick={(e) => this.detailedViewCursorPosition(e) } />
+                            onClick={(e) => this.detailedViewCursorPosition(e)} />
                         <rect x={rangeX1} y={0}
                             width={this.props.viewWidth - rangeX1}
                             height={this.props.viewHeight}
-                            onClick={(e) => this.detailedViewCursorPosition(e) } />
+                            onClick={(e) => this.detailedViewCursorPosition(e)} />
                     </g>
                 </g>
 
                 <g className='time-cursor' transform='translate(0, 0)'>
                     <line className='bg'
-                        x1={xScale(this.state.referenceTimeCursor) }
+                        x1={xScale(this.state.referenceTimeCursor)}
                         y1={0}
-                        x2={xScale(this.state.referenceTimeCursor) }
+                        x2={xScale(this.state.referenceTimeCursor)}
                         y2={this.props.viewHeight}
                         />
                     <line
-                        x1={xScale(this.state.referenceTimeCursor) }
+                        x1={xScale(this.state.referenceTimeCursor)}
                         y1={0}
-                        x2={xScale(this.state.referenceTimeCursor) }
+                        x2={xScale(this.state.referenceTimeCursor)}
                         y2={this.props.viewHeight}
                         />
                 </g>
 
                 <g className='brackets' transform='translate(0, 0)'>
                     <rect x={rangeX0} y={0} width={rangeX1 - rangeX0} height={this.props.viewHeight}
-                        onMouseDown={ event => this.onStartDragRanges(event, 'both') }
-                        onMouseMove={ event => this.onMouseMove(event) }
-                        onWheel={ event => this.onMouseWheel(event) }
+                        onMouseDown={event => this.onStartDragRanges(event, 'both')}
+                        onMouseMove={event => this.onMouseMove(event)}
+                        onWheel={event => this.onMouseWheel(event)}
                         />
                     <path d={pathD} className='frame-fg' />
                     <path d={`M0,0 L0,${this.props.viewHeight}`} transform={`translate(${rangeX0},0)`}
-                        onMouseDown={ event => this.onStartDragRanges(event, 'start') }
-                        onMouseMove={ event => this.onMouseMove(event) }
-                        onWheel={ event => this.onMouseWheel(event) }
+                        onMouseDown={event => this.onStartDragRanges(event, 'start')}
+                        onMouseMove={event => this.onMouseMove(event)}
+                        onWheel={event => this.onMouseWheel(event)}
                         />
                     <path d={`M0,0 L0,${this.props.viewHeight}`} transform={`translate(${rangeX1},0)`}
-                        onMouseDown={ event => this.onStartDragRanges(event, 'end') }
-                        onMouseMove={ event => this.onMouseMove(event) }
-                        onWheel={ event => this.onMouseWheel(event) }
+                        onMouseDown={event => this.onStartDragRanges(event, 'end')}
+                        onMouseMove={event => this.onMouseMove(event)}
+                        onWheel={event => this.onMouseWheel(event)}
                         />
                 </g>
             </g>

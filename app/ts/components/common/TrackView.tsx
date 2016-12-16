@@ -1,10 +1,10 @@
 // TrackView: display a single track in the app.
 
-import {AlignedTimeSeries, SignalsViewMode, Track} from '../../common/common';
-import {SensorTimeSeries, TimeSeriesKind, VideoTimeSeries} from '../../common/dataset';
-import {AutocorrelogramPlot} from '../common/AutocorrelogramPlot';
-import {SensorTimeSeriesRangePlot} from '../common/SensorPlot';
-import {VideoFrame, VideoTimeSeriesRangePlot} from '../common/VideoPlot';
+import { AlignedTimeSeries, SignalsViewMode, Track } from '../../common/common';
+import { SensorTimeSeries, TimeSeriesKind, VideoTimeSeries } from '../../common/dataset';
+import { AutocorrelogramPlot } from '../common/AutocorrelogramPlot';
+import { SensorTimeSeriesRangePlot } from '../common/SensorPlot';
+import { VideoFrame, VideoTimeSeriesRangePlot } from '../common/VideoPlot';
 import * as d3 from 'd3';
 import * as React from 'react';
 
@@ -30,7 +30,8 @@ export interface TrackViewProps {
     zoomTransform?: ZoomTrasform;
 
     enableMouseEvents?: boolean;
-    onWheel?: (event: React.WheelEvent<Element>, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number, deltaY: number) => any;
+    onWheel?: (event: React.WheelEvent<Element>, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number,
+        deltaY: number) => any;
     onMouseMove?: (event: React.MouseEvent<Element>, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number) => any;
     onMouseDown?: (event: React.MouseEvent<Element>, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number) => any;
     onMouseEnter?: (event: React.MouseEvent<Element>, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number) => any;
@@ -68,7 +69,9 @@ export class TrackView extends React.Component<TrackViewProps, {}> {
     private emitMouseLeave(event: React.MouseEvent<Element>, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number): void {
         if (this.props.onMouseLeave !== null) { this.props.onMouseLeave(event, track, timeSeries, t, pps); }
     }
-    private emitWheel(event: React.WheelEvent<Element>, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number, deltaY: number): void {
+    private emitWheel(
+        event: React.WheelEvent<Element>, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number,
+        deltaY: number): void {
         if (this.props.onWheel !== null) { this.props.onWheel(event, track, timeSeries, t, pps, deltaY); }
     }
 
@@ -77,13 +80,13 @@ export class TrackView extends React.Component<TrackViewProps, {}> {
         // Get zooming factors.
         const zooming = this.props.zoomTransform(alignedTimeSeries);
         // scale: Reference -> Pixel.
-        const sReferenceToPixel = d3.scale.linear()
+        const sReferenceToPixel = d3.scaleLinear()
             .domain([zooming.rangeStart, zooming.rangeStart + this.props.viewWidth / zooming.pixelsPerSecond])
             .range([0, this.props.viewWidth]);
 
         return alignedTimeSeries.timeSeries.map((timeSeries, t) => {
             // scale: Signal -> Reference.
-            const sSignalToReference = d3.scale.linear()
+            const sSignalToReference = d3.scaleLinear()
                 .domain([timeSeries.timestampStart, timeSeries.timestampEnd])
                 .range([alignedTimeSeries.referenceStart, alignedTimeSeries.referenceEnd]);
 
@@ -136,11 +139,11 @@ export class TrackView extends React.Component<TrackViewProps, {}> {
                             y={0}
                             width={xEnd - xStart}
                             height={chunkHeight}
-                            onMouseDown={ event => { this.emitMouseDown(event, track, alignedTimeSeries, getTime(event), pps); } }
-                            onMouseMove={ event => { this.emitMouseMove(event, track, alignedTimeSeries, getTime(event), pps); } }
-                            onMouseEnter={ event => { this.emitMouseEnter(event, track, alignedTimeSeries, getTime(event), pps); } }
-                            onMouseLeave={ event => { this.emitMouseLeave(event, track, alignedTimeSeries, getTime(event), pps); } }
-                            onWheel={ event => { this.emitWheel(event, track, alignedTimeSeries, getTime(event), pps, event.deltaY); } }
+                            onMouseDown={event => { this.emitMouseDown(event, track, alignedTimeSeries, getTime(event), pps); } }
+                            onMouseMove={event => { this.emitMouseMove(event, track, alignedTimeSeries, getTime(event), pps); } }
+                            onMouseEnter={event => { this.emitMouseEnter(event, track, alignedTimeSeries, getTime(event), pps); } }
+                            onMouseLeave={event => { this.emitMouseLeave(event, track, alignedTimeSeries, getTime(event), pps); } }
+                            onWheel={event => { this.emitWheel(event, track, alignedTimeSeries, getTime(event), pps, event.deltaY); } }
                             />
                         {
                             timeCursor !== null ? (

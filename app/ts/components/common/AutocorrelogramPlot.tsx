@@ -115,10 +115,10 @@ export class AutocorrelogramPlot extends React.Component<AutocorrelogramPlotProp
     public render(): JSX.Element {
         if (!this.state.computedAutocorrelogram) { return (<g></g>); }
         const slicesCount = this.state.computedAutocorrelogram.dimensions[0].length;
-        const sliceScale = d3.scale.linear() // slice index <> slice timestamp
+        const sliceScale = d3.scaleLinear() // slice index <> slice timestamp
             .domain([0, slicesCount - 1])
             .range([this.state.computedAutocorrelogram.timestampStart, this.state.computedAutocorrelogram.timestampEnd]);
-        const timeScale = d3.scale.linear() // timestamp <> pixel.
+        const timeScale = d3.scaleLinear() // timestamp <> pixel.
             .domain([this.props.rangeStart, this.props.rangeStart + this.props.plotWidth / this.props.pixelsPerSecond])
             .range([0, this.props.plotWidth]);
 
@@ -157,10 +157,10 @@ export function computeSensorTimeSeriesAutocorrelogram(timeSeries: SensorTimeSer
     const result = autocorrelogram(dimension, windowSize, sliceSize);
     const sliceCount = result.length / windowSize;
     const dimensions: Float32Array[] = [];
-    const samplesScale = d3.scale.linear() // sample index <> sample timestamp
+    const samplesScale = d3.scaleLinear() // sample index <> sample timestamp
         .domain([0, dimension.length - 1])
         .range([timeSeries.timestampStart, timeSeries.timestampEnd]);
-    const sliceScale = d3.scale.linear() // slice index <> slice timestamp
+    const sliceScale = d3.scaleLinear() // slice index <> slice timestamp
         .domain([0, sliceCount - 1])
         .range([samplesScale(0 + windowSize / 2), samplesScale(sliceSize * (sliceCount - 1) + windowSize / 2)]);
     for (let i = 0; i < windowSize; i++) {

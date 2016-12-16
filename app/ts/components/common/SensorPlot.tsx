@@ -1,6 +1,6 @@
-import {SensorTimeSeries} from '../../common/dataset';
-import {getUniqueIDForObject, isSameArray} from '../../common/ui/utils';
-import {MipmapCache} from './Mipmap';
+import { SensorTimeSeries } from '../../common/dataset';
+import { getUniqueIDForObject, isSameArray } from '../../common/ui/utils';
+import { MipmapCache } from './Mipmap';
 import * as d3 from 'd3';
 import * as React from 'react';
 
@@ -14,7 +14,7 @@ const mipmapCache = new MipmapCache();
 export interface SensorTimeSeriesPlotProps {
     timeSeries: SensorTimeSeries;     // The timeseries object to show, replace it with a NEW object if you need to update its contents.
     dimensionVisibility?: boolean[];  // boolean array to show/hide individual dimensions.
-    colorScale?: any;                 // Colors to use, if null, use d3.category10 or 20.
+    colorScale?: d3.ScaleOrdinal<number, string>; // Colors to use, if null, use d3.category10 or 20.
     pixelsPerSecond: number;          // Scaling factor (assume the dataset's timeunit is seconds).
     plotHeight: number;               // The height of the plot.
     yDomain?: number[];               // The y domain: [ min, max ], similar to D3's scale.domain([min, max]).
@@ -61,12 +61,10 @@ export class SensorTimeSeriesPlot extends React.Component<SensorTimeSeriesPlotPr
         const yScale = 1 / (y0 - y1) * this.props.plotHeight;
 
         // Determine color scale.
-        let colors = null;
-        if (this.props.colorScale) {
-            colors = this.props.colorScale;
-        } else {
-            colors = numSeries <= 10 ? d3.scale.category10() : d3.scale.category20();
-        }
+        const colors = this.props.colorScale ||
+            (numSeries <= 10 ?
+                d3.scaleOrdinal<number, string>(d3.schemeCategory10) :
+                d3.scaleOrdinal<number, string>(d3.schemeCategory20));
 
         const paths = dimensions.map((dimSeries: number[], dimIndex: number) => {
             if (this.props.dimensionVisibility !== undefined && this.props.dimensionVisibility !== null) {

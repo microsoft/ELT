@@ -260,7 +260,7 @@ export class LabelingView extends EventListenerComponent<LabelingViewProps, Labe
         const timeCursorY1 = labelAreaY1;
 
         // The time scale.
-        const scale = d3.scale.linear()
+        const scale = d3.scaleLinear()
             .domain([
                 this.state.detailedViewStart,
                 this.state.detailedViewStart + this.props.viewWidth / this.state.pixelsPerSecond])

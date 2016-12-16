@@ -80,7 +80,7 @@ export class AlignmentUiStore extends EventEmitter {
             blocks.forEach((block) => {
                 if (alignmentStore.isBlockAligned(block)) {
                     block.forEach((series) => {
-                        const scale = d3.scale.linear()
+                        const scale = d3.scaleLinear()
                             .domain([series.referenceStart, series.referenceEnd])
                             .range([series.timeSeries[0].timestampStart, series.timeSeries[0].timestampEnd]);
                         this._seriesTimeCursor.set(series, scale(action.timeCursor));

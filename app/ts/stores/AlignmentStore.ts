@@ -284,7 +284,7 @@ export class AlignmentStore extends EventEmitter {
             }
             if (!otherMarker) { return; } // not on this timeseries.
             if (tTrackIndex - 1 !== tracks.indexOf(otherMarker.timeSeries.track)) { return; } // must be the previous track.
-            const otherScale = d3.scale.linear()
+            const otherScale = d3.scaleLinear()
                 .domain([otherMarker.timeSeries.timeSeries[0].timestampStart, otherMarker.timeSeries.timeSeries[0].timestampEnd])
                 .range([otherMarker.timeSeries.referenceStart, otherMarker.timeSeries.referenceEnd]);
             tCorrespondences.push([otherScale(otherMarker.localTimestamp), thisMarker.localTimestamp]);

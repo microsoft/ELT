@@ -3,8 +3,7 @@ import * as React from 'react';
 
 // Component TimeAxis.
 export interface TimeAxisProps {
-    scale: any;           // D3 scale for the axis.
-    orientation: string;  // Orientation of the axis, see d3.axis's orientation.
+    scale: d3.ScaleLinear<number, number>;           // D3 scale for the axis.
     transform?: string;   // Transform.
 }
 
@@ -21,7 +20,7 @@ export class TimeAxis extends React.Component<TimeAxisProps, TimeAxisState> {
     constructor(props: TimeAxisProps, context: any) {
         super(props, context);
         this.state = {
-            axis: d3.svg.axis()
+            axis: d3.axisTop(props.scale)
         };
     }
 
@@ -35,11 +34,9 @@ export class TimeAxis extends React.Component<TimeAxisProps, TimeAxisState> {
     }
 
     public componentWillReceiveProps(newProps: TimeAxisProps): void {
-        const axis = d3.svg.axis()
-            .orient(newProps.orientation)
-            .scale(newProps.scale)
+        const axis = d3.axisTop(newProps.scale)
             .ticks(newProps.scale.range()[1] / 50);
-        const tickValues = newProps.scale.ticks(axis.ticks()[0]) as number[];
+        const tickValues = newProps.scale.ticks(axis.tickArguments()[0]) as number[];
         for (let i = 0; i <= 3; i++) {
             const tf = (d) => d.toFixed(i) + 's';
             axis.tickFormat(tf);
@@ -55,6 +52,6 @@ export class TimeAxis extends React.Component<TimeAxisProps, TimeAxisState> {
     }
 
     public render(): JSX.Element {
-        return <g className='axis' ref='axisNode' transform={this.props.transform || ''}/>;
+        return <g className='axis' ref='axisNode' transform={this.props.transform || ''} />;
     }
 }

@@ -24,7 +24,7 @@ export class ConfidenceSlider extends React.Component<ConfidenceSliderProps, {}>
     private onMouseDown(event: React.MouseEvent<Element>): void {
         const v0 = this.props.value;
         const circleRadius = 10;
-        const xScale = d3.scale.linear()
+        const xScale = d3.scaleLinear()
             .domain([this.props.min, this.props.max])
             .range([circleRadius + 1, this.props.viewWidth - 1 - circleRadius]);
         const x0 = event.screenX;
@@ -45,10 +45,10 @@ export class ConfidenceSlider extends React.Component<ConfidenceSliderProps, {}>
         let histogramMax = this.props.histogram.reduce((a, b) => Math.max(a, b), 0);
         if (histogramMax === 0) { histogramMax = 1; }
 
-        const xScale = d3.scale.linear()
+        const xScale = d3.scaleLinear()
             .domain([this.props.min, this.props.max])
             .range([circleRadius + 1, this.props.viewWidth - 1 - circleRadius]);
-        const histogramIndexToRange = d3.scale.linear()
+        const histogramIndexToRange = d3.scaleLinear()
             .domain([0, this.props.histogram.length - 1])
             .range([this.props.min, this.props.max]);
 

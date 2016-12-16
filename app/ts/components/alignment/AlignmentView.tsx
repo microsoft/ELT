@@ -3,13 +3,13 @@
 // - Handles alignment keyboard events.
 
 import * as actions from '../../actions/Actions';
-import {AlignedTimeSeries, Marker, SignalsViewMode, startDragging, Track} from '../../common/common';
-import {KeyCode} from '../../common/ui/types';
+import { AlignedTimeSeries, Marker, SignalsViewMode, startDragging, Track } from '../../common/common';
+import { KeyCode } from '../../common/ui/types';
 import * as stores from '../../stores/stores';
-import {EventListenerComponent} from '../common/EventListenerComponent';
-import {TimeAxis} from '../common/TimeAxis';
-import {TrackView} from '../common/TrackView';
-import {SVGGlyphiconButton} from '../svgcontrols/buttons';
+import { EventListenerComponent } from '../common/EventListenerComponent';
+import { TimeAxis } from '../common/TimeAxis';
+import { TrackView } from '../common/TrackView';
+import { SVGGlyphiconButton } from '../svgcontrols/buttons';
 import * as d3 from 'd3';
 import * as React from 'react';
 
@@ -104,7 +104,7 @@ export class AlignmentView extends EventListenerComponent<AlignmentViewProps, Al
     private onTrackMouseMove(
         event: React.MouseEvent<Element>, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number): void {
         if (timeSeries.aligned) {
-            const scale = d3.scale.linear()
+            const scale = d3.scaleLinear()
                 .domain([timeSeries.referenceStart, timeSeries.referenceEnd])
                 .range([timeSeries.timeSeries[0].timestampStart, timeSeries.timeSeries[0].timestampEnd]);
             new actions.CommonActions.SetReferenceViewTimeCursor(scale.invert(t)).dispatch();
@@ -161,7 +161,7 @@ export class AlignmentView extends EventListenerComponent<AlignmentViewProps, Al
         if (track === stores.alignmentLabelingStore.referenceTrack || timeSeries.aligned) {
             new actions.CommonActions.ReferenceViewPanAndZoom(0, deltaY / 1000, 'cursor').dispatch();
         } else {
-            const scale = d3.scale.linear()
+            const scale = d3.scaleLinear()
                 .domain([timeSeries.referenceStart, timeSeries.referenceEnd])
                 .range([timeSeries.timeSeries[0].timestampStart, timeSeries.timeSeries[0].timestampEnd]);
             const t = stores.alignmentUiStore.getTimeCursor(timeSeries);
@@ -267,11 +267,11 @@ export class AlignmentView extends EventListenerComponent<AlignmentViewProps, Al
             [alignmentState.rangeStart, alignmentState.pixelsPerSecond] :
             [this.state.detailedViewStart, this.state.pixelsPerSecond];
         // scale: Reference -> Pixel.
-        const sReferenceToPixel = d3.scale.linear()
+        const sReferenceToPixel = d3.scaleLinear()
             .domain([rangeStart, rangeStart + this.props.viewWidth / pixelsPerSecond])
             .range([0, this.props.viewWidth]);
         // scale: Signal -> Reference.
-        const sSignalToReference = d3.scale.linear()
+        const sSignalToReference = d3.scaleLinear()
             .domain([timeSeries.timeSeries[0].timestampStart, timeSeries.timeSeries[0].timestampEnd])
             .range([timeSeries.referenceStart, timeSeries.referenceEnd]);
         const x = sReferenceToPixel(sSignalToReference(marker.localTimestamp));
@@ -306,14 +306,10 @@ export class AlignmentView extends EventListenerComponent<AlignmentViewProps, Al
             let timeAxis = null;
             if (!track.alignedTimeSeries[0].aligned) {
                 const zoom = this.getZoomTransform(track.alignedTimeSeries[0]);
-                const scale = d3.scale.linear()
+                const scale = d3.scaleLinear()
                     .domain([zoom.rangeStart, zoom.rangeStart + this.props.viewWidth / zoom.pixelsPerSecond])
                     .range([0, this.props.viewWidth]);
-                timeAxis = <TimeAxis
-                    orientation='top'
-                    scale={scale}
-                    transform='translate(0, 0)'
-                    />;
+                timeAxis = <TimeAxis scale={scale} transform='translate(0, 0)' />;
             }
             return (
                 <g transform={`translate(0, ${trackLayout.y0})`} key={track.id}>
@@ -341,13 +337,13 @@ export class AlignmentView extends EventListenerComponent<AlignmentViewProps, Al
                         width={3} height={trackLayout.height} />
 
                     <g transform={`translate(${this.props.viewWidth + 4}, 0)`}>
-                        <SVGGlyphiconButton x={0} y={ 0} width={20} height={20} text='remove'
-                            onClick={event => new actions.CommonActions.DeleteTrack(track).dispatch() } />
+                        <SVGGlyphiconButton x={0} y={0} width={20} height={20} text='remove'
+                            onClick={event => new actions.CommonActions.DeleteTrack(track).dispatch()} />
                         <SVGGlyphiconButton x={0} y={20}
                             width={20} height={20}
                             text={track.minimized ? 'plus' : 'minus'}
                             onClick={event =>
-                                new actions.AlignmentActions.SetTrackMinimized(track, !track.minimized).dispatch() } />
+                                new actions.AlignmentActions.SetTrackMinimized(track, !track.minimized).dispatch()} />
                     </g>
                 </g>
             );
@@ -371,8 +367,8 @@ export class AlignmentView extends EventListenerComponent<AlignmentViewProps, Al
                     <line className='handler'
                         key={`correspondence-handler-${index}`}
                         x1={l1.x} x2={l2.x} y1={y1} y2={y2}
-                        onClick={ () =>
-                            new actions.AlignmentActions.SelectMarkerCorrespondence(correspondence).dispatch() }
+                        onClick={() =>
+                            new actions.AlignmentActions.SelectMarkerCorrespondence(correspondence).dispatch()}
                         />
                 </g>
             );
@@ -449,14 +445,14 @@ export class AlignmentView extends EventListenerComponent<AlignmentViewProps, Al
                         cx={x} cy={y0} r={rh}
                         data-type='marker'
                         data-marker-index={markerIndex}
-                        onMouseDown={ event => this.startCreatingCorrespondence(marker, 'top', event) }
+                        onMouseDown={event => this.startCreatingCorrespondence(marker, 'top', event)}
                         />
                     <circle
                         className='marker-handler'
                         cx={x} cy={y1} r={rh}
                         data-type='marker'
                         data-marker-index={markerIndex}
-                        onMouseDown={ event => this.startCreatingCorrespondence(marker, 'bottom', event) }
+                        onMouseDown={event => this.startCreatingCorrespondence(marker, 'bottom', event)}
                         />
                 </g>
             ));
@@ -482,9 +478,9 @@ export class AlignmentView extends EventListenerComponent<AlignmentViewProps, Al
                     x={0} y={0}
                     width={this.props.viewWidth} height={this.props.viewHeight}
                     style={{ fill: 'none', stroke: 'none' }} />
-                { this.renderTracks() }
-                { this.renderCorrespondences() }
-                { this.renderMarkers() }
+                {this.renderTracks()}
+                {this.renderCorrespondences()}
+                {this.renderMarkers()}
             </g>
         );
     }
