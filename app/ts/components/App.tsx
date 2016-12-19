@@ -1,14 +1,14 @@
 // The main view for the app.
 
 import * as Actions from '../actions/Actions';
-import {TabID} from '../common/ui/types';
+import { TabID } from '../common/ui/types';
 import * as stores from '../stores/stores';
-import {EventListenerComponent} from './common/EventListenerComponent';
-import {NavigationColumn, NavigationColumnItem} from './common/NavigationColumn';
-import {DeploymentPanel} from './deployment/DeploymentPanel';
-import {FileMenu, OptionsMenu} from './menus/menus';
-import {WorkPanel} from './WorkPanel';
-import {remote} from 'electron';
+import { EventListenerComponent } from './common/EventListenerComponent';
+import { NavigationColumn, NavigationColumnItem } from './common/NavigationColumn';
+import { DeploymentPanel } from './deployment/DeploymentPanel';
+import { FileMenu, OptionsMenu } from './menus/menus';
+import { WorkPanel } from './WorkPanel';
+import { remote } from 'electron';
 import * as React from 'react';
 
 
@@ -84,7 +84,7 @@ export class App extends EventListenerComponent<{}, AppState> {
         return (
             <div className='app-container container-fluid'>
                 <NavigationColumn selected={this.state.currentTab} onSelect={
-                    (tab) => {
+                    tab => {
                         new Actions.Actions.SwitchTabAction(tab as TabID).dispatch();
                     }
                 }>

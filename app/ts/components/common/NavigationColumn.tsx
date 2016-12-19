@@ -74,13 +74,3 @@ export class NavigationColumnItem extends React.Component<NavigationColumnItemPr
         );
     }
 }
-
-export class NavigationColumnEmptyItem extends React.Component<NavigationColumnItemProps, {}> {
-    constructor(props: NavigationColumnItemProps, context: any) {
-        super(props, context);
-    }
-
-    public render(): JSX.Element {
-        return null;
-    }
-}

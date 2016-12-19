@@ -49,9 +49,9 @@
     // workaround monaco-typescript not understanding the environment
     self.process.browser = true;
     require(['vs/editor/editor.main'], function() {
-        req('requirejs')
-        var editor = req('./app/js/components/deployment/scriptEditor.js');
-        editor.ScriptEditor.monaco = monaco;
+        req('requirejs');
+        global.monaco = monaco;
+        console.log('index', global.monaco);
         req('./app/js/startup.js');
     });
 </script>

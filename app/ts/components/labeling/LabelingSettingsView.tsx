@@ -93,12 +93,12 @@ export class LabelingSettingsView extends EventListenerComponent<{}, LabelingSet
     }
 
     public render(): JSX.Element {
-        function logicClassName(log: LabelingSuggestionLogicType): string {
+        const logicClassName = (log: LabelingSuggestionLogicType) => {
             return this.state.suggestionLogic === log ? 'tbtn-l1 active' : 'tbtn-l3';
-        }
-        function viewModeClassName(mode: SignalsViewMode): string {
+        };
+        const viewModeClassName = (mode: SignalsViewMode) => {
             return this.state.signalsViewMode === mode ? 'tbtn-l1 active' : 'tbtn-l3';
-        }
+        };
         return (
             <div className='labeling-options-menu labeling-menu'>
                 <h2>Suggestions</h2>
