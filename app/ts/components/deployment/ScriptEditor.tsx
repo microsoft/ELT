@@ -4,7 +4,6 @@
 
 import * as React from 'react';
 
-
 export interface ScriptEditorProps {
     width: number;
     height: number;
@@ -13,7 +12,6 @@ export interface ScriptEditorProps {
 }
 
 export class ScriptEditor extends React.Component<ScriptEditorProps, {}> {
-    public static monaco: any;
     private editor: monaco.editor.IStandaloneCodeEditor;
 
     public refs: {
@@ -21,8 +19,13 @@ export class ScriptEditor extends React.Component<ScriptEditorProps, {}> {
         container: HTMLElement
     };
 
+    constructor(props: ScriptEditorProps, context: any) {
+        super(props, context);
+    }
+
     public componentDidMount(): void {
-        this.editor = ScriptEditor.monaco.editor.create(this.refs.container, {
+        const monaco = (global as any).monaco;
+        this.editor = monaco.editor.create(this.refs.container, {
             value: '',
             language: 'c',
             lineNumbers: false,
