@@ -154,7 +154,7 @@ class LabelingSuggestionLogicForward {
     }): TimeRange {
         return {
             timestampStart: d3.max(info.labels, (l) => l.timestampEnd - (l.timestampEnd - l.timestampStart) * 0.1),
-            timestampEnd: info.dataset.timestampEnd
+            timestampEnd: info.dataset.timestampEnd,
         };
     }
 

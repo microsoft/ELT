@@ -29,7 +29,7 @@ export class Autocorrelation {
 
         this._array = {
             re: new Float32Array(this._FFTSize),
-            im: new Float32Array(this._FFTSize)
+            im: new Float32Array(this._FFTSize),
         };
     }
 
