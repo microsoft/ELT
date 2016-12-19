@@ -14,6 +14,7 @@ interface ChangePointsPlotProps {
     height: number;
 }
 
+
 export class ChangePointsPlot extends React.Component<ChangePointsPlotProps, {}> {
 
     public shouldComponentUpdate(nextProps: ChangePointsPlotProps): boolean {
@@ -51,6 +52,8 @@ interface ChangePointsRangePlotProps {
     plotHeight: number;
     plotWidth: number;
 }
+
+
 
 interface ChangePointsRangePlotState {
     timestamps: number[];

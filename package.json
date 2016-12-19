@@ -15,6 +15,7 @@
     "package:win32": "electron-packager . --platform=win32 --arch=x64 --ignore=\"/data($|/)\" --asar --out=../packaged",
     "package:darwin": "electron-packager . --platform=darwin --arch=x64 --ignore=\"/data($|/)\" --asar --out=../packaged"
   },
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://cjacobs.visualstudio.com/DefaultCollection/_git/ElectronApp"
@@ -23,7 +24,8 @@
   "author": "cjacobs",
   "devDependencies": {
     "cross-env": "^2.0.1",
-    "electron-prebuilt": "^1.3.5",
+    "electron-packager": "^8.1.0",
+    "electron": "^1.4.4",
     "electron-rebuild": "^1.1.5",
     "tslint": "^3.15.1"
   },

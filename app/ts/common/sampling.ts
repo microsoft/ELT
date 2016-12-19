@@ -20,12 +20,12 @@ export function resampleColumn(
         result[i] = input[in_i0] * (1 - d) + input[in_i1] * d;
     }
     // Fill-in NaNs.
-    let previous_non_nan = 0;
+    let previousNonNan = 0;
     for (let i = 0; i < length; i++) {
         if (result[i] !== result[i]) {
-            result[i] = previous_non_nan;
+            result[i] = previousNonNan;
         } else {
-            previous_non_nan = result[i];
+            previousNonNan = result[i];
         }
     }
     return result;
