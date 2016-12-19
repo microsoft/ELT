@@ -1,0 +1,167 @@
+{
+  "referenceTrack": {
+    "id": "track-1",
+    "minimized": false,
+    "timeSeries": [
+      {
+        "id": "series-1",
+        "trackID": "track-1",
+        "referenceStart": 0,
+        "referenceEnd": 60.978,
+        "source": "D:\\GitProj\\ID\\UX\\IntegratedApp\\demo\\ChuckGestureData\\vid.webm",
+        "aligned": true
+      }
+    ]
+  },
+  "tracks": [
+    {
+      "id": "track-2",
+      "minimized": false,
+      "timeSeries": [
+        {
+          "id": "series-2",
+          "trackID": "track-2",
+          "referenceStart": 16.329192585402545,
+          "referenceEnd": 57.68919258540255,
+          "source": "D:\\GitProj\\ID\\UX\\IntegratedApp\\demo\\ChuckGestureData\\log.tsv",
+          "aligned": true
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "name": "MyProject",
+    "timeSaved": 1478560324.514
+  },
+  "alignment": {
+    "markers": [
+      {
+        "id": "marker1",
+        "timeSeriesID": "series-1",
+        "localTimestamp": 19.326360655737705
+      },
+      {
+        "id": "marker2",
+        "timeSeriesID": "series-2",
+        "localTimestamp": 4.15116807033516
+      }
+    ],
+    "correspondences": [
+      {
+        "marker1ID": "marker1",
+        "marker2ID": "marker2"
+      }
+    ],
+    "timeSeriesStates": {
+      "series-2": {
+        "referenceStart": 16.329192585402545,
+        "referenceEnd": 57.68919258540255,
+        "rangeStart": 15.792951029367131,
+        "pixelsPerSecond": 59.78366593139705
+      }
+    }
+  },
+  "labeling": {
+    "labels": [
+      {
+        "timestampStart": 23.31947632396792,
+        "timestampEnd": 24.122371215945286,
+        "className": "Positive",
+        "state": 1
+      },
+      {
+        "timestampStart": 25.025627969419823,
+        "timestampEnd": 25.92888472289436,
+        "className": "Positive",
+        "state": 1
+      },
+      {
+        "timestampStart": 27.601582414513874,
+        "timestampEnd": 28.253934514245486,
+        "className": "Positive",
+        "state": 1
+      },
+      {
+        "timestampStart": 31.49896803598734,
+        "timestampEnd": 32.15132013571895,
+        "className": "Back",
+        "state": 1
+      },
+      {
+        "timestampStart": 33.30548154293641,
+        "timestampEnd": 33.99128759650041,
+        "className": "Back",
+        "state": 1
+      },
+      {
+        "timestampStart": 35.26084157136382,
+        "timestampEnd": 36.063736463341186,
+        "className": "Back",
+        "state": 1
+      },
+      {
+        "timestampStart": 39.19168114666968,
+        "timestampEnd": 39.87748720023367,
+        "className": "Back",
+        "state": 5,
+        "suggestionConfidence": 0.439893057382316,
+        "suggestionGeneration": 1478560259351
+      },
+      {
+        "timestampStart": 37.23462484747485,
+        "timestampEnd": 38.12083511616408,
+        "className": "Positive",
+        "state": 5,
+        "suggestionConfidence": 0.3966450821372303,
+        "suggestionGeneration": 1478560269455
+      },
+      {
+        "timestampStart": 41.234391085891346,
+        "timestampEnd": 41.91061642869365,
+        "className": "Positive",
+        "state": 5,
+        "suggestionConfidence": 0.7402841226758485,
+        "suggestionGeneration": 1478560275909
+      },
+      {
+        "timestampStart": 42.89576600918798,
+        "timestampEnd": 43.56350748044994,
+        "className": "Back",
+        "state": 5,
+        "suggestionConfidence": 0.25490033711487653,
+        "suggestionGeneration": 1478560288602
+      },
+      {
+        "timestampStart": 29.553876885885778,
+        "timestampEnd": 30.270320906722873,
+        "className": "Back",
+        "state": 5,
+        "suggestionConfidence": 0.22969567309826777,
+        "suggestionGeneration": 1478560290030
+      },
+      {
+        "timestampStart": 21.210599264094842,
+        "timestampEnd": 21.978919913580295,
+        "className": "Positive",
+        "state": 5,
+        "suggestionConfidence": 0.41175260998215535,
+        "suggestionGeneration": 1478560301762
+      }
+    ],
+    "classes": [
+      "IGNORE",
+      "Positive",
+      "Back"
+    ],
+    "classColormap": {
+      "IGNORE": "#CCC",
+      "Positive": "#a6cee3",
+      "Back": "#b2df8a"
+    }
+  },
+  "ui": {
+    "currentTab": "file",
+    "referenceViewStart": 15.792951029367131,
+    "referenceViewPPS": 59.78366593139705
+  }
+}

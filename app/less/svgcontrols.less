@@ -1,0 +1,22 @@
+// SVGButtons.
+.svgbutton {
+    rect {
+        shape-rendering: crispEdges;
+        stroke: #666;
+        fill: #EEE;
+        cursor: pointer;
+    }
+    text {
+        stroke: none;
+        fill: black;
+        alignment-baseline: central;
+        text-anchor: middle;
+        cursor: pointer;
+    }
+
+    &:hover {
+        rect {
+            fill: #CCC;
+        }
+    }
+}
