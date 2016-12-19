@@ -42,6 +42,10 @@ export module CommonActions {
         ) { super(); }
     }
 
+    export class ExportLabels extends ActionBase {
+        constructor() { super(); }
+    }
+
     export class LoadProject extends ActionBase {
         constructor(
             public fileName: string

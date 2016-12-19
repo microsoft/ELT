@@ -11,7 +11,8 @@ export enum TimeSeriesKind {
     GYROSCOPE = 4,
     ACCELEROMETER = 5,
     MAGNETOMETER = 6,
-    VIDEO = 100
+    VIDEO = 100,
+    RAW = 7
 }
 
 
@@ -32,6 +33,11 @@ export interface TimeSeries {
     aligned?: AlignedState;
 }
 
+// Just loads the raw data from file (used for exporting labels, i.e., annotating the original data)
+export interface RawTimeSeries extends TimeSeries {
+    timeColumn: number[];
+    rawData: string[][];
+}
 
 // Single/multi-variate timeseries.
 export interface SensorTimeSeries extends TimeSeries {
@@ -130,6 +136,7 @@ export function loadVideoTimeSeriesFromFile(filename: string, callback: (video: 
 }
 
 
+// FIXME: what's the difference between this and loadMultipleSensorTimeSeriesFromFile?
 // This function reads Liang's sensor data format.
 export function loadSensorTimeSeriesFromFile(filename: string): SensorTimeSeries {
     const content = readFileSync(filename, 'utf-8');
@@ -257,4 +264,35 @@ export function loadMultipleSensorTimeSeriesFromFile(filename: string): SensorTi
         });
     }
     return result;
+}
+
+export function loadRawSensorTimeSeriesFromFile(filename: string): RawTimeSeries {
+    const content = readFileSync(filename, 'utf-8');
+    let rows = d3.tsvParseRows(content);
+    rows = rows.filter((x) => x.length > 0 && x.join('').length > 0);
+    const numColumns = rows[0].length;
+    const columns: number[][] = [];
+    for (let i = 0; i < numColumns; i++) {
+        const column: number[] = [];
+        for (let j = 0; j < rows.length; j++) {
+            let val = parseFloat(rows[j][i]);
+            if (val !== val) {
+                if (j !== 0 && j !== rows.length - 1) {
+                    // set missing rows to average of prev and next to preserve sample rate
+                    val = (parseFloat(rows[j - 1][i]) + parseFloat(rows[j + 1][i])) / 2;
+                }
+            }
+            column[j] = val;
+        }
+        columns[i] = column;
+    }
+    const timeColumn = columns[0]; // time are in milliseconds, these are converted to seconds in the following code.
+    return {
+        name: filename + '.Raw',
+        kind: TimeSeriesKind.RAW,
+        timestampStart: timeColumn[0] / 1000,
+        timestampEnd: timeColumn[timeColumn.length - 1] / 1000,
+        timeColumn: timeColumn,
+        rawData: rows
+    };
 }

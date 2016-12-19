@@ -5,11 +5,11 @@ import {TabID} from '../common/ui/types';
 import * as stores from '../stores/stores';
 import {EventListenerComponent} from './common/EventListenerComponent';
 import {NavigationColumn, NavigationColumnItem} from './common/NavigationColumn';
-import {DeploymentMenu, FileMenu, OptionsMenu} from './menus/menus';
+import {DeploymentPanel} from './deployment/DeploymentPanel';
+import {FileMenu, OptionsMenu} from './menus/menus';
 import {WorkPanel} from './WorkPanel';
 import {remote} from 'electron';
 import * as React from 'react';
-
 
 
 export interface AppState {
@@ -98,7 +98,7 @@ export class App extends EventListenerComponent<{}, AppState> {
                         <WorkPanel mode='labeling' />
                     </NavigationColumnItem>
                     <NavigationColumnItem title='Deployment' name='deploying' iconClass='glyphicon glyphicon-export'>
-                        <DeploymentMenu />
+                        <DeploymentPanel />
                     </NavigationColumnItem>
                     <NavigationColumnItem title='Options' name='options' iconClass='glyphicon glyphicon-cog'>
                         <OptionsMenu />

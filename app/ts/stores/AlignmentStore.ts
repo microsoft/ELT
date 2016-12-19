@@ -2,15 +2,17 @@
 // Store alignment markers and correspondences (connections between markers).
 
 import * as Actions from '../actions/Actions';
-import {AlignedTimeSeries, Marker, MarkerCorrespondence, SavedAlignmentState,
-    SavedMarker, SavedMarkerCorrespondence, TransitionController} from '../common/common';
-import {globalDispatcher} from '../dispatcher/globalDispatcher';
-import {AlignmentLabelingStore} from './AlignmentLabelingStore';
-import {AlignmentLabelingUiStore} from './AlignmentLabelingUiStore';
-import {NodeEvent} from './NodeEvent';
-import {alignmentLabelingStore, alignmentLabelingUiStore, alignmentUiStore} from './stores';
+import {
+    AlignedTimeSeries, Marker, MarkerCorrespondence, SavedAlignmentState,
+    SavedMarker, SavedMarkerCorrespondence, TransitionController
+} from '../common/common';
+import { globalDispatcher } from '../dispatcher/globalDispatcher';
+import { AlignmentLabelingStore } from './AlignmentLabelingStore';
+import { AlignmentLabelingUiStore } from './AlignmentLabelingUiStore';
+import { NodeEvent } from './NodeEvent';
+import { alignmentLabelingStore, alignmentLabelingUiStore, alignmentUiStore } from './stores';
 import * as d3 from 'd3';
-import {EventEmitter} from 'events';
+import { EventEmitter } from 'events';
 
 
 
@@ -298,6 +300,12 @@ export class AlignmentStore extends EventEmitter {
         } else {
             return null;
         }
+    }
+
+    public solveForKandB(x1: number, y1: number, x2: number, y2: number): [number, number] {
+        const k = (y2 - y1) / (x2 - x1);
+        const b = y1 - k * x1;
+        return [k, b];
     }
 
     // Terminate current animation.
