@@ -13,8 +13,8 @@
 // When undo, take a snapshot, call undo(currentSnapshot). 
 // If the history is not empty, the function will return the previous snapshot, 
 // and save curerntSnapeshot in the redo history.
-//   If the returned snapshot is null, which means history is empty, stop because we can't undo.
-//   Otherwise, load the saved snapshot.
+// If the returned snapshot is null, which means history is empty, stop because we can't undo.
+// Otherwise, load the saved snapshot.
 // When redo, (the same except calling redo).
 //
 // Call reset when the history need to be discarded completely. 
