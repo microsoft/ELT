@@ -1,0 +1,177 @@
+{
+  "referenceTrack": {
+    "id": "track-1",
+    "minimized": false,
+    "timeSeries": [
+      {
+        "id": "series-1",
+        "trackID": "track-1",
+        "referenceStart": 0,
+        "referenceEnd": 109.243,
+        "source": "D:\\GitProj\\ID\\UX\\IntegratedApp\\demo\\NextAndBack_Chuck_Medium\\vid.webm",
+        "aligned": true
+      }
+    ]
+  },
+  "tracks": [
+    {
+      "id": "track-2",
+      "minimized": false,
+      "timeSeries": [
+        {
+          "id": "series-2",
+          "trackID": "track-2",
+          "referenceStart": -18.141758858535013,
+          "referenceEnd": 114.34577563612092,
+          "source": "D:\\GitProj\\ID\\UX\\IntegratedApp\\demo\\NextAndBack_Chuck_Medium\\log.tsv",
+          "aligned": true
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "name": "MyProject",
+    "timeSaved": 1478728729.923
+  },
+  "alignment": {
+    "markers": [
+      {
+        "id": "marker1",
+        "timeSeriesID": "series-1",
+        "localTimestamp": 2.3364723045855924
+      },
+      {
+        "id": "marker2",
+        "timeSeriesID": "series-2",
+        "localTimestamp": 21.6910665771552
+      },
+      {
+        "id": "marker3",
+        "timeSeriesID": "series-1",
+        "localTimestamp": 104.03160794639524
+      },
+      {
+        "id": "marker4",
+        "timeSeriesID": "series-2",
+        "localTimestamp": 123.38041887142994
+      }
+    ],
+    "correspondences": [
+      {
+        "marker1ID": "marker1",
+        "marker2ID": "marker2"
+      },
+      {
+        "marker1ID": "marker3",
+        "marker2ID": "marker4"
+      }
+    ],
+    "timeSeriesStates": {
+      "series-2": {
+        "referenceStart": -18.141758858535013,
+        "referenceEnd": 114.34577563612092,
+        "rangeStart": 94.35082625039506,
+        "pixelsPerSecond": 156.510876121489
+      }
+    }
+  },
+  "labeling": {
+    "labels": [
+      {
+        "timestampStart": 5.362277372508459,
+        "timestampEnd": 5.809806901052241,
+        "className": "Next",
+        "state": 1
+      },
+      {
+        "timestampStart": 10.850068541672988,
+        "timestampEnd": 11.300772038504313,
+        "className": "Next",
+        "state": 1
+      },
+      {
+        "timestampStart": 30.14144779336877,
+        "timestampEnd": 30.68737033882643,
+        "className": "Next",
+        "state": 1
+      },
+      {
+        "timestampStart": 53.92081820365254,
+        "timestampEnd": 54.33660804932087,
+        "className": "Next",
+        "state": 1
+      },
+      {
+        "timestampStart": 70.81902536653975,
+        "timestampEnd": 71.23798918049563,
+        "className": "Next",
+        "state": 1
+      },
+      {
+        "timestampStart": 80.11578583208347,
+        "timestampEnd": 80.54084928059328,
+        "className": "Next",
+        "state": 5,
+        "suggestionConfidence": 0.6882483931896735,
+        "suggestionGeneration": 1478728615021
+      },
+      {
+        "timestampStart": 84.7559201171479,
+        "timestampEnd": 85.28914678945539,
+        "className": "Back",
+        "state": 1
+      },
+      {
+        "timestampStart": 87.97114999243054,
+        "timestampEnd": 88.54246428418855,
+        "className": "Back",
+        "state": 1
+      },
+      {
+        "timestampStart": 91.32286050407757,
+        "timestampEnd": 91.88465289097294,
+        "className": "Back",
+        "state": 1
+      },
+      {
+        "timestampStart": 93.82569034076278,
+        "timestampEnd": 94.42487255046979,
+        "className": "Back",
+        "state": 5,
+        "suggestionConfidence": 0.6932139703890694,
+        "suggestionGeneration": 1478728676873
+      },
+      {
+        "timestampStart": 95.92209019723693,
+        "timestampEnd": 96.55578215500765,
+        "className": "Back",
+        "state": 5,
+        "suggestionConfidence": 0.6415369128621262,
+        "suggestionGeneration": 1478728681857
+      },
+      {
+        "timestampStart": 99.16980699174269,
+        "timestampEnd": 99.78175872655218,
+        "className": "Back",
+        "state": 5,
+        "suggestionConfidence": 0.6032636444249742,
+        "suggestionGeneration": 1478728697868
+      }
+    ],
+    "classes": [
+      "IGNORE",
+      "Next",
+      "Back"
+    ],
+    "classColormap": {
+      "IGNORE": "#CCC",
+      "Next": "#a6cee3",
+      "Back": "#b2df8a"
+    }
+  },
+  "ui": {
+    "currentTab": "file",
+    "referenceViewStart": 94.35082625039506,
+    "referenceViewPPS": 156.510876121489
+  }
+}

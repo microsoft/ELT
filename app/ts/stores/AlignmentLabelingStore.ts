@@ -2,14 +2,15 @@
 // Stores the information about tracks and handles project load/save and undo/redo state saving.
 
 import * as actions from '../actions/Actions';
-import {AlignedTimeSeries, Track} from '../common/common';
-import {SavedAlignedTimeSeries, SavedAlignmentSnapshot, SavedLabelingSnapshot, SavedProject, SavedTrack} from '../common/common';
-import {loadMultipleSensorTimeSeriesFromFile, loadVideoTimeSeriesFromFile, TimeSeries} from '../common/dataset';
-import {globalDispatcher} from '../dispatcher/globalDispatcher';
-import {HistoryTracker} from './HistoryTracker';
-import {NodeEvent} from './NodeEvent';
-import {alignmentLabelingUiStore, alignmentStore, labelingStore, uiStore} from './stores';
-import {EventEmitter} from 'events';
+import { AlignedTimeSeries, Track } from '../common/common';
+import { SavedAlignedTimeSeries, SavedAlignmentSnapshot, SavedLabelingSnapshot, SavedProject, SavedTrack } from '../common/common';
+import { loadMultipleSensorTimeSeriesFromFile, loadRawSensorTimeSeriesFromFile, loadVideoTimeSeriesFromFile, TimeSeries }
+    from '../common/dataset';
+import { globalDispatcher } from '../dispatcher/globalDispatcher';
+import { HistoryTracker } from './HistoryTracker';
+import { NodeEvent } from './NodeEvent';
+import { alignmentLabelingUiStore, alignmentStore, labelingStore, uiStore } from './stores';
+import { EventEmitter } from 'events';
 import * as fs from 'fs';
 
 
@@ -29,6 +30,17 @@ function deepClone<Type>(obj: Type): Type {
     return JSON.parse(JSON.stringify(obj)); // Is there a better way?
 }
 
+
+export class MappedLabel {
+    public className: string;
+    public timestampStart: number;
+    public timestampEnd: number;
+    constructor(className: string, timestampStart: number, timestampEnd: number) {
+        this.className = className;
+        this.timestampStart = timestampStart;
+        this.timestampEnd = timestampEnd;
+    }
+}
 
 
 // AlignmentLabelingStore: Stores the information about tracks and handles project load/save and undo/redo state saving.
@@ -158,6 +170,10 @@ export class AlignmentLabelingStore extends EventEmitter {
                 fs.writeFileSync(action.fileName, json, 'utf-8');
                 this._projectFileLocation = action.fileName;
                 this.addToRecentProjects(action.fileName);
+            }
+
+            if (action instanceof actions.CommonActions.ExportLabels) {
+                this.exportLabels();
             }
 
             if (action instanceof actions.CommonActions.LoadProject) {
@@ -290,6 +306,58 @@ export class AlignmentLabelingStore extends EventEmitter {
                 referenceViewPPS: alignmentLabelingUiStore.referenceViewPPS
             }
         };
+    }
+
+    // TODO: might want to move some of this computation elsewhere 
+    public exportLabels(): void {
+        // for each timeseries, get the source file, and save to a .labels file
+        this.tracks.map((track) => {
+            track.alignedTimeSeries.map((timeSeries) => {
+                const sourceFile = timeSeries.source;
+                const destinationFile = sourceFile + '.labels.tsv';
+                // read in the source file via dataset.ts (see loadMultipleSensorTimeSeriesFromFile)
+                // you can also get the timestampStart and timestampEnd from this
+                // which you want to map to timeSeries.referenceStart and timeSeries.referenceEnd
+                const rawSensorData = loadRawSensorTimeSeriesFromFile(sourceFile);
+                const localStart = rawSensorData.timestampStart;
+                const localEnd = rawSensorData.timestampEnd;
+                const referenceStart = timeSeries.referenceStart;
+                const referenceEnd = timeSeries.referenceEnd;
+                // use these to recompute k and b
+                // TODO: figure out why we don't just store k and b for each timeSeries?
+                const [k, b] = alignmentStore.solveForKandB(localStart, referenceStart, localEnd, referenceEnd);
+                // get the labels from labelingStore .labels()
+                // map the timestamps of the labels from the reference time to the time of the current time series
+                // (i.e., localTime = (refTime - b)/k)
+                const mappedLabels = labelingStore.labels.map((label) => {
+                    return new MappedLabel(label.className, (label.timestampStart - b) / k, (label.timestampEnd - b) / k);
+                });
+                mappedLabels.sort((l1, l2) => l1.timestampStart - l2.timestampStart);
+                // map the labels onto the source file by looking up the timeseries
+                // add a column
+                const countLabels = mappedLabels.length;
+                const timeColumn = rawSensorData.timeColumn;
+                const numRows = timeColumn.length;
+                const annotatedSensorData: string[] = [];
+                if (countLabels > 0) {
+                    let currLabelIndex = 0;
+                    let currentLabel = mappedLabels[currLabelIndex];
+                    for (let i = 0; i < numRows; i++) {
+                        const currentTime = timeColumn[i] / 1000;
+                        if (currentTime > currentLabel.timestampStart && currentTime <= currentLabel.timestampEnd) {
+                            annotatedSensorData[i] = rawSensorData.rawData[i].join('\t') + '\t' + currentLabel.className;
+                        } else {
+                            annotatedSensorData[i] = rawSensorData.rawData[i].join('\t') + '\t' + '';
+                        }
+                        if (currentTime >= currentLabel.timestampEnd && (currLabelIndex + 1) < countLabels) {
+                            currLabelIndex++;
+                            currentLabel = mappedLabels[currLabelIndex];
+                        }
+                    }
+                }
+                fs.writeFileSync(destinationFile, annotatedSensorData.join('\n'), 'utf-8');
+            });
+        });
     }
 
     public loadProject(project: SavedProject, loadProjectCallback: () => any): void {

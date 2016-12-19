@@ -6,6 +6,12 @@ import * as stores from '../../stores/stores';
 import {remote} from 'electron';
 
 
+// We should save one .labels file for each input file
+export function exportLabels() {
+    new actions.CommonActions.ExportLabels().dispatch();
+}
+
+
 // Show the save project dialog, once file is selected, save the project.
 export function showSaveProjectDialog(onSaved: () => any = null, onCanceled: () => any = null): void {
     remote.dialog.showSaveDialog(

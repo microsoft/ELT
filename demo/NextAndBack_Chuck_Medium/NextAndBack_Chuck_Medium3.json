@@ -1,0 +1,169 @@
+{
+  "referenceTrack": {
+    "id": "track-1",
+    "minimized": false,
+    "timeSeries": [
+      {
+        "id": "series-1",
+        "trackID": "track-1",
+        "referenceStart": 0,
+        "referenceEnd": 109.243,
+        "source": "D:\\GitProj\\ID\\UX\\IntegratedApp\\demo\\NextAndBack_Chuck_Medium\\vid.webm",
+        "aligned": true
+      }
+    ]
+  },
+  "tracks": [
+    {
+      "id": "track-2",
+      "minimized": false,
+      "timeSeries": [
+        {
+          "id": "series-2",
+          "trackID": "track-2",
+          "referenceStart": -18.141758858535013,
+          "referenceEnd": 114.34577563612092,
+          "source": "D:\\GitProj\\ID\\UX\\IntegratedApp\\demo\\NextAndBack_Chuck_Medium\\log.tsv",
+          "aligned": true
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "name": "MyProject",
+    "timeSaved": 1478732584.279
+  },
+  "alignment": {
+    "markers": [
+      {
+        "id": "marker1",
+        "timeSeriesID": "series-1",
+        "localTimestamp": 2.3364723045855924
+      },
+      {
+        "id": "marker2",
+        "timeSeriesID": "series-2",
+        "localTimestamp": 21.6910665771552
+      },
+      {
+        "id": "marker3",
+        "timeSeriesID": "series-1",
+        "localTimestamp": 104.03160794639524
+      },
+      {
+        "id": "marker4",
+        "timeSeriesID": "series-2",
+        "localTimestamp": 123.38041887142994
+      }
+    ],
+    "correspondences": [
+      {
+        "marker1ID": "marker1",
+        "marker2ID": "marker2"
+      },
+      {
+        "marker1ID": "marker3",
+        "marker2ID": "marker4"
+      }
+    ],
+    "timeSeriesStates": {
+      "series-2": {
+        "referenceStart": -18.141758858535013,
+        "referenceEnd": 114.34577563612092,
+        "rangeStart": 92.42989824655132,
+        "pixelsPerSecond": 130.70706695873022
+      }
+    }
+  },
+  "labeling": {
+    "labels": [
+      {
+        "timestampStart": 5.362277372508459,
+        "timestampEnd": 5.931634543649983,
+        "className": "Next",
+        "state": 1
+      },
+      {
+        "timestampStart": 10.798857479624697,
+        "timestampEnd": 11.410913138598819,
+        "className": "Next",
+        "state": 1
+      },
+      {
+        "timestampStart": 30.14144779336877,
+        "timestampEnd": 30.910643351541832,
+        "className": "Next",
+        "state": 1
+      },
+      {
+        "timestampStart": 53.902558773184595,
+        "timestampEnd": 54.5528679108446,
+        "className": "Next",
+        "state": 1
+      },
+      {
+        "timestampStart": 70.78504398572692,
+        "timestampEnd": 71.42005173191257,
+        "className": "Next",
+        "state": 1
+      },
+      {
+        "timestampStart": 80.07598519101556,
+        "timestampEnd": 80.65743806704097,
+        "className": "Next",
+        "state": 5,
+        "suggestionConfidence": 0.6882483931896735,
+        "suggestionGeneration": 1478728615021
+      },
+      {
+        "timestampStart": 87.93537088795482,
+        "timestampEnd": 88.83083898362652,
+        "className": "Back",
+        "state": 1
+      },
+      {
+        "timestampStart": 91.24222225740981,
+        "timestampEnd": 92.16007005977552,
+        "className": "Back",
+        "state": 1
+      },
+      {
+        "timestampStart": 93.82569034076278,
+        "timestampEnd": 94.73093951356229,
+        "className": "Back",
+        "state": 5,
+        "suggestionConfidence": 0.6932139703890694,
+        "suggestionGeneration": 1478728676873
+      },
+      {
+        "timestampStart": 95.92209019723693,
+        "timestampEnd": 96.85864099511029,
+        "className": "Back",
+        "state": 5,
+        "suggestionConfidence": 0.6415369128621262,
+        "suggestionGeneration": 1478728681857
+      },
+      {
+        "timestampStart": 99.19311327821534,
+        "timestampEnd": 100.18092843380846,
+        "className": "Back",
+        "state": 1
+      }
+    ],
+    "classes": [
+      "IGNORE",
+      "Next",
+      "Back"
+    ],
+    "classColormap": {
+      "IGNORE": "#CCC",
+      "Next": "#a6cee3",
+      "Back": "#b2df8a"
+    }
+  },
+  "ui": {
+    "currentTab": "deploying",
+    "referenceViewStart": 92.42989824655132,
+    "referenceViewPPS": 130.70706695873022
+  }
+}

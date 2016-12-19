@@ -1,0 +1,243 @@
+{
+  "referenceTrack": {
+    "id": "track-1",
+    "minimized": false,
+    "timeSeries": [
+      {
+        "id": "series-1",
+        "trackID": "track-1",
+        "referenceStart": 0,
+        "referenceEnd": 77.578,
+        "source": "D:\\GitProj\\ID\\UX\\IntegratedApp\\demo\\NextAndBack_Chuck_Large\\vid.webm",
+        "aligned": true
+      }
+    ]
+  },
+  "tracks": [
+    {
+      "id": "track-2",
+      "minimized": false,
+      "timeSeries": [
+        {
+          "id": "series-2",
+          "trackID": "track-2",
+          "referenceStart": -5.053608348663035,
+          "referenceEnd": 81.05698516700838,
+          "source": "D:\\GitProj\\ID\\UX\\IntegratedApp\\demo\\NextAndBack_Chuck_Large\\log.tsv",
+          "aligned": true
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "name": "MyProject",
+    "timeSaved": 1478634819.956
+  },
+  "alignment": {
+    "markers": [
+      {
+        "id": "marker1",
+        "timeSeriesID": "series-1",
+        "localTimestamp": 74.42802609877754
+      },
+      {
+        "id": "marker2",
+        "timeSeriesID": "series-2",
+        "localTimestamp": 82.15044475645573
+      },
+      {
+        "id": "marker3",
+        "timeSeriesID": "series-1",
+        "localTimestamp": 2.0810824732305084
+      },
+      {
+        "id": "marker4",
+        "timeSeriesID": "series-2",
+        "localTimestamp": 9.425926383607035
+      }
+    ],
+    "correspondences": [
+      {
+        "marker1ID": "marker2",
+        "marker2ID": "marker1"
+      },
+      {
+        "marker1ID": "marker3",
+        "marker2ID": "marker4"
+      }
+    ],
+    "timeSeriesStates": {
+      "series-2": {
+        "referenceStart": -5.053608348663035,
+        "referenceEnd": 81.05698516700838,
+        "rangeStart": 68.05620782098146,
+        "pixelsPerSecond": 213.3578431767022
+      }
+    }
+  },
+  "labeling": {
+    "labels": [
+      {
+        "timestampStart": 5.07281897564755,
+        "timestampEnd": 5.757115356911038,
+        "className": "Next",
+        "state": 1
+      },
+      {
+        "timestampStart": 8.02091776889915,
+        "timestampEnd": 8.550544420151027,
+        "className": "Next",
+        "state": 1
+      },
+      {
+        "timestampStart": 10.303468026949275,
+        "timestampEnd": 10.987764408212762,
+        "className": "Next",
+        "state": 1
+      },
+      {
+        "timestampStart": 12.813742508471787,
+        "timestampEnd": 13.424579186682157,
+        "className": "Next",
+        "state": 5,
+        "suggestionConfidence": 0.6078895987219032,
+        "suggestionGeneration": 1478634545281
+      },
+      {
+        "timestampStart": 17.032712518170214,
+        "timestampEnd": 17.653899936513962,
+        "className": "Next",
+        "state": 5,
+        "suggestionConfidence": 0.5698743174929034,
+        "suggestionGeneration": 1478634551101
+      },
+      {
+        "timestampStart": 20.53510501529307,
+        "timestampEnd": 21.043713259991787,
+        "className": "Next",
+        "state": 5,
+        "suggestionConfidence": 0.45885131012048697,
+        "suggestionGeneration": 1478634557233
+      },
+      {
+        "timestampStart": 23.00513373396333,
+        "timestampEnd": 23.520626738852098,
+        "className": "Next",
+        "state": 5,
+        "suggestionConfidence": 0.5210494884292223,
+        "suggestionGeneration": 1478634568025
+      },
+      {
+        "timestampStart": 26.695488079256936,
+        "timestampEnd": 27.277580882253833,
+        "className": "Next",
+        "state": 5,
+        "suggestionConfidence": 0.30311077648603957,
+        "suggestionGeneration": 1478634585497
+      },
+      {
+        "timestampStart": 29.246110354553494,
+        "timestampEnd": 29.79042054766227,
+        "className": "Next",
+        "state": 5,
+        "suggestionConfidence": 0.3509616086584824,
+        "suggestionGeneration": 1478634596958
+      },
+      {
+        "timestampStart": 32.13393040757841,
+        "timestampEnd": 32.730578878632755,
+        "className": "Next",
+        "state": 5,
+        "suggestionConfidence": 0.6479474080771056,
+        "suggestionGeneration": 1478634603796
+      },
+      {
+        "timestampStart": 37.23943585654698,
+        "timestampEnd": 37.858114776593425,
+        "className": "Back",
+        "state": 1
+      },
+      {
+        "timestampStart": 40.393760956480726,
+        "timestampEnd": 41.00306595349616,
+        "className": "Back",
+        "state": 1
+      },
+      {
+        "timestampStart": 43.712129709457095,
+        "timestampEnd": 44.415173936782594,
+        "className": "Back",
+        "state": 1
+      },
+      {
+        "timestampStart": 46.89270122661269,
+        "timestampEnd": 47.597309182429086,
+        "className": "Back",
+        "state": 5,
+        "suggestionConfidence": 0.29706856102167467,
+        "suggestionGeneration": 1478634719852
+      },
+      {
+        "timestampStart": 49.87693364779025,
+        "timestampEnd": 50.530641819416324,
+        "className": "Back",
+        "state": 5,
+        "suggestionConfidence": 0.20415895286697874,
+        "suggestionGeneration": 1478634726737
+      },
+      {
+        "timestampStart": 53.570182610630376,
+        "timestampEnd": 54.16603444932143,
+        "className": "Back",
+        "state": 5,
+        "suggestionConfidence": 0.4754400119522426,
+        "suggestionGeneration": 1478634732851
+      },
+      {
+        "timestampStart": 56.600791412299586,
+        "timestampEnd": 57.26215282215463,
+        "className": "Back",
+        "state": 5,
+        "suggestionConfidence": 0.5189506551635541,
+        "suggestionGeneration": 1478634741168
+      },
+      {
+        "timestampStart": 63.18424428771735,
+        "timestampEnd": 63.911713703489866,
+        "className": "Back",
+        "state": 5,
+        "suggestionConfidence": 0.6898723003373379,
+        "suggestionGeneration": 1478634757851
+      },
+      {
+        "timestampStart": 66.47179526943951,
+        "timestampEnd": 67.1499963725654,
+        "className": "Back",
+        "state": 5,
+        "suggestionConfidence": 0.3735738615136741,
+        "suggestionGeneration": 1478634762913
+      },
+      {
+        "timestampStart": 69.95442723476029,
+        "timestampEnd": 70.8027672690664,
+        "className": "Back",
+        "state": 1
+      }
+    ],
+    "classes": [
+      "IGNORE",
+      "Next",
+      "Back"
+    ],
+    "classColormap": {
+      "IGNORE": "#CCC",
+      "Next": "#a6cee3",
+      "Back": "#b2df8a"
+    }
+  },
+  "ui": {
+    "currentTab": "file",
+    "referenceViewStart": 68.05620782098146,
+    "referenceViewPPS": 213.3578431767022
+  }
+}

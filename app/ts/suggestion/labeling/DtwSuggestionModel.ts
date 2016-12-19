@@ -1,11 +1,11 @@
 // Do suggestions with the Spring DTW algorithm.
 
-import {DBA} from '../../common/algorithms/DBA';
-import {MultipleSpringAlgorithm, MultipleSpringAlgorithmBestMatch} from '../../common/algorithms/SpringAlgorithm';
-import {Label, LabelConfirmationState, resampleDatasetRowMajor} from '../../common/common';
-import {Dataset} from '../../common/dataset';
-import {generateArduinoCodeForDtwModel, generateMicrobitCodeForDtwModel} from './DTWDeployment';
-import {LabelingSuggestionCallback, LabelingSuggestionModel, LabelingSuggestionModelFactory} from './LabelingSuggestionEngine';
+import { DBA } from '../../common/algorithms/DBA';
+import { MultipleSpringAlgorithm, MultipleSpringAlgorithmBestMatch } from '../../common/algorithms/SpringAlgorithm';
+import { Label, LabelConfirmationState, resampleDatasetRowMajor } from '../../common/common';
+import { Dataset } from '../../common/dataset';
+import { generateArduinoCodeForDtwModel, generateMicrobitCodeForDtwModel } from './DTWDeployment';
+import { LabelingSuggestionCallback, LabelingSuggestionModel, LabelingSuggestionModelFactory } from './LabelingSuggestionEngine';
 
 
 
@@ -376,5 +376,15 @@ export class SpringDtwSuggestionModelFactory extends LabelingSuggestionModelFact
             const model = new DtwSuggestionModel(references, sampleRate);
             callback(model, 1, null);
         });
+    }
+
+    public getReferences(dataset: Dataset, labels: Label[]): ReferenceLabel[] {
+        const maxDuration = labels.map((label) => label.timestampEnd - label.timestampStart).reduce((a, b) => Math.max(a, b), 0);
+        const sampleRate = 100 / maxDuration; // / referenceDuration;
+        let prototypes;
+        getAverageLabelsPerClass(dataset, labels, sampleRate, (references) => {
+            prototypes = references;
+        });
+        return prototypes;
     }
 }
