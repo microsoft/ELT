@@ -4,7 +4,8 @@
 //    u3 - u2 - u1 - [ current ] - r1 - r2 - r3
 // The current state is the state of the app (not in the HistoryTracker).
 // The history tracker stores states before the current state, and states after the current state (in case of redo).
-// The states after the current state is cleared when adding a new action (this means users can't redo after doing something after undo).
+// The states after the current state is cleared when adding a new action
+// (this means users can't redo after doing something after undo).
 // The states before the current state is always saved.
 //
 // The usage is:

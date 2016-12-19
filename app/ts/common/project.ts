@@ -53,7 +53,7 @@ export interface SavedLabelingState {
     classColormap: { [name: string]: string };
 }
 
-export interface SavedUIState {
+export interface SavedUiState {
     // Current tab.
     currentTab: TabID;
     // Zooming level.
@@ -73,7 +73,7 @@ export interface SavedProject {
     metadata: SavedMetadata;
     alignment: SavedAlignmentState;
     labeling: SavedLabelingState;
-    ui: SavedUIState;
+    ui: SavedUiState;
 }
 
 // A snapshot is a in-memory data structure that contain references to datasets.

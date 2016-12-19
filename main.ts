@@ -11,7 +11,7 @@ const debugging = process.argv.some(a => a === '--debugging');
 if (!debugging) { (<ExpectedEnv>process.env).NODE_ENV = 'production'; }
 
 // Module to create native browser window.
-const BrowserWindow = electron.BrowserWindow;
+const window = electron.BrowserWindow;
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -19,7 +19,7 @@ let mainWindow = null;
 
 function createWindow(): void {
     // Create the browser window.
-    mainWindow = new BrowserWindow({
+    mainWindow = new window({
         width: 1200,
         height: 800,
         webPreferences: {

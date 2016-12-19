@@ -63,7 +63,7 @@ class WorkerModel extends LabelingSuggestionModel {
             timestampStart: timestampStart,
             timestampEnd: timestampEnd,
             confidenceThreshold: confidenceThreshold,
-            generation: generation
+            generation: generation,
         });
     }
 
@@ -89,7 +89,7 @@ class WorkerModel extends LabelingSuggestionModel {
         this._parent.postModelMessage(this._modelID, {
             type: 'get-deployment-code',
             callbackID: callbackID,
-            platform: platform
+            platform: platform,
         });
     }
 
@@ -140,7 +140,7 @@ export class SpingDtwSuggestionModelFactoryWebWorker extends LabelingSuggestionM
         this._worker.postMessage({
             type: 'model.message.' + modelID,
             modelID: modelID,
-            message: message
+            message: message,
         });
     }
 
@@ -170,7 +170,7 @@ export class SpingDtwSuggestionModelFactoryWebWorker extends LabelingSuggestionM
         this._worker.postMessage({
             type: 'model.build',
             callbackID: callbackID,
-            labels: labels
+            labels: labels,
         });
     }
 }

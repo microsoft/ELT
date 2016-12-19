@@ -207,30 +207,6 @@ export class LabelingView extends EventListenerComponent<LabelingViewProps, Labe
         );
     }
 
-    // private onMouseDownScroll(event: React.MouseEvent<Element>) {
-    //     let x0 = event.screenX;
-    //     let start0 = stores.alignmentLabelingUiStore.referenceViewStart;
-    //     startDragging(
-    //         moveEvent => {
-    //             let x1 = moveEvent['screenX'];
-    //             new actions.CommonActions.SetReferenceViewZooming(
-    //                 start0 - (x1 - x0) / stores.alignmentLabelingUiStore.referenceViewPPS,
-    //                 stores.alignmentLabelingUiStore.referenceViewPPS).dispatch();
-    //         },
-    //         null,
-    //         true
-    //     );
-    // }
-
-    // private onMouseDown(event: React.MouseEvent<Element>) {
-    //     new actions.LabelingActions.ClearLabelSelection().dispatch();
-    //     if (event.shiftKey || event.button === 2) {
-    //         this.onMouseDownCreateLabel(event);
-    //     } else {
-    //         this.onMouseDownScroll(event);
-    //     }
-    // }
-
     private onMouseWheel(event: React.WheelEvent<Element>): void {
         // Decide the zooming factor.
         new actions.CommonActions.ReferenceViewPanAndZoom(0, event.deltaY / 1000).dispatch();
