@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+
+    <!-- Bootstrap core CSS -->
+    <link rel="stylesheet" href="./node_modules/bootstrap/dist/css/bootstrap.min.css" />
+
+    <!-- Bootstrap theme-->
+    <link rel="stylesheet" href="./node_modules/bootstrap/dist/css/bootstrap-theme.min.css" />
+
+    <!-- Custom styles for us -->
+    <link rel="stylesheet" href="./app/css/styles.compiled.css" />
+
+	<script>
+        window.jQuery = window.$ = require('jquery');
+    </script>
+	<script src="./node_modules/bootstrap/dist/js/bootstrap.js"></script>
+
+    <title>Gesture Builder - Intelligent Device Project</title>
+</head>
+
+<!-- 
+    The following script craziness is because the Monaco editor insists on using
+    its own module loader, so we have to set that up, then load on our startup code.
+-->
+<script>
+    var path = require('path');
+    var req = require;
+</script>
+<script src="node_modules/monaco-editor/min/vs/loader.js"></script>
+<script>
+    function uriFromPath(_path) {
+        var pathName = path.resolve(_path).replace(/\\/g, '/');
+        if (pathName.length > 0 && pathName.charAt(0) !== '/') {
+            pathName = '/' + pathName;
+        }
+        return encodeURI('file://' + pathName);
+    }
+    var uri = uriFromPath(path.join(__dirname, 'node_modules/monaco-editor/dev'));
+    require.config({ baseUrl: uri });
+    window.monacoRequire = require;
+    // workaround monaco-css not understanding the environment
+    self.module = undefined;
+    // workaround monaco-typescript not understanding the environment
+    self.process.browser = true;
+    require(['vs/editor/editor.main'], function() {
+        req('requirejs')
+        var editor = req('./app/js/components/deployment/scriptEditor.js');
+        editor.ScriptEditor.monaco = monaco;
+        req('./app/js/startup.js');
+    });
+</script>
+
+<body role="document">
+    <div id="outer-app-container" />
+</body>
+</html>

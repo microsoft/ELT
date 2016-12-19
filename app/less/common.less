@@ -1,0 +1,160 @@
+// Axis
+.axis path,
+.axis line {
+    fill: none;
+    stroke: grey;
+    stroke-width: 1;
+}
+
+// SensorTimeSeriesPlot.
+.sensor-timeseries-plot {
+    path {
+        stroke-linejoin: round;
+        stroke-linecap: round;
+    }
+}
+
+// Custom buttons.
+.tbtn {
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle;
+    touch-action: manipulation;
+    cursor: pointer;
+    -webkit-user-select: none;
+    border: 1px solid transparent;
+    padding: 5px 10px;
+    font-size: 12px;
+    line-height: 1.5;
+    background-color: #AAA;
+    border-radius: 4px;
+}
+
+.tbtn {
+    &:hover {
+        background-color: #000;
+        color: white;
+    }
+    .glyphicon:not(.icon-only) {
+        margin-right: 4px;
+    }
+    // box-shadow: 0 0 6px rgba(0, 0, 0, 0.1);
+}
+
+.tbtn-style-mixin(@color, @textcolor) {
+    background-color: @color;
+    color: @textcolor;
+    &:hover {
+        background-color: darken(@color, 20%);
+        color: white;
+    }
+    &:focus {
+        outline: none;
+        box-shadow: 0 0 3px #2979FF;
+    }
+    &:active {
+        background-color: darken(@color, 30%);
+        color: white;
+    }
+    &.active {
+        box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.3);
+    }
+}
+
+// Extra button styles, a button should always include one of them:
+
+// Important buttons.
+.tbtn-l1 {
+    .tbtn-style-mixin(#444, white);
+}
+// Middle important buttons.
+.tbtn-l2 {
+    .tbtn-style-mixin(#666, white);
+}
+// Less important buttons.
+.tbtn-l3 {
+    .tbtn-style-mixin(#ddd, black);
+}
+// Red buttons.
+.tbtn-red {
+    .tbtn-style-mixin(#d9534f, white);
+}
+// Green buttons.
+.tbtn-green {
+    .tbtn-style-mixin(#5cb85c, white);
+}
+
+// Large buttons.
+.tbtn-large {
+    padding: 10px 20px;
+    font-size: 18px;
+    line-height: 1.5;
+}
+
+// Button groups.
+.tbtn-group {
+    border-radius: 4px;
+    background-color: #EEE;
+    overflow: hidden;
+    display: inline-block;
+    vertical-align: top;
+    .tbtn { border-radius: 0; }
+    .tbtn:not(:first-child) {
+        margin-left: 1px;
+        box-shadow: none;
+    }
+    .tbtn:focus {
+        outline: none;
+    }
+}
+
+// Tile-sized buttons for the main file menu.
+.tbtn-tile {
+    font-size: 24px;
+    width: 100%;
+    text-align: left;
+    padding: 20px 30px;
+}
+
+.toolOutputPanel {
+    z-index: 9999;
+    width: 100%;
+    position: absolute;
+    bottom: 0;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.toolOutputPanel .panel-title {
+    font-size: 80%;
+    text-transform: uppercase;
+    color: #666666;
+}
+
+.toolOutputPanel .panel-title a {
+    font-size: 150%;
+    text-decoration: none;
+}
+
+.toolOutputPanel .collapsing:first-child { 
+    display: none; 
+}
+
+.feedbackText {
+    font-family: Consolas, monospace;
+    font-size: 10pt;
+    padding: 0;
+    margin: 0;
+    outline: none;
+    white-space: pre;
+    width: 100%;
+    height: 300px;
+    overflow: scroll;
+}
+.toolOutputPanelCollapse {
+    float: right;
+}
+.breathing-room {
+    margin-left: 3px;
+    margin-right: 3px;
+}
