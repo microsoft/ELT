@@ -2,7 +2,7 @@
 
 import { Dataset } from '../common/dataset';
 import { Label } from '../common/labeling';
-import { LabelingSuggestionCallback, LabelingSuggestionModel, LabelingSuggestionModelFactory } from './LabelingSuggestionEngine';
+import { LabelingSuggestionCallback, LabelingSuggestionModel, LabelingSuggestionModelBuilder } from './LabelingSuggestionEngine';
 import { ModelSpecificMessage, SuggestionWorkerMessage } from './worker/SuggestionWorkerMessage';
 import { EventEmitter } from 'events';
 
@@ -10,12 +10,12 @@ import { EventEmitter } from 'events';
 
 class WorkerModel extends LabelingSuggestionModel {
     private _modelID: string;
-    private _parent: DtwSuggestionWebWorker;
+    private _parent: DtwAsyncModelBuilder;
     private _currentCallbackID: number;
     private _registeredCallbacks: Map<string, Function>;
     private _callback2ID: WeakMap<Function, string>;
 
-    constructor(parent: DtwSuggestionWebWorker, modelID: string) {
+    constructor(parent: DtwAsyncModelBuilder, modelID: string) {
         super();
         this._modelID = modelID;
         this._parent = parent;
@@ -103,7 +103,7 @@ class WorkerModel extends LabelingSuggestionModel {
 
 
 
-export class DtwSuggestionWebWorker extends LabelingSuggestionModelFactory {
+export class DtwAsyncModelBuilder extends LabelingSuggestionModelBuilder {
     private _worker: Worker;
     private _currentDataset: Dataset;
     private _registeredCallbacks: Map<string, (model: LabelingSuggestionModel, progress: number, error: string) => void>;
@@ -161,7 +161,7 @@ export class DtwSuggestionWebWorker extends LabelingSuggestionModelFactory {
     }
 
 
-    public buildModel(
+    public buildModelAsync(
         dataset: Dataset,
         labels: Label[],
         callback: (model: LabelingSuggestionModel, progress: number, error: string) => void): void {

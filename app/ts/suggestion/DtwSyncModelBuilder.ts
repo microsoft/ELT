@@ -5,7 +5,7 @@ import { MultipleSpringAlgorithm, MultipleSpringAlgorithmBestMatch } from '../co
 import { Label, LabelConfirmationState, resampleDatasetRowMajor } from '../common/common';
 import { Dataset } from '../common/dataset';
 import { generateArduinoCodeForDtwModel, generateMicrobitCodeForDtwModel } from './DTWDeployment';
-import { LabelingSuggestionCallback, LabelingSuggestionModel, LabelingSuggestionModelFactory } from './LabelingSuggestionEngine';
+import { LabelingSuggestionCallback, LabelingSuggestionModel, LabelingSuggestionModelBuilder } from './LabelingSuggestionEngine';
 
 
 
@@ -19,31 +19,28 @@ interface ReferenceLabel {
 
 
 // We use the sum of absolute distance as distance function, rather than euclidean distance
-function makeDistanceAndAverage(): {
-    distanceFunction: (a: number[], b: number[]) => number;
-    averageFunction: (a: number[][]) => number[];
-} {
-    const distanceFunction = (a: number[], b: number[]) => {
-        let s = 0;
-        const dim = a.length;
-        for (let i = 0; i < dim; i++) { s += Math.abs(a[i] - b[i]); }
-        return s;
-    };
-    const averageFunction = (x: number[][]) => {
-        const mean = x[0].slice();
-        const N = x.length;
-        for (let i = 1; i < N; i++) {
-            for (let j = 0; j < mean.length; j++) {
-                mean[j] += x[i][j];
-            }
-        }
-        for (let j = 0; j < mean.length; j++) {
-            mean[j] /= N;
-        }
-        return mean;
-    };
-    return { distanceFunction: distanceFunction, averageFunction: averageFunction };
+function distanceFunction(a: number[], b: number[]): number {
+    let s = 0;
+    const dim = a.length;
+    for (let i = 0; i < dim; i++) { s += Math.abs(a[i] - b[i]); }
+    return s;
 }
+
+
+function averageFunction(x: number[][]): number[] {
+    const mean = x[0].slice();
+    const N = x.length;
+    for (let i = 1; i < N; i++) {
+        for (let j = 0; j < mean.length; j++) {
+            mean[j] += x[i][j];
+        }
+    }
+    for (let j = 0; j < mean.length; j++) {
+        mean[j] /= N;
+    }
+    return mean;
+}
+
 
 
 function groupBy<InputType>(input: InputType[], groupFunc: (itype: InputType) => string): { group: string, items: InputType[] }[] {
@@ -71,32 +68,26 @@ function groupBy<InputType>(input: InputType[], groupFunc: (itype: InputType) =>
 function getAverageLabelsPerClass(
     dataset: Dataset,
     labels: Label[],
-    sampleRate: number,
-    callback: (labels: ReferenceLabel[]) => void): void {
+    sampleRate: number): ReferenceLabel[] {
 
     if (!labels || labels.length === 0) {
-        callback([]);
-        return;
+        return [];
     }
-
-    const { distanceFunction, averageFunction } = makeDistanceAndAverage();
 
     const dba = new DBA<number[]>(distanceFunction, averageFunction);
 
     const classes_array = groupBy(
-        labels.map((reference) => {
-            return {
-                name: reference.className,
-                timestampStart: reference.timestampStart,
-                timestampEnd: reference.timestampEnd,
-                samples: resampleDatasetRowMajor(
-                    dataset,
-                    reference.timestampStart, reference.timestampEnd,
-                    Math.round(sampleRate * (reference.timestampEnd - reference.timestampStart))
-                )
-            };
-        }),
-        (input) => input.name);
+        labels.map(reference => ({
+            name: reference.className,
+            timestampStart: reference.timestampStart,
+            timestampEnd: reference.timestampEnd,
+            samples: resampleDatasetRowMajor(
+                dataset,
+                reference.timestampStart, reference.timestampEnd,
+                Math.round(sampleRate * (reference.timestampEnd - reference.timestampStart))
+            )
+        })),
+        input => input.name);
 
     const result: ReferenceLabel[] = [];
 
@@ -153,7 +144,7 @@ function getAverageLabelsPerClass(
         }
     }
 
-    callback(result);
+    return result;
 }
 
 
@@ -214,9 +205,6 @@ class DtwSuggestionModel extends LabelingSuggestionModel {
         const resampledLength = Math.round(this._sampleRate * (timestampEnd - timestampStart));
 
         const confidenceHistogram = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-
-        // Define the distance between samples.
-        const { distanceFunction } = makeDistanceAndAverage();
 
         const getLikelihood = (variance: number, distance: number) => {
             // return 1 - invertGaussianPercentPoint(-distance / variance) * 2;
@@ -328,28 +316,25 @@ class DtwSuggestionModel extends LabelingSuggestionModel {
 }
 
 
-export class DtwSuggestionModelFactory implements LabelingSuggestionModelFactory {
+export class DtwSyncModelBuilder implements LabelingSuggestionModelBuilder {
 
-    public buildModel(
+    public buildModelAsync(
         dataset: Dataset,
         labels: Label[],
         callback: (model: LabelingSuggestionModel, progress: number, error: string) => void): void {
 
         const maxDuration = labels.map((label) => label.timestampEnd - label.timestampStart).reduce((a, b) => Math.max(a, b), 0);
         const sampleRate = 100 / maxDuration; // / referenceDuration;
-        getAverageLabelsPerClass(dataset, labels, sampleRate, (references) => {
-            const model = new DtwSuggestionModel(references, sampleRate);
-            callback(model, 1, null);
-        });
+        const references = getAverageLabelsPerClass(dataset, labels, sampleRate);
+        const model = new DtwSuggestionModel(references, sampleRate);
+        callback(model, 1, null);
     }
 
-    public getReferences(dataset: Dataset, labels: Label[]): ReferenceLabel[] {
-        const maxDuration = labels.map((label) => label.timestampEnd - label.timestampStart).reduce((a, b) => Math.max(a, b), 0);
+    public getReferenceLabels(dataset: Dataset, labels: Label[]): ReferenceLabel[] {
+        const maxDuration = labels
+            .map(label => label.timestampEnd - label.timestampStart)
+            .reduce((a, b) => Math.max(a, b), 0);
         const sampleRate = 100 / maxDuration; // / referenceDuration;
-        let prototypes;
-        getAverageLabelsPerClass(dataset, labels, sampleRate, (references) => {
-            prototypes = references;
-        });
-        return prototypes;
+        return getAverageLabelsPerClass(dataset, labels, sampleRate);
     }
 }

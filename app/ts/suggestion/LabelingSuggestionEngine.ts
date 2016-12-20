@@ -3,7 +3,7 @@
 import { Dataset } from '../common/dataset';
 import { Label } from '../common/labeling';
 import * as stores from '../stores/stores';
-import { DtwSuggestionModelFactory } from './suggestion';
+import { DtwSyncModelBuilder } from './suggestion';
 import { EventEmitter } from 'events';
 
 
@@ -43,8 +43,8 @@ export abstract class LabelingSuggestionModel {
 
 
 
-export abstract class LabelingSuggestionModelFactory {
-    public abstract buildModel(
+export abstract class LabelingSuggestionModelBuilder {
+    public abstract buildModelAsync(
         dataset: Dataset,
         labels: Label[],
         callback: (model: LabelingSuggestionModel, progress: number, error: string) => void): void;
@@ -70,18 +70,18 @@ interface LabelingSuggestionCallbackInfo {
 export class LabelingSuggestionEngine extends EventEmitter {
     private _dataset: Dataset;
     private _labels: Label[];
-    private _modelFactory: LabelingSuggestionModelFactory;
+    private _modelBuilder: LabelingSuggestionModelBuilder;
     private _currentModel: LabelingSuggestionModel;
     private _computingInstances: Map<LabelingSuggestionCallback, LabelingSuggestionCallbackInfo>;
     private _shouldRebuildModel: boolean;
     private _isRebuildingModel: boolean;
     private _onModelBuiltCallbackQueue: ((model: LabelingSuggestionModel) => void)[];
 
-    constructor(modelFactory: LabelingSuggestionModelFactory) {
+    constructor(modelBuilder: LabelingSuggestionModelBuilder) {
         super();
         this._dataset = null;
         this._labels = [];
-        this._modelFactory = modelFactory;
+        this._modelBuilder = modelBuilder;
         this._currentModel = null;
         this._computingInstances = new Map<LabelingSuggestionCallback, LabelingSuggestionCallbackInfo>();
         this._shouldRebuildModel = true;
@@ -116,37 +116,33 @@ export class LabelingSuggestionEngine extends EventEmitter {
         }
     }
 
-    public sendEMLLPrototypes(dataset: Dataset, labels: Label[]): void {
-        const factory = new DtwSuggestionModelFactory();
-        const maxDuration = labels.map((label) => label.timestampEnd - label.timestampStart).reduce((a, b) => Math.max(a, b), 0);
+    private storeModel(dataset: Dataset, labels: Label[]): void {
+        const factory = new DtwSyncModelBuilder();
+        const maxDuration = labels
+            .map((label) => label.timestampEnd - label.timestampStart)
+            .reduce((a, b) => Math.max(a, b), 0);
         const sampleRate = 100 / maxDuration; // / referenceDuration;
-        const prototypes = factory.getReferences(dataset, labels);
-        stores.dtwModelStore.prototypes = prototypes;
+        stores.dtwModelStore.prototypes = factory.getReferenceLabels(dataset, labels);
         stores.dtwModelStore.prototypeSampleRate = sampleRate;
     }
 
     public rebuildModel(): void {
-        if (!this._shouldRebuildModel) { return; }
-        if (this._dataset) {
-            if (!this._isRebuildingModel) {
-                this._isRebuildingModel = true;
-                this._shouldRebuildModel = false;
+        if (this._shouldRebuildModel && this._dataset && !this._isRebuildingModel) {
+            this._isRebuildingModel = true;
+            this._shouldRebuildModel = false;
 
-                this.sendEMLLPrototypes(this._dataset, this._labels);
+            this.storeModel(this._dataset, this._labels);
 
-                this.emitStatusUpdate({
-                    status: 'BUILDING_MODEL'
-                });
+            this.emitStatusUpdate({ status: 'BUILDING_MODEL' });
 
-                this._modelFactory.buildModel(this._dataset, this._labels, (model, progress, error) => {
+            this._modelBuilder.buildModelAsync(
+                this._dataset, this._labels,
+                (model, progress, error) => {
                     if (model) {
-                        this.emitStatusUpdate({
-                            status: 'MODEL_READY'
-                        });
-                        let oldModel: LabelingSuggestionModel;
+                        this.emitStatusUpdate({ status: 'MODEL_READY' });
+
                         const restartInfos: LabelingSuggestionCallbackInfo[] = [];
                         if (this._currentModel && this._currentModel !== model) {
-                            oldModel = this._currentModel;
                             this._computingInstances.forEach((info, callback) => {
                                 this._currentModel.cancelSuggestion(callback);
                                 restartInfos.push(info);
@@ -155,7 +151,8 @@ export class LabelingSuggestionEngine extends EventEmitter {
                         }
                         this._currentModel = model;
                         this._isRebuildingModel = false;
-                        this._onModelBuiltCallbackQueue.forEach((x) => x(model));
+
+                        this._onModelBuiltCallbackQueue.forEach(callback => callback(model));
                         this._onModelBuiltCallbackQueue = [];
 
                         // Restart any existing calculation.
@@ -171,16 +168,17 @@ export class LabelingSuggestionEngine extends EventEmitter {
                         this.rebuildModel();
                     }
                 });
-            }
         }
     }
 
     private emitStatusUpdate(status: LabelingSuggestionEngineStatus): void {
         this.emit('status-update', status);
     }
+
     public addStatusUpdateListener(callback: (status: LabelingSuggestionEngineStatus) => void): void {
         this.addListener('status-update', callback);
     }
+
     public removeStatusUpdateListener(callback: (status: LabelingSuggestionEngineStatus) => void): void {
         this.removeListener('status-update', callback);
     }

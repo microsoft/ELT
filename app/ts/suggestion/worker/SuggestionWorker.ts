@@ -3,10 +3,10 @@
 import { Dataset } from '../../common/dataset';
 import { Label } from '../../common/labeling';
 import {
-    DtwSuggestionModelFactory,
+    DtwSyncModelBuilder,
     LabelingSuggestionCallback,
     LabelingSuggestionModel,
-    LabelingSuggestionModelFactory,
+    LabelingSuggestionModelBuilder,
     LabelingSuggestionProgress
 } from '../suggestion';
 import { ModelBuildMessage, ModelMessage, SetDatasetMessage } from './SuggestionWorkerMessage';
@@ -15,12 +15,12 @@ import { EventEmitter } from 'events';
 
 export class SuggestionWorker extends EventEmitter {
     private _dataset: Dataset;
-    private _factory: LabelingSuggestionModelFactory;
+    private _modelBuilder: LabelingSuggestionModelBuilder;
     private _currentModelID: number;
 
-    constructor() {
+    constructor(modelBuilder: LabelingSuggestionModelBuilder) {
         super();
-        this._factory = new DtwSuggestionModelFactory();
+        this._modelBuilder = modelBuilder;
         this._currentModelID = 1;
 
         this.addListener('dataset.set', (data: SetDatasetMessage) => {
@@ -33,7 +33,7 @@ export class SuggestionWorker extends EventEmitter {
             const labels = data.labels;
             const buildCallbackID = data.callbackID;
 
-            this._factory.buildModel(
+            this._modelBuilder.buildModelAsync(
                 this._dataset, labels,
 
                 (model: LabelingSuggestionModel, progress: number, error: string) => {
@@ -108,7 +108,7 @@ export class SuggestionWorker extends EventEmitter {
     }
 }
 
-const worker = new SuggestionWorker();
+const worker = new SuggestionWorker(new DtwSyncModelBuilder());
 
 self.onmessage = (message) => {
     const data = message.data;
