@@ -118,7 +118,6 @@ export class SpingDtwSuggestionModelFactoryWebWorker extends LabelingSuggestionM
         this._currentDataset = null;
         this._worker.onmessage = event => {
             const data = event.data;
-            console.log('got worker message', data);
             this._emitter.emit(data.type, data);
         };
         this._currentCallbackID = 1;

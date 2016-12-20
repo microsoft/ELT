@@ -1,0 +1,99 @@
+{
+  "referenceTrack": {
+    "id": "track-1",
+    "minimized": false,
+    "timeSeries": [
+      {
+        "id": "series-1",
+        "trackID": "track-1",
+        "referenceStart": 0,
+        "referenceEnd": 42.126,
+        "source": "C:\\ID\\UX\\EmbeddedLearningToolkit\\demo\\NextAndBack_Chuck_Clean\\vid.webm",
+        "aligned": true
+      }
+    ]
+  },
+  "tracks": [
+    {
+      "id": "track-2",
+      "minimized": false,
+      "timeSeries": [
+        {
+          "id": "series-2",
+          "trackID": "track-2",
+          "referenceStart": -7.3191389196884415,
+          "referenceEnd": 47.24086108031156,
+          "source": "C:\\ID\\UX\\EmbeddedLearningToolkit\\demo\\NextAndBack_Chuck_Clean\\log.tsv",
+          "aligned": true
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "name": "MyProject",
+    "timeSaved": 1482188695.368
+  },
+  "alignment": {
+    "markers": [
+      {
+        "id": "marker1",
+        "timeSeriesID": "series-1",
+        "localTimestamp": 2.1458565389547486
+      },
+      {
+        "id": "marker2",
+        "timeSeriesID": "series-2",
+        "localTimestamp": 25.29899545864319
+      }
+    ],
+    "correspondences": [
+      {
+        "marker1ID": "marker1",
+        "marker2ID": "marker2"
+      }
+    ],
+    "timeSeriesStates": {
+      "series-2": {
+        "referenceStart": -7.3191389196884415,
+        "referenceEnd": 47.24086108031156,
+        "rangeStart": 5.842053031524426,
+        "pixelsPerSecond": 79.8360872962615
+      }
+    }
+  },
+  "labeling": {
+    "labels": [
+      {
+        "timestampStart": 9.261559287973743,
+        "timestampEnd": 10.41392037073322,
+        "className": "Positive",
+        "state": 1
+      },
+      {
+        "timestampStart": 12.630962888650908,
+        "timestampEnd": 13.658067331980007,
+        "className": "Positive",
+        "state": 1
+      },
+      {
+        "timestampStart": 15.799955866239468,
+        "timestampEnd": 16.739380661967303,
+        "className": "Positive",
+        "state": 1
+      }
+    ],
+    "classes": [
+      "IGNORE",
+      "Positive"
+    ],
+    "classColormap": {
+      "IGNORE": "#CCC",
+      "Positive": "#a6cee3"
+    }
+  },
+  "ui": {
+    "currentTab": "file",
+    "referenceViewStart": 5.842053031524426,
+    "referenceViewPPS": 79.8360872962615
+  }
+}
