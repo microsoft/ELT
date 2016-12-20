@@ -4,8 +4,8 @@ import { ArrayThrottler, Label, LabelConfirmationState } from '../common/common'
 import { SensorTimeSeries } from '../common/dataset';
 import { computeDimensionsMipmapLevels } from '../components/common/Mipmap';
 import { globalDispatcher } from '../dispatcher/globalDispatcher';
-import { LabelingSuggestionCallback, LabelingSuggestionEngine, LabelingSuggestionProgress, SpingDtwSuggestionModelFactoryWebWorker }
-    from '../suggestion/labeling/suggestion';
+import { LabelingSuggestionCallback, LabelingSuggestionEngine, LabelingSuggestionProgress, DtwSuggestionWebWorker }
+    from '../suggestion/suggestion';
 import { alignmentLabelingUiStore, labelingStore, labelingUiStore } from './stores';
 import { EventEmitter } from 'events';
 
@@ -22,7 +22,7 @@ export class LabelingSuggestionGenerator extends EventEmitter {
     constructor() {
         super();
 
-        this._engine = new LabelingSuggestionEngine(new SpingDtwSuggestionModelFactoryWebWorker());
+        this._engine = new LabelingSuggestionEngine(new DtwSuggestionWebWorker());
 
         this._engine.addStatusUpdateListener((status) => {
             this.emitStatusUpdate(status.status);
