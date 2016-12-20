@@ -1,19 +1,209 @@
 // Generate DTW code for Arduino and Microbit.
 import {resampleColumn} from '../../common/common';
-import * as eletron from 'electron';
-import * as fs from 'fs';
-import * as path from 'path';
 
 
 
-const templateArduino = readTemplate('dtwArduino.txt');
-const templateMicrobit = readTemplate('dtwMicrobit.txt');
+const templateArduino = `// HOWTO-dtwDeployment.ts:
+// Call setupRecognizer(0.2) first.
+// Then, call String className = recognize(sample);
+// "NONE" will be returned if nothing is detected.
+// sample should be a float array, in the same order you put the training data in the tool.
 
-function readTemplate(filename: string): string {
-    const rootDir = eletron.remote.getGlobal('rootDir');
-    const fullname = path.join(rootDir, 'app', 'templates', 'dtw', filename);
-    return fs.readFileSync(fullname).toString();
+struct DTWInfo {
+    int dim;                        // The dimension of the signal.
+    float* prototype;               // The data for the prototype.
+    int* s;                         // Matching array: start points.
+    float* d;                       // Matching array: distances.
+    int prototypeSize;              // The length of the prototype.
+    int t;                          // Current time in samples.
+    float variance;                 // The variance.
+    float bestMatchEndsAtTDistance; // The distance of the best match that ends at t.
+    int bestMatchEndsAtTStart;      // The start of the best match that ends at t.
+};
+
+float DTWDistanceFunction(int dim, float* a, float* b) {
+    int s = 0;
+    for(int i = 0; i < dim; i++) {
+        s += abs(a[i] - b[i]);
+    }
+    return s;
 }
+
+void DTWInit(struct DTWInfo* DTW, int dim, float* prototype, int prototypeSize, float variance) {
+    DTW->dim = dim;
+    DTW->prototypeSize = prototypeSize;
+    DTW->prototype = prototype;
+    DTW->d = new float[prototypeSize + 1];
+    DTW->s = new int[prototypeSize + 1];
+    DTW->t = 0;
+    DTW->variance = variance;
+    for(int i = 0; i <= prototypeSize; i++) {
+        DTW->d[i] = 1e10;
+        DTW->s[i] = 0;
+    }
+    DTW->d[0] = 0;
+}
+
+void DTWReset(struct DTWInfo* DTW) {
+    for(int i = 0; i <= DTW->prototypeSize; i++) {
+        DTW->d[i] = 1e10;
+        DTW->s[i] = 0;
+    }
+    DTW->d[0] = 0;
+}
+
+void DTWFeed(struct DTWInfo* DTW, float* sample) {
+    float* d = DTW->d;
+    int* s = DTW->s;
+    DTW->t += 1;
+    d[0] = 0;
+    s[0] = DTW->t;
+    float dp = d[0];
+    int sp = s[0];
+    for(int i = 1; i <= DTW->prototypeSize; i++) {
+        float dist = DTWDistanceFunction(DTW->dim, DTW->prototype + (i - 1) * DTW->dim, sample);
+        float d_i_minus_1 = d[i - 1]; int s_i_minus_1 = s[i - 1];
+        float d_i_p = d[i]; int s_i_p = s[i];
+        float d_i_p_minus_1 = dp; int s_i_p_minus_1 = sp;
+        dp = d[i];
+        sp = s[i];
+        if(d_i_minus_1 <= d_i_p && d_i_minus_1 <= d_i_p_minus_1) {
+            d[i] = dist + d_i_minus_1;
+            s[i] = s_i_minus_1;
+        } else if(d_i_p <= d_i_minus_1 && d_i_p <= d_i_p_minus_1) {
+            d[i] = dist + d_i_p;
+            s[i] = s_i_p;
+        } else {
+            d[i] = dist + d_i_p_minus_1;
+            s[i] = s_i_p_minus_1;
+        }
+    }
+    DTW->bestMatchEndsAtTDistance = d[DTW->prototypeSize] / DTW->variance;
+    DTW->bestMatchEndsAtTStart = s[DTW->prototypeSize];
+    if(DTW->t - DTW->bestMatchEndsAtTStart > DTW->prototypeSize * 0.8 && DTW->t - DTW->bestMatchEndsAtTStart < DTW->prototypeSize * 1.2) {
+    } else DTW->bestMatchEndsAtTDistance = 1e10;
+}
+
+%%GLOBAL%%
+
+void setupRecognizer(float confidenceThreshold) {
+    float threshold = sqrt(-2 * log(confidenceThreshold));
+%%SETUP%%
+}
+
+void resetRecognizer() {
+%%RESET%%
+}
+
+String recognize(float* sample) {
+%%MATCH%%
+    String minClass = "NONE";
+    float minClassScore = 1e10;
+%%MATCH_COMPARISON%%
+    return minClass;
+}
+`;
+
+
+const templateMicrobit = `// HOWTO:
+// Call setupRecognizer() first.
+// Then, call let className = recognize([ input.acceleration(Dimension.X), input.acceleration(Dimension.Y), input.acceleration(Dimension.Z) ]);
+// "NONE" will be returned if nothing is detected.
+// An example is at the end of this file.
+
+// IMPORTANT: All number in microbit are integers.
+function DTWDistanceFunction(dim: number, a: number[], astart: number, b: number[]) {
+    let s = 0;
+    for (let i = 0; i < dim; i++) {
+        s += (a[i + astart] - b[i]) * (a[i + astart] - b[i]);
+    }
+    return Math.sqrt(s);
+}
+class DTWInfo {
+    public dim: number;
+    public prototype: number[];
+    public s: number[];
+    public d: number[];
+    public prototypeSize: number;
+    public t: number;
+    public bestMatchEndsAtTDistance: number;
+    // The distance of the best match that ends at t.
+    public variance: number;
+    // The variance computed.
+    public bestMatchEndsAtTStart: number;
+    // The start of the best match that ends at t.
+    constructor(dim: number, prototype: number[], prototypeSize: number, variance: number) {
+        this.dim = dim;
+        this.prototypeSize = prototypeSize;
+        this.prototype = prototype;
+        this.d = %%ARRAY_INITIALIZATION%%;
+        this.s = %%ARRAY_INITIALIZATION%%;
+        this.t = 0;
+        this.variance = variance;
+        for (let i = 0; i <= prototypeSize; i++) {
+            this.d[i] = 500000000;
+            this.s[i] = 0;
+        }
+        this.d[0] = 0;
+    }
+    public feed(sample: number[]) {
+        let d = this.d;
+        let s = this.s;
+        this.t += 1;
+        d[0] = 0;
+        s[0] = this.t;
+        let dp = d[0];
+        let sp = s[0];
+        for (let i = 1; i <= this.prototypeSize; i++) {
+            let dist = DTWDistanceFunction(this.dim, this.prototype, (i - 1) * this.dim, sample);
+            let d_i_minus_1 = d[i - 1];
+            let s_i_minus_1 = s[i - 1];
+            let d_i_p = d[i];
+            let s_i_p = s[i];
+            let d_i_p_minus_1 = dp;
+            let s_i_p_minus_1 = sp;
+            dp = d[i];
+            sp = s[i];
+            if (d_i_minus_1 <= d_i_p && d_i_minus_1 <= d_i_p_minus_1) {
+                d[i] = dist + d_i_minus_1;
+                s[i] = s_i_minus_1;
+            } else if (d_i_p <= d_i_minus_1 && d_i_p <= d_i_p_minus_1) {
+                d[i] = dist + d_i_p;
+                s[i] = s_i_p;
+            } else {
+                d[i] = dist + d_i_p_minus_1;
+                s[i] = s_i_p_minus_1;
+            }
+        }
+        this.bestMatchEndsAtTDistance = d[this.prototypeSize] / this.variance;
+        this.bestMatchEndsAtTStart = s[this.prototypeSize];
+    }
+}
+
+%%GLOBAL%%
+
+function setupRecognizer() {
+    let threshold = 1794; // confidenceThreshold = 0.2
+%%SETUP%%
+}
+
+function recognize(sample: number[]): string {
+%%MATCH%%
+    let minClass = "NONE";
+    let minClassScore = 5000000;
+%%MATCH_COMPARISON%%
+    return minClass;
+}
+
+// Example application code:
+setupRecognizer();
+basic.forever(() => {
+    // Recognize the gesture.
+    let className = recognize([input.acceleration(Dimension.X), input.acceleration(Dimension.Y), input.acceleration(Dimension.Z)]);
+    // Send the result over serial.
+    serial.writeLine(className);
+}
+`;
 
 
 export interface ReferenceLabel {

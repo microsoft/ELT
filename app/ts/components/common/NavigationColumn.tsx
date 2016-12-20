@@ -30,7 +30,7 @@ export class NavigationColumn extends React.Component<NavigationColumnProps, {}>
                 <div key={info.name} role='button'
                     className={`navigation-column-button ${info.name === this.props.selected ? 'active' : ''}`}
                     title={info.title}
-                    onClick={ event => { this.props.onSelect(info.name); } }>
+                    onClick={event => { this.props.onSelect(info.name); } }>
                     <span className={`${info.iconClass}`}></span>
                 </div>
             );

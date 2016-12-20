@@ -1,13 +1,13 @@
 import * as Actions from '../actions/Actions';
-import {pelt} from '../common/algorithms/pelt';
-import {ArrayThrottler, Label, LabelConfirmationState} from '../common/common';
-import {SensorTimeSeries} from '../common/dataset';
-import {computeDimensionsMipmapLevels} from '../components/common/Mipmap';
-import {globalDispatcher} from '../dispatcher/globalDispatcher';
-import {LabelingSuggestionCallback, LabelingSuggestionEngine, LabelingSuggestionProgress, SpingDtwSuggestionModelFactoryWebWorker}
-from '../suggestion/labeling/suggestion';
-import {alignmentLabelingUiStore, labelingStore, labelingUiStore} from './stores';
-import {EventEmitter} from 'events';
+import { pelt } from '../common/algorithms/pelt';
+import { ArrayThrottler, Label, LabelConfirmationState } from '../common/common';
+import { SensorTimeSeries } from '../common/dataset';
+import { computeDimensionsMipmapLevels } from '../components/common/Mipmap';
+import { globalDispatcher } from '../dispatcher/globalDispatcher';
+import { LabelingSuggestionCallback, LabelingSuggestionEngine, LabelingSuggestionProgress, SpingDtwSuggestionModelFactoryWebWorker }
+    from '../suggestion/labeling/suggestion';
+import { alignmentLabelingUiStore, labelingStore, labelingUiStore } from './stores';
+import { EventEmitter } from 'events';
 
 
 
@@ -112,6 +112,7 @@ export class LabelingSuggestionGenerator extends EventEmitter {
     }
 
     private _runSuggestionsTimeout: NodeJS.Timer;
+
     private scheduleRunSuggestions(): void {
         setImmediate(() => {
             // Cancel current suggestion if running.
@@ -128,6 +129,7 @@ export class LabelingSuggestionGenerator extends EventEmitter {
             }
         });
     }
+
     private runSuggestionsZoomChanged(): void {
         if (labelingUiStore.suggestionLogic.shouldTriggerSuggestionUpdate({ didViewportChange: true })) {
             this.scheduleRunSuggestions();

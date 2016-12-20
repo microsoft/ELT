@@ -2,11 +2,11 @@
 // FIXME: There's currently no settings for alignment, and some of the settings are shared but all in this file.
 
 import * as Actions from '../../actions/Actions';
-import {LabelingSuggestionLogicType, SignalsViewMode} from '../../common/common';
-import {labelingSuggestionGenerator} from '../../stores/LabelingSuggestionGenerator';
+import { LabelingSuggestionLogicType, SignalsViewMode } from '../../common/common';
+import { labelingSuggestionGenerator } from '../../stores/LabelingSuggestionGenerator';
 import * as stores from '../../stores/stores';
-import {ConfidenceSlider} from '../common/ConfidenceSlider';
-import {EventListenerComponent} from '../common/EventListenerComponent';
+import { ConfidenceSlider } from '../common/ConfidenceSlider';
+import { EventListenerComponent } from '../common/EventListenerComponent';
 import * as React from 'react';
 
 
@@ -26,8 +26,8 @@ export interface LabelingSettingsViewState {
 
 export class LabelingSettingsView extends EventListenerComponent<{}, LabelingSettingsViewState> {
 
-    private setSuggestionLogicThunk: {[logicType: number]: () => void} = {};
-    private setViewModeThunk: {[viewMode: number]: () => void} = {};
+    private setSuggestionLogicThunk: { [logicType: number]: () => void } = {};
+    private setViewModeThunk: { [viewMode: number]: () => void } = {};
 
     constructor(props: {}, context: any) {
         super(props, context, [
@@ -117,21 +117,21 @@ export class LabelingSettingsView extends EventListenerComponent<{}, LabelingSet
                     </span>
                 </p>
 
-                { stores.labelingUiStore.suggestionEnabled ? (
+                {stores.labelingUiStore.suggestionEnabled ? (
                     <div>
                         <ConfidenceSlider
                             viewWidth={400}
                             viewHeight={50}
                             min={0}
                             max={1}
-                            value={Math.pow(this.state.suggestionConfidenceThreshold, 0.3) }
+                            value={Math.pow(this.state.suggestionConfidenceThreshold, 0.3)}
                             histogram={this.state.suggestionConfidenceHistogram}
                             onChange={this.setConfidenceThreshold}
                             />
                         <p>Status: {this.state.suggestionStatus}</p>
 
                     </div>
-                ) : null }
+                ) : null}
 
                 <h2>Suggestion Logic</h2>
                 <p>
