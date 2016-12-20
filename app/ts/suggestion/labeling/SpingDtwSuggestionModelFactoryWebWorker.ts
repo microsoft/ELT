@@ -1,9 +1,9 @@
 // Warps SPRINGDTWSuggestionModelFactory with a WebWorker.
 
-import {Dataset} from '../../common/dataset';
-import {Label} from '../../common/labeling';
-import {LabelingSuggestionCallback, LabelingSuggestionModel, LabelingSuggestionModelFactory} from './LabelingSuggestionEngine';
-import {EventEmitter} from 'events';
+import { Dataset } from '../../common/dataset';
+import { Label } from '../../common/labeling';
+import { LabelingSuggestionCallback, LabelingSuggestionModel, LabelingSuggestionModelFactory } from './LabelingSuggestionEngine';
+import { EventEmitter } from 'events';
 
 
 
@@ -63,7 +63,7 @@ class WorkerModel extends LabelingSuggestionModel {
             timestampStart: timestampStart,
             timestampEnd: timestampEnd,
             confidenceThreshold: confidenceThreshold,
-            generation: generation,
+            generation: generation
         });
     }
 
@@ -89,7 +89,7 @@ class WorkerModel extends LabelingSuggestionModel {
         this._parent.postModelMessage(this._modelID, {
             type: 'get-deployment-code',
             callbackID: callbackID,
-            platform: platform,
+            platform: platform
         });
     }
 
@@ -118,6 +118,7 @@ export class SpingDtwSuggestionModelFactoryWebWorker extends LabelingSuggestionM
         this._currentDataset = null;
         this._worker.onmessage = event => {
             const data = event.data;
+            console.log('got worker message', data);
             this._emitter.emit(data.type, data);
         };
         this._currentCallbackID = 1;
@@ -136,17 +137,22 @@ export class SpingDtwSuggestionModelFactoryWebWorker extends LabelingSuggestionM
         this._emitter.addListener('model.message.' + modelID, callback);
     }
 
+    private postMessage(message: any): void {
+        console.log('post worker message', message);
+        this._worker.postMessage(message);
+    }
+
     public postModelMessage(modelID: string, message: any): void {
-        this._worker.postMessage({
+        this.postMessage({
             type: 'model.message.' + modelID,
             modelID: modelID,
-            message: message,
+            message: message
         });
     }
 
     public setDataset(dataset: Dataset): void {
         if (dataset !== this._currentDataset) {
-            this._worker.postMessage({
+            this.postMessage({
                 type: 'dataset.set',
                 dataset: dataset.serialize()
             });
@@ -167,10 +173,10 @@ export class SpingDtwSuggestionModelFactoryWebWorker extends LabelingSuggestionM
 
         this._registeredCallbacks.set(callbackID, callback);
 
-        this._worker.postMessage({
+        this.postMessage({
             type: 'model.build',
             callbackID: callbackID,
-            labels: labels,
+            labels: labels
         });
     }
 }

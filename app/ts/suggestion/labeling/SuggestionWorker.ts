@@ -1,7 +1,7 @@
 // The webworker entry point for the worker-based DTW model factory.
 
-import {Dataset} from '../../common/dataset';
-import {Label} from '../../common/labeling';
+import { Dataset } from '../../common/dataset';
+import { Label } from '../../common/labeling';
 import {
     LabelingSuggestionCallback,
     LabelingSuggestionModel,
@@ -9,7 +9,7 @@ import {
     LabelingSuggestionProgress,
     SpringDtwSuggestionModelFactory
 } from './suggestion';
-import {EventEmitter} from 'events';
+import { EventEmitter } from 'events';
 
 
 
@@ -23,11 +23,14 @@ export class SuggestionWorker extends EventEmitter {
         this._factory = new SpringDtwSuggestionModelFactory();
         this._currentModelID = 1;
 
+        console.log('worker started');
+
         this.addListener('dataset.set', (data) => {
             const ds = new Dataset();
             ds.deserialize(data.dataset);
             this._dataset = ds;
         });
+
         this.addListener('model.build', (data) => {
             const labels = data.labels;
             const buildCallbackID = data.callbackID;
@@ -44,6 +47,7 @@ export class SuggestionWorker extends EventEmitter {
 
                 this.addListener('model.message.' + modelID, (modelData) => {
                     const message = modelData.message;
+                    console.log('WORKER MESSAGE', message.type);
                     if (message.type === 'compute') {
                         const callback = (computeLabels: Label[], computeProgress: LabelingSuggestionProgress, completed: boolean) => {
                             this.emit('.post', {
@@ -113,3 +117,5 @@ self.onmessage = (message) => {
 worker.addListener('.post', (message) => {
     self.postMessage(message, undefined);
 });
+
+self.postMessage('worker started', undefined);

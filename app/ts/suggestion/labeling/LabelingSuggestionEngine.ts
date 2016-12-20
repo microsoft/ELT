@@ -218,9 +218,9 @@ export class LabelingSuggestionEngine extends EventEmitter {
                 timestampEnd: timestampEnd,
                 confidenceThreshold: confidenceThreshold,
                 callback: callback,
-                generation: generation,
+                generation: generation
             },
-            model: this._currentModel,
+            model: this._currentModel
         };
         this._computingInstances.set(callback, cbInfo);
 
