@@ -23,8 +23,6 @@ export class SuggestionWorker extends EventEmitter {
         this._factory = new SpringDtwSuggestionModelFactory();
         this._currentModelID = 1;
 
-        console.log('worker started');
-
         this.addListener('dataset.set', (data) => {
             const ds = new Dataset();
             ds.deserialize(data.dataset);
@@ -47,7 +45,6 @@ export class SuggestionWorker extends EventEmitter {
 
                 this.addListener('model.message.' + modelID, (modelData) => {
                     const message = modelData.message;
-                    console.log('WORKER MESSAGE', message.type);
                     if (message.type === 'compute') {
                         const callback = (computeLabels: Label[], computeProgress: LabelingSuggestionProgress, completed: boolean) => {
                             this.emit('.post', {
@@ -117,5 +114,3 @@ self.onmessage = (message) => {
 worker.addListener('.post', (message) => {
     self.postMessage(message, undefined);
 });
-
-self.postMessage('worker started', undefined);

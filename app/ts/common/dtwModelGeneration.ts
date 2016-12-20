@@ -9,7 +9,6 @@ export interface ReferenceLabel {
     variance: number;
     className: string;
 }
-
 export function makeVector(l: number[]): ell.DoubleVector;
 export function makeVector(l: number[][]): ell.DoubleVectorVector;
 export function makeVector(l: any): any {
