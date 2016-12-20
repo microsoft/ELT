@@ -29,7 +29,7 @@ export function makeVector(l: any): any {
 
 
 
-export function generateEMLLPrototypes(
+function generateEllPrototypes(
     sampleRate: number,
     arduinoSampleRate: number,
     references: ReferenceLabel[]): ell.PrototypeList {
@@ -71,12 +71,12 @@ export function generateEMLLPrototypes(
 
 
 
-export function generateEMLLModel(
+export function generateEllModel(
     sampleRate: number,
     arduinoSampleRate: number,
     references: ReferenceLabel[],
     confidenceThreshold: number): ell.ELL_CompiledMap {
 
-    const prototypes = generateEMLLPrototypes(sampleRate, arduinoSampleRate, references);
+    const prototypes = generateEllPrototypes(sampleRate, arduinoSampleRate, references);
     return ell.GenerateMulticlassDTWClassifier(prototypes, confidenceThreshold);
 }

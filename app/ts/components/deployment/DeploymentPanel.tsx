@@ -1,5 +1,5 @@
 import { LayoutParameters } from '../../common/common';
-import { generateEMLLModel } from '../../common/dtwModelGeneration';
+import { generateEllModel } from '../../common/dtwModelGeneration';
 import { labelingSuggestionGenerator } from '../../stores/LabelingSuggestionGenerator';
 import * as stores from '../../stores/stores';
 import { ScriptEditor } from './ScriptEditor';
@@ -14,7 +14,7 @@ import * as React from 'react';
 
 
 // Configuration
-const useEmllModel = true; // vs. Donghao model
+const useEllModel = true; // vs. Donghao model
 const confidenceThreshold = 0.2;
 const useStoredModel = false;
 
@@ -57,7 +57,7 @@ export class DeploymentPanel extends React.Component<{}, DeploymentPanelState> {
         super();
         let appCode: string;
         let modelCodeFilename: string;
-        if (useEmllModel) {
+        if (useEllModel) {
             appCode = fs.readFileSync('arduino/dtw_ELL.ino', 'utf-8');
             modelCodeFilename = 'model.asm';
         } else {
@@ -93,15 +93,15 @@ export class DeploymentPanel extends React.Component<{}, DeploymentPanelState> {
     public componentDidMount(): void {
         const prototypes = stores.dtwModelStore.prototypes;
         const sampleRate = stores.dtwModelStore.prototypeSampleRate;
-        const model = generateEMLLModel(sampleRate, 30, prototypes, confidenceThreshold);
-        const emllModelCode = model.GetCodeString();
+        const model = generateEllModel(sampleRate, 30, prototypes, confidenceThreshold);
+        const ellModelCode = model.GetCodeString();
         const header = model.GetHeaderString();
         labelingSuggestionGenerator.getDeploymentCode('arduino', oldModelCode => {
-            const modelCode = useEmllModel ? emllModelCode : oldModelCode;
+            const modelCode = useEllModel ? ellModelCode : oldModelCode;
             // #### hack: replace code passed in with current code from the store
             const appCode = this.state.arduinoAppCodeTemplate.replace('// %%HEADER%%', header);
             this.setState({ arduinoModelCode: modelCode });
-            const modelCodeFilename = useEmllModel ? 'model.asm' : 'model.ino';
+            const modelCodeFilename = useEllModel ? 'model.asm' : 'model.ino';
             this.state.tabs
                 .filter(t => t.label === modelCodeFilename)
                 .forEach(t => t.text = modelCode);
@@ -110,7 +110,7 @@ export class DeploymentPanel extends React.Component<{}, DeploymentPanelState> {
                 .forEach(t => t.text = appCode);
         });
         labelingSuggestionGenerator.getDeploymentCode('microbit', oldModelCode => {
-            const modelCode = useEmllModel ? emllModelCode : oldModelCode;
+            const modelCode = useEllModel ? ellModelCode : oldModelCode;
             // #### hack: replace code passed in with current code from the store
             // let appCode = this.state.microbitAppCodeTemplate.replace('// %%HEADER%%', header);
             this.setState({ microbitModelCode: modelCode });
@@ -120,12 +120,15 @@ export class DeploymentPanel extends React.Component<{}, DeploymentPanelState> {
         const containerHeight = 500; // this.refs.container.getBoundingClientRect().height;
         this.setState({ width: containerWidth, height: containerHeight });
     }
+
     private compile(): void {
         this.runScript('--verify');
     }
+
     private deploy(): void {
         this.runScript('--upload');
     }
+
     private runScript(mode: string): void {
         // Create a temp sketch with our files.
         const mainTempDir = os.tmpdir() + path.sep + 'DTWSketches';
@@ -138,7 +141,6 @@ export class DeploymentPanel extends React.Component<{}, DeploymentPanelState> {
         copyTextFile('arduino/BluefruitConfig.h', tmpdir + path.sep + 'BluefruitConfig.h');
         this.state.tabs.forEach(tab => {
             const filename = tab.label;
-            console.log('Writing tab ' + filename);
             const asmExt = '.asm';
             if (filename.indexOf(asmExt, filename.length - asmExt.length) !== -1) {
                 if (useStoredModel) {

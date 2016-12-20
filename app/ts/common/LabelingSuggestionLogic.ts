@@ -15,17 +15,19 @@ export enum LabelingSuggestionLogicType {
     CURRENT_VIEW        // Suggest from the current view, towards the end of the dataset.
 }
 
-export abstract class LabelingSuggestionLogic {
-    public abstract getType(): LabelingSuggestionLogicType;
-    public abstract getDescription(): string;
+
+
+export interface LabelingSuggestionLogic {
+    getType(): LabelingSuggestionLogicType;
+    getDescription(): string;
 
     // If the event in info happened, should we recompute the suggestions?
-    public abstract shouldTriggerSuggestionUpdate(info: {
+    shouldTriggerSuggestionUpdate(info: {
         didViewportChange: boolean
     }): boolean;
 
     // On what time range should we compute suggestions?
-    public abstract calculateSuggestionRange(info: {
+    calculateSuggestionRange(info: {
         dataset: Dataset,
         labels: Label[],
         detailedViewRange: TimeRange
@@ -33,7 +35,7 @@ export abstract class LabelingSuggestionLogic {
 
     // During the suggestion progress, how should we refresh existing suggestions.
     // By default, we update matching suggestions.
-    public abstract refreshSuggestions(info: {
+    refreshSuggestions(info: {
         suggestionProgress: {
             timestampStart: number,
             timestampEnd: number,
@@ -45,7 +47,7 @@ export abstract class LabelingSuggestionLogic {
         };
 
     // When a (or a set of) label has been confirmed, which suggestions should we update or delete.
-    public abstract onConfirmLabels(info: {
+    onConfirmLabels(info: {
         labelsConfirmed: Label[],
         currentSuggestions: TimeRangeIndex<Label>
     }): {
@@ -55,12 +57,14 @@ export abstract class LabelingSuggestionLogic {
         };
 
     // What labels should be highlighted (to attract the user's attention).
-    public abstract calculateHighlightedLabels(info: {
+    calculateHighlightedLabels(info: {
         suggestionsInView: Label[]
     }): Label[];
 }
 
-class LabelingSuggestionLogicCurrentView {
+
+
+class CurrentView implements LabelingSuggestionLogic {
     public getType(): LabelingSuggestionLogicType {
         return LabelingSuggestionLogicType.CURRENT_VIEW;
     }
@@ -131,7 +135,9 @@ class LabelingSuggestionLogicCurrentView {
     }
 }
 
-class LabelingSuggestionLogicForward {
+
+
+class Forward implements LabelingSuggestionLogic {
     public getType(): LabelingSuggestionLogicType {
         return LabelingSuggestionLogicType.FORWARD;
     }
@@ -154,7 +160,7 @@ class LabelingSuggestionLogicForward {
     }): TimeRange {
         return {
             timestampStart: d3.max(info.labels, (l) => l.timestampEnd - (l.timestampEnd - l.timestampStart) * 0.1),
-            timestampEnd: info.dataset.timestampEnd,
+            timestampEnd: info.dataset.timestampEnd
         };
     }
 
@@ -197,7 +203,9 @@ class LabelingSuggestionLogicForward {
     }): Label[] { return []; }
 }
 
-class LabelingSuggestionLogicForwardConfirm extends LabelingSuggestionLogicForward {
+
+
+class ForwardConfirm extends Forward implements LabelingSuggestionLogic {
     public getType(): LabelingSuggestionLogicType {
         return LabelingSuggestionLogicType.FORWARD_CONFIRM;
     }
@@ -221,7 +229,9 @@ class LabelingSuggestionLogicForwardConfirm extends LabelingSuggestionLogicForwa
     }
 }
 
-class LabelingSuggestionLogicForwardReject extends LabelingSuggestionLogicForward {
+
+
+class ForwardReject extends Forward implements LabelingSuggestionLogic {
     public getType(): LabelingSuggestionLogicType {
         return LabelingSuggestionLogicType.FORWARD_REJECT;
     }
@@ -245,17 +255,19 @@ class LabelingSuggestionLogicForwardReject extends LabelingSuggestionLogicForwar
     };
 }
 
+
+
 export function getLabelingSuggestionLogic(logicType: LabelingSuggestionLogicType): LabelingSuggestionLogic {
     switch (logicType) {
         case LabelingSuggestionLogicType.CURRENT_VIEW:
-            return new LabelingSuggestionLogicCurrentView();
+            return new CurrentView();
         case LabelingSuggestionLogicType.FORWARD:
-            return new LabelingSuggestionLogicForward();
+            return new Forward();
         case LabelingSuggestionLogicType.FORWARD_CONFIRM:
-            return new LabelingSuggestionLogicForwardConfirm();
+            return new ForwardConfirm();
         case LabelingSuggestionLogicType.FORWARD_REJECT:
-            return new LabelingSuggestionLogicForwardReject();
+            return new ForwardReject();
         default:
-            return new LabelingSuggestionLogicCurrentView();
+            throw 'bad suggestion logic type ' + logicType;
     }
 }

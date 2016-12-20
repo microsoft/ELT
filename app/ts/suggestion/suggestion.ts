@@ -2,7 +2,7 @@
 
 export {
     LabelingSuggestionEngine, LabelingSuggestionCallback,
-    LabelingSuggestionModel, LabelingSuggestionModelFactory, LabelingSuggestionProgress
+    LabelingSuggestionModel, LabelingSuggestionModelBuilder, LabelingSuggestionProgress
 } from './LabelingSuggestionEngine';
-export { DtwSuggestionModelFactory } from './DtwSuggestionModelFactory';
-export { DtwSuggestionWebWorker } from './DtwSuggestionWebWorker';
+export { DtwSyncModelBuilder } from './DtwSyncModelBuilder';
+export { DtwAsyncModelBuilder } from './DtwAsyncModelBuilder';
