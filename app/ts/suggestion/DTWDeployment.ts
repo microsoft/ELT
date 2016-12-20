@@ -1,5 +1,5 @@
 // Generate DTW code for Arduino and Microbit.
-import {resampleColumn} from '../../common/common';
+import {resampleColumn} from '../common/common';
 
 
 

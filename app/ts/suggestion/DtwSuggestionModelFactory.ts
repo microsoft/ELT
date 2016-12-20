@@ -1,9 +1,9 @@
 // Do suggestions with the Spring DTW algorithm.
 
-import { DBA } from '../../common/algorithms/DBA';
-import { MultipleSpringAlgorithm, MultipleSpringAlgorithmBestMatch } from '../../common/algorithms/SpringAlgorithm';
-import { Label, LabelConfirmationState, resampleDatasetRowMajor } from '../../common/common';
-import { Dataset } from '../../common/dataset';
+import { DBA } from '../common/algorithms/DBA';
+import { MultipleSpringAlgorithm, MultipleSpringAlgorithmBestMatch } from '../common/algorithms/SpringAlgorithm';
+import { Label, LabelConfirmationState, resampleDatasetRowMajor } from '../common/common';
+import { Dataset } from '../common/dataset';
 import { generateArduinoCodeForDtwModel, generateMicrobitCodeForDtwModel } from './DTWDeployment';
 import { LabelingSuggestionCallback, LabelingSuggestionModel, LabelingSuggestionModelFactory } from './LabelingSuggestionEngine';
 
@@ -16,6 +16,7 @@ interface ReferenceLabel {
     adjustmentsBegin: number;
     adjustmentsEnd: number;
 }
+
 
 // We use the sum of absolute distance as distance function, rather than euclidean distance
 function makeDistanceAndAverage(): {
@@ -43,6 +44,7 @@ function makeDistanceAndAverage(): {
     };
     return { distanceFunction: distanceFunction, averageFunction: averageFunction };
 }
+
 
 function groupBy<InputType>(input: InputType[], groupFunc: (itype: InputType) => string): { group: string, items: InputType[] }[] {
     const groupName2Items: { [name: string]: InputType[] } = {};
@@ -154,46 +156,9 @@ function getAverageLabelsPerClass(
     callback(result);
 }
 
-// Complementary error function
-// From Numerical Recipes in C 2e p221
-// function erfc(x: number) {
-//     const z = Math.abs(x);
-//     const t = 1 / (1 + z / 2);
-//     const r = t * Math.exp(-z * z - 1.26551223 + t * (1.00002368 +
-//         t * (0.37409196 + t * (0.09678418 + t * (-0.18628806 +
-//             t * (0.27886807 + t * (-1.13520398 + t * (1.48851587 +
-//                 t * (-0.82215223 + t * 0.17087277)))))))));
-//     return x >= 0 ? r : 2 - r;
-// };
-// Inverse complementary error function
-// From Numerical Recipes 3e p265
-// function ierfc(x: number): number {
-//     if (x >= 2) { return -100; }
-//     if (x <= 0) { return 100; }
 
-//     const xx = (x < 1) ? x : 2 - x;
-//     const t = Math.sqrt(-2 * Math.log(xx / 2));
 
-//     let r = -0.70711 * ((2.30753 + t * 0.27061) /
-//         (1 + t * (0.99229 + t * 0.04481)) - t);
-
-//     for (let j = 0; j < 2; j++) {
-//         const err = erfc(r) - xx;
-//         r += err / (1.12837916709551257 * Math.exp(-(r * r)) - r * err);
-//     }
-
-//     return (x < 1) ? r : -r;
-// };
-
-// function gaussianPercentPoint(x: number): number {
-//     return -Math.sqrt(2) * ierfc(2 * x);
-// }
-
-// function invertGaussianPercentPoint(x: number): number {
-//     return erfc(x / -Math.sqrt(2)) / 2;
-// }
-
-export class DtwSuggestionModel extends LabelingSuggestionModel {
+class DtwSuggestionModel extends LabelingSuggestionModel {
     private _references: ReferenceLabel[];
     private _sampleRate: number;
     private _callback2Timer: WeakMap<LabelingSuggestionCallback, NodeJS.Timer>;
@@ -363,7 +328,7 @@ export class DtwSuggestionModel extends LabelingSuggestionModel {
 }
 
 
-export class SpringDtwSuggestionModelFactory extends LabelingSuggestionModelFactory {
+export class DtwSuggestionModelFactory implements LabelingSuggestionModelFactory {
 
     public buildModel(
         dataset: Dataset,

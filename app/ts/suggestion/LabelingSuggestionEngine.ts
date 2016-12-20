@@ -1,21 +1,11 @@
 // Suggestion model classes and suggestion engine.
 
-import { Dataset } from '../../common/dataset';
-import { Label } from '../../common/labeling';
-import * as stores from '../../stores/stores';
-import { SpringDtwSuggestionModelFactory } from './suggestion';
+import { Dataset } from '../common/dataset';
+import { Label } from '../common/labeling';
+import * as stores from '../stores/stores';
+import { DtwSuggestionModelFactory } from './suggestion';
 import { EventEmitter } from 'events';
 
-
-// #### TEST EMLL
-interface ReferenceLabel {
-    series: number[][];
-    variance: number;
-    className: string;
-    adjustmentsBegin: number;
-    adjustmentsEnd: number;
-}
-// #### TEST EMLL
 
 
 export interface LabelingSuggestionProgress {
@@ -127,7 +117,7 @@ export class LabelingSuggestionEngine extends EventEmitter {
     }
 
     public sendEMLLPrototypes(dataset: Dataset, labels: Label[]): void {
-        const factory = new SpringDtwSuggestionModelFactory();
+        const factory = new DtwSuggestionModelFactory();
         const maxDuration = labels.map((label) => label.timestampEnd - label.timestampStart).reduce((a, b) => Math.max(a, b), 0);
         const sampleRate = 100 / maxDuration; // / referenceDuration;
         const prototypes = factory.getReferences(dataset, labels);

@@ -1,20 +1,21 @@
 // Warps SPRINGDTWSuggestionModelFactory with a WebWorker.
 
-import { Dataset } from '../../common/dataset';
-import { Label } from '../../common/labeling';
+import { Dataset } from '../common/dataset';
+import { Label } from '../common/labeling';
 import { LabelingSuggestionCallback, LabelingSuggestionModel, LabelingSuggestionModelFactory } from './LabelingSuggestionEngine';
+import { ModelSpecificMessage, SuggestionWorkerMessage } from './worker/SuggestionWorkerMessage';
 import { EventEmitter } from 'events';
 
 
 
 class WorkerModel extends LabelingSuggestionModel {
     private _modelID: string;
-    private _parent: SpingDtwSuggestionModelFactoryWebWorker;
+    private _parent: DtwSuggestionWebWorker;
     private _currentCallbackID: number;
     private _registeredCallbacks: Map<string, Function>;
     private _callback2ID: WeakMap<Function, string>;
 
-    constructor(parent: SpingDtwSuggestionModelFactoryWebWorker, modelID: string) {
+    constructor(parent: DtwSuggestionWebWorker, modelID: string) {
         super();
         this._modelID = modelID;
         this._parent = parent;
@@ -26,13 +27,13 @@ class WorkerModel extends LabelingSuggestionModel {
 
     private onMessage(data: any): void {
         const message = data.message;
-        if (message.type === 'callback') {
+        if (message.kind === 'callback') {
             const cb = this._registeredCallbacks.get(message.callbackID);
             if (cb) {
                 cb(message.labels, message.progress, message.completed);
             }
         }
-        if (message.type === 'get-deployment-code-callback') {
+        if (message.kind === 'get-deployment-code-callback') {
             const cb = this._registeredCallbacks.get(message.callbackID);
             if (cb) {
                 cb(message.code);
@@ -58,7 +59,7 @@ class WorkerModel extends LabelingSuggestionModel {
         this._callback2ID.set(callback, callbackID);
 
         this._parent.postModelMessage(this._modelID, {
-            type: 'compute',
+            kind: 'compute',
             callbackID: callbackID,
             timestampStart: timestampStart,
             timestampEnd: timestampEnd,
@@ -72,7 +73,7 @@ class WorkerModel extends LabelingSuggestionModel {
         // console.log('WebWorker.cancelSuggestion', this._modelID);
         if (this._callback2ID.has(callback)) {
             this._parent.postModelMessage(this._modelID, {
-                type: 'compute.cancel',
+                kind: 'compute.cancel',
                 callbackID: this._callback2ID.get(callback)
             });
             this._callback2ID.delete(callback);
@@ -87,7 +88,7 @@ class WorkerModel extends LabelingSuggestionModel {
         this._callback2ID.set(callback, callbackID);
 
         this._parent.postModelMessage(this._modelID, {
-            type: 'get-deployment-code',
+            kind: 'get-deployment-code',
             callbackID: callbackID,
             platform: platform
         });
@@ -95,14 +96,14 @@ class WorkerModel extends LabelingSuggestionModel {
 
     public dispose(): void {
         this._parent.postModelMessage(this._modelID, {
-            type: 'dispose'
+            kind: 'dispose'
         });
     }
 }
 
 
 
-export class SpingDtwSuggestionModelFactoryWebWorker extends LabelingSuggestionModelFactory {
+export class DtwSuggestionWebWorker extends LabelingSuggestionModelFactory {
     private _worker: Worker;
     private _currentDataset: Dataset;
     private _registeredCallbacks: Map<string, (model: LabelingSuggestionModel, progress: number, error: string) => void>;
@@ -111,14 +112,14 @@ export class SpingDtwSuggestionModelFactoryWebWorker extends LabelingSuggestionM
 
     constructor() {
         super();
-        this._worker = new Worker('./app/js/suggestion/labeling/suggestionWorker.browserified.js');
+        this._worker = new Worker('./app/js/suggestion/worker/suggestionWorker.browserified.js');
         this._emitter = new EventEmitter();
         this._registeredCallbacks = new Map<string, (model: LabelingSuggestionModel, progress: number, error: string) => void>();
 
         this._currentDataset = null;
         this._worker.onmessage = event => {
             const data = event.data;
-            this._emitter.emit(data.type, data);
+            this._emitter.emit(data.kind, data);
         };
         this._currentCallbackID = 1;
 
@@ -136,14 +137,14 @@ export class SpingDtwSuggestionModelFactoryWebWorker extends LabelingSuggestionM
         this._emitter.addListener('model.message.' + modelID, callback);
     }
 
-    private postMessage(message: any): void {
+    private postMessage(message: SuggestionWorkerMessage): void {
         console.log('post worker message', message);
         this._worker.postMessage(message);
     }
 
-    public postModelMessage(modelID: string, message: any): void {
+    public postModelMessage(modelID: string, message: ModelSpecificMessage): void {
         this.postMessage({
-            type: 'model.message.' + modelID,
+            kind: 'model.message.' + modelID,
             modelID: modelID,
             message: message
         });
@@ -152,7 +153,7 @@ export class SpingDtwSuggestionModelFactoryWebWorker extends LabelingSuggestionM
     public setDataset(dataset: Dataset): void {
         if (dataset !== this._currentDataset) {
             this.postMessage({
-                type: 'dataset.set',
+                kind: 'dataset.set',
                 dataset: dataset.serialize()
             });
             this._currentDataset = dataset;
@@ -173,7 +174,7 @@ export class SpingDtwSuggestionModelFactoryWebWorker extends LabelingSuggestionM
         this._registeredCallbacks.set(callbackID, callback);
 
         this.postMessage({
-            type: 'model.build',
+            kind: 'model.build',
             callbackID: callbackID,
             labels: labels
         });

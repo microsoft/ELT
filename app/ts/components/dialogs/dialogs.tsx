@@ -7,7 +7,7 @@ import {remote} from 'electron';
 
 
 // We should save one .labels file for each input file
-export function exportLabels() {
+export function exportLabels(): void {
     new actions.CommonActions.ExportLabels().dispatch();
 }
 
