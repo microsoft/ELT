@@ -10,7 +10,7 @@
     "build": "npm run build:ts && npm run build:worker && npm run build:less",
     "build:ts": "tsc && tsc -p app",
     "build:less": "lessc app/less/styles.less app/css/styles.compiled.css",
-    "build:worker": "browserify app/js/suggestion/worker/suggestionWorker.js -o app/js/suggestion/worker/suggestionWorker.browserified.js",
+    "build:worker": "browserify app/js/suggestion/worker/dtwsuggestionWorker.js -o app/js/suggestion/worker/suggestionWorker.browserified.js",
     "prepublish": "npm run build",
     "package:win32": "electron-packager . --platform=win32 --arch=x64 --ignore=\"/data($|/)\" --asar --out=../packaged",
     "package:darwin": "electron-packager . --platform=darwin --arch=x64 --ignore=\"/data($|/)\" --asar --out=../packaged"
