@@ -4,7 +4,7 @@ import { DBA } from '../../common/algorithms/DBA';
 import { MultipleSpringAlgorithm, MultipleSpringAlgorithmBestMatch } from '../../common/algorithms/SpringAlgorithm';
 import { Label, LabelConfirmationState, resampleDatasetRowMajor } from '../../common/common';
 import { Dataset } from '../../common/dataset';
-import { generateArduinoCodeForDtwModel, generateMicrobitCodeForDtwModel } from '../DTWDeployment';
+import { generateArduinoCodeForDtwModel, generateMicrobitCodeForDtwModel } from '../DtwDeployment';
 import { LabelingSuggestionCallback, LabelingSuggestionModel } from '../LabelingSuggestionEngine';
 
 
