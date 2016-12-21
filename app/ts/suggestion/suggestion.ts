@@ -4,5 +4,5 @@ export {
     LabelingSuggestionEngine, LabelingSuggestionCallback,
     LabelingSuggestionModel, LabelingSuggestionModelBuilder, LabelingSuggestionProgress
 } from './LabelingSuggestionEngine';
-export { DtwSyncModelBuilder } from './DtwSyncModelBuilder';
-export { DtwAsyncModelBuilder } from './DtwAsyncModelBuilder';
+export { DtwAlgorithm } from './worker/DtwAlgorithm';
+export { DtwSuggestionModelBuilder } from './DtwSuggestionModelBuilder';

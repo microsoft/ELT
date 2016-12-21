@@ -3,7 +3,7 @@
 import { Dataset } from '../common/dataset';
 import { Label } from '../common/labeling';
 import * as stores from '../stores/stores';
-import { DtwSyncModelBuilder } from './suggestion';
+import { DtwAlgorithm } from './suggestion';
 import { EventEmitter } from 'events';
 
 
@@ -117,12 +117,11 @@ export class LabelingSuggestionEngine extends EventEmitter {
     }
 
     private storeModel(dataset: Dataset, labels: Label[]): void {
-        const factory = new DtwSyncModelBuilder();
         const maxDuration = labels
             .map((label) => label.timestampEnd - label.timestampStart)
             .reduce((a, b) => Math.max(a, b), 0);
         const sampleRate = 100 / maxDuration; // / referenceDuration;
-        stores.dtwModelStore.prototypes = factory.getReferenceLabels(dataset, labels);
+        stores.dtwModelStore.prototypes = DtwAlgorithm.getReferenceLabels(dataset, labels);
         stores.dtwModelStore.prototypeSampleRate = sampleRate;
     }
 
