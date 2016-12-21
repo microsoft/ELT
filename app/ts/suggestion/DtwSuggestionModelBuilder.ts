@@ -10,12 +10,12 @@ import { EventEmitter } from 'events';
 
 class WorkerModel extends LabelingSuggestionModel {
     private _modelID: string;
-    private _parent: DtwAsyncModelBuilder;
+    private _parent: DtwSuggestionModelBuilder;
     private _currentCallbackID: number;
     private _registeredCallbacks: Map<string, Function>;
     private _callback2ID: WeakMap<Function, string>;
 
-    constructor(parent: DtwAsyncModelBuilder, modelID: string) {
+    constructor(parent: DtwSuggestionModelBuilder, modelID: string) {
         super();
         this._modelID = modelID;
         this._parent = parent;
@@ -103,7 +103,7 @@ class WorkerModel extends LabelingSuggestionModel {
 
 
 
-export class DtwAsyncModelBuilder extends LabelingSuggestionModelBuilder {
+export class DtwSuggestionModelBuilder extends LabelingSuggestionModelBuilder {
     private _worker: Worker;
     private _currentDataset: Dataset;
     private _registeredCallbacks: Map<string, (model: LabelingSuggestionModel, progress: number, error: string) => void>;
@@ -138,7 +138,6 @@ export class DtwAsyncModelBuilder extends LabelingSuggestionModelBuilder {
     }
 
     private postMessage(message: SuggestionWorkerMessage): void {
-        console.log('post worker message', message);
         this._worker.postMessage(message);
     }
 

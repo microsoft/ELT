@@ -1,11 +1,11 @@
 // Do suggestions with the Spring DTW algorithm.
 
-import { DBA } from '../common/algorithms/DBA';
-import { MultipleSpringAlgorithm, MultipleSpringAlgorithmBestMatch } from '../common/algorithms/SpringAlgorithm';
-import { Label, LabelConfirmationState, resampleDatasetRowMajor } from '../common/common';
-import { Dataset } from '../common/dataset';
-import { generateArduinoCodeForDtwModel, generateMicrobitCodeForDtwModel } from './DTWDeployment';
-import { LabelingSuggestionCallback, LabelingSuggestionModel, LabelingSuggestionModelBuilder } from './LabelingSuggestionEngine';
+import { DBA } from '../../common/algorithms/DBA';
+import { MultipleSpringAlgorithm, MultipleSpringAlgorithmBestMatch } from '../../common/algorithms/SpringAlgorithm';
+import { Label, LabelConfirmationState, resampleDatasetRowMajor } from '../../common/common';
+import { Dataset } from '../../common/dataset';
+import { generateArduinoCodeForDtwModel, generateMicrobitCodeForDtwModel } from '../DTWDeployment';
+import { LabelingSuggestionCallback, LabelingSuggestionModel } from '../LabelingSuggestionEngine';
 
 
 
@@ -161,7 +161,6 @@ class DtwSuggestionModel extends LabelingSuggestionModel {
         this._sampleRate = sampleRate;
         this._callback2Timer = new WeakMap<LabelingSuggestionCallback, NodeJS.Timer>();
         this._allTimers = new Set<NodeJS.Timer>();
-        // console.log(this.getDeploymentCode('arduino'));
     }
 
     public getDeploymentCode(platform: string, callback: (code: string) => any): void {
@@ -316,21 +315,16 @@ class DtwSuggestionModel extends LabelingSuggestionModel {
 }
 
 
-export class DtwSyncModelBuilder implements LabelingSuggestionModelBuilder {
+export module DtwAlgorithm {
 
-    public buildModelAsync(
-        dataset: Dataset,
-        labels: Label[],
-        callback: (model: LabelingSuggestionModel, progress: number, error: string) => void): void {
-
+    export function createModel(dataset: Dataset, labels: Label[]): DtwSuggestionModel {
         const maxDuration = labels.map((label) => label.timestampEnd - label.timestampStart).reduce((a, b) => Math.max(a, b), 0);
         const sampleRate = 100 / maxDuration; // / referenceDuration;
         const references = getAverageLabelsPerClass(dataset, labels, sampleRate);
-        const model = new DtwSuggestionModel(references, sampleRate);
-        callback(model, 1, null);
+        return new DtwSuggestionModel(references, sampleRate);
     }
 
-    public getReferenceLabels(dataset: Dataset, labels: Label[]): ReferenceLabel[] {
+    export function getReferenceLabels(dataset: Dataset, labels: Label[]): ReferenceLabel[] {
         const maxDuration = labels
             .map(label => label.timestampEnd - label.timestampStart)
             .reduce((a, b) => Math.max(a, b), 0);
