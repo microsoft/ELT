@@ -173,7 +173,7 @@ export class AlignmentLabelingStore extends EventEmitter {
             }
 
             if (action instanceof actions.CommonActions.ExportLabels) {
-                this.exportLabels();
+                this.exportLabels(action.fileName);
             }
 
             if (action instanceof actions.CommonActions.LoadProject) {
@@ -309,12 +309,12 @@ export class AlignmentLabelingStore extends EventEmitter {
     }
 
     // TODO: might want to move some of this computation elsewhere 
-    public exportLabels(): void {
+    public exportLabels(fileName: string): void {
         // for each timeseries, get the source file, and save to a .labels file
         this.tracks.map((track) => {
             track.alignedTimeSeries.map((timeSeries) => {
                 const sourceFile = timeSeries.source;
-                const destinationFile = sourceFile + '.labels.tsv';
+                //const destinationFile = sourceFile + '.labels.tsv';
                 // read in the source file via dataset.ts (see loadMultipleSensorTimeSeriesFromFile)
                 // you can also get the timestampStart and timestampEnd from this
                 // which you want to map to timeSeries.referenceStart and timeSeries.referenceEnd
@@ -355,7 +355,7 @@ export class AlignmentLabelingStore extends EventEmitter {
                         }
                     }
                 }
-                fs.writeFileSync(destinationFile, annotatedSensorData.join('\n'), 'utf-8');
+                fs.writeFileSync(fileName, annotatedSensorData.join('\n'), 'utf-8');
             });
         });
     }

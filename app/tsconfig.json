@@ -8,8 +8,8 @@
         "target": "es5",
         "noImplicitAny": false,
         "jsx": "react",
-        "sourceMap": true,
-        "forceConsistentCasingInFileNames": true
+        "sourceMap": true
+         //"forceConsistentCasingInFileNames": true //TODO: check if we need this
     },
     "exclude": [
         "ts/test"
