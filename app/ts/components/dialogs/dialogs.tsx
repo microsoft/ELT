@@ -8,9 +8,26 @@ import {remote} from 'electron';
 
 // We should save one .labels file for each input file
 export function exportLabels(): void {
-    new actions.CommonActions.ExportLabels().dispatch();
+    showExportLabelsDialog();
+    //new actions.CommonActions.ExportLabels().dispatch();
 }
 
+export function showExportLabelsDialog(onSaved: () => any = null, onCanceled: () => any = null): void {
+    remote.dialog.showSaveDialog(
+        remote.BrowserWindow.getFocusedWindow(), {
+            filters: [
+                { name: 'tsv', extensions: ['tsv'] }
+            ]
+        },
+        (fileName: string) => {
+            if (fileName) {
+                new actions.CommonActions.ExportLabels(fileName).dispatch();
+                if (onSaved) { onSaved(); }
+            } else {
+                if (onCanceled) { onCanceled(); }
+            }
+        });
+}
 
 // Show the save project dialog, once file is selected, save the project.
 export function showSaveProjectDialog(onSaved: () => any = null, onCanceled: () => any = null): void {
