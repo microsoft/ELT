@@ -6,7 +6,7 @@ import { remote } from 'electron';
 import * as React from 'react';
 
 
-export interface AlignmentToolbarViewProps {
+export interface AlignmentToolbarProps {
     top: number;
     left: number;
     viewWidth: number;
@@ -14,12 +14,12 @@ export interface AlignmentToolbarViewProps {
 }
 
 
-export class AlignmentToolbarView extends React.Component<AlignmentToolbarViewProps, {}> {
+export class AlignmentToolbar extends React.Component<AlignmentToolbarProps, {}> {
     public refs: {
         [name: string]: Element
     };
 
-    constructor(props: AlignmentToolbarViewProps, context: any) {
+    constructor(props: AlignmentToolbarProps, context: any) {
         super(props, context);
         this.loadDataOrVideo = this.loadDataOrVideo.bind(this);
         this.loadReferenceVideo = this.loadReferenceVideo.bind(this);

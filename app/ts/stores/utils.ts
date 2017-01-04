@@ -188,9 +188,6 @@ export class ArrayThrottler<ItemType, StationaryType> {
     }
 }
 
-
-
-
 export interface DatasetMetadata {
     name: string;
     sensors: {

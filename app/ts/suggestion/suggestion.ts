@@ -1,7 +1,6 @@
 // Export suggestion stuff.
 
-export {
-    LabelingSuggestionEngine, LabelingSuggestionCallback,
+export { LabelingSuggestionEngine, LabelingSuggestionCallback,
     LabelingSuggestionModel, LabelingSuggestionModelBuilder, LabelingSuggestionProgress
 } from './LabelingSuggestionEngine';
 export { DtwAlgorithm } from './worker/DtwAlgorithm';

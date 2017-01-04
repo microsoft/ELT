@@ -61,9 +61,6 @@ interface ChangePointsRangePlotState {
 
 
 
-
-
-
 export class ChangePointsRangePlot extends EventListenerComponent<ChangePointsRangePlotProps, ChangePointsRangePlotState> {
     constructor(props: ChangePointsRangePlotProps, context: any) {
         super(props, context, [stores.labelingStore.suggestedChangePointsChanged]);

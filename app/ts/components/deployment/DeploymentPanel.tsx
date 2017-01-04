@@ -3,7 +3,7 @@ import { generateEllModel } from '../../suggestion/ELLDtwModelGeneration';
 import { labelingSuggestionGenerator } from '../../stores/LabelingSuggestionGenerator';
 import * as stores from '../../stores/stores';
 import { ScriptEditor } from './ScriptEditor';
-import { DeploymentToolbar } from './Toolbar';
+import { DeploymentToolbar } from './DeploymentToolbar';
 import { ToolOutputPanel } from './ToolOutputPanel';
 import { execFileSync, spawn } from 'child_process';
 import * as fs from 'fs';
