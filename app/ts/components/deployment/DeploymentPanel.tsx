@@ -1,5 +1,5 @@
 import { LayoutParameters } from '../../stores/dataStructures/LayoutParameters';
-import { generateEllModel } from '../../common/dtwModelGeneration';
+import { generateEllModel } from '../../suggestion/ELLDtwModelGeneration';
 import { labelingSuggestionGenerator } from '../../stores/LabelingSuggestionGenerator';
 import * as stores from '../../stores/stores';
 import { ScriptEditor } from './ScriptEditor';

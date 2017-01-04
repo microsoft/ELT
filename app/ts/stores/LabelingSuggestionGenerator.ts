@@ -1,5 +1,5 @@
 import * as Actions from '../actions/Actions';
-import { pelt } from '../common/algorithms/pelt';
+import { pelt } from '../suggestion/algorithms/pelt';
 import { Label, LabelConfirmationState } from '../stores/dataStructures/labeling';
 import { ArrayThrottler} from '../stores/utils';
 import { SensorTimeSeries } from '../stores/dataStructures/dataset';

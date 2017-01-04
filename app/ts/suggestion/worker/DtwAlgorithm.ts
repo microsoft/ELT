@@ -1,7 +1,7 @@
 // Do suggestions with the Spring DTW algorithm.
 
-import { DBA } from '../../common/algorithms/DBA';
-import { MultipleSpringAlgorithm, MultipleSpringAlgorithmBestMatch } from '../../common/algorithms/SpringAlgorithm';
+import { DBA } from '../algorithms/DBA';
+import { MultipleSpringAlgorithm, MultipleSpringAlgorithmBestMatch } from '../algorithms/SpringAlgorithm';
 import { resampleDatasetRowMajor } from '../../stores/dataStructures/sampling';
 import { Label, LabelConfirmationState } from '../../stores/dataStructures/labeling';
 import { Dataset } from '../../stores/dataStructures/dataset';
