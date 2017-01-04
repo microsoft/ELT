@@ -8,10 +8,10 @@ import * as React from 'react';
 // Global mipmap cache for sensor plots.
 const mipmapCache = new MipmapCache();
 
-// Component SensorTimeSeriesPlot
+// Component SensorPlot
 // This is a long timeseries without any boundary. 
 // To show a timeseries with boundary (i.e., in a rectangle and scrollable), use SensorTimeSeriesRangePlot
-export interface SensorTimeSeriesPlotProps {
+export interface SensorPlotProps {
     timeSeries: SensorTimeSeries;     // The timeseries object to show, replace it with a NEW object if you need to update its contents.
     dimensionVisibility?: boolean[];  // boolean array to show/hide individual dimensions.
     colorScale?: d3.ScaleOrdinal<number, string>; // Colors to use, if null, use d3.category10 or 20.
@@ -22,9 +22,9 @@ export interface SensorTimeSeriesPlotProps {
     alternateDimensions?: (number[] | Float32Array)[]; // If set, use this dimensions as data, instead of the data from timeSeries.
 }
 
-export class SensorTimeSeriesPlot extends React.Component<SensorTimeSeriesPlotProps, {}> {
+export class SensorPlot extends React.Component<SensorPlotProps, {}> {
 
-    public shouldComponentUpdate(nextProps: SensorTimeSeriesPlotProps): boolean {
+    public shouldComponentUpdate(nextProps: SensorPlotProps): boolean {
         // We consider the timeSeries object and colorScale constant, so any change INSIDE these objects will not trigger an update.
         // To change the timeSeries, replace it with another object, don't update it directly.
         return nextProps.timeSeries !== this.props.timeSeries ||
@@ -106,10 +106,10 @@ export class SensorTimeSeriesPlot extends React.Component<SensorTimeSeriesPlotPr
     }
 }
 
-// Component SensorTimeSeriesRangePlot
+// Component SensorRangePlot
 // Draw a timeseries in a box of (0, 0, plotWidth, plotHeight). 
 // Use rangeStart to set starting time (for scrolling), and pixelsPerSecond to set zooming factor.
-export interface SensorTimeSeriesRangePlotProps {
+export interface SensorRangePlotProps {
     timeSeries: SensorTimeSeries;     // The timeseries object to show, replace it with a NEW object if you need to update its contents.
     dimensionVisibility?: boolean[];  // boolean array to show/hide individual dimensions.
     colorScale?: any;                 // Colors to use, if null, use d3.category10 or 20.
@@ -125,9 +125,9 @@ export interface SensorTimeSeriesRangePlotProps {
     useMipmap?: boolean;              // Enable mipmap.
 }
 
-export class SensorTimeSeriesRangePlot extends React.Component<SensorTimeSeriesRangePlotProps, {}> {
+export class SensorRangePlot extends React.Component<SensorRangePlotProps, {}> {
 
-    public shouldComponentUpdate(nextProps: SensorTimeSeriesRangePlotProps): boolean {
+    public shouldComponentUpdate(nextProps: SensorRangePlotProps): boolean {
         return nextProps.timeSeries !== this.props.timeSeries ||
             nextProps.colorScale !== this.props.colorScale ||
             nextProps.pixelsPerSecond !== this.props.pixelsPerSecond ||
@@ -216,7 +216,7 @@ export class SensorTimeSeriesRangePlot extends React.Component<SensorTimeSeriesR
         }
         const slicePlots = slices.map((slice) => {
             return (
-                <SensorTimeSeriesPlot
+                <SensorPlot
                     key={`slice-${slice[0]}`}
                     timeSeries={timeseries}
                     colorScale={this.props.colorScale}

@@ -6,7 +6,7 @@ import * as React from 'react';
 
 
 
-interface ChangePointsPlotProps {
+interface ChangePointPlotProps {
     timestamps: number[];
     // Zooming factor.
     pixelsPerSecond: number;
@@ -15,9 +15,9 @@ interface ChangePointsPlotProps {
 }
 
 
-export class ChangePointsPlot extends React.Component<ChangePointsPlotProps, {}> {
+export class ChangePointPlot extends React.Component<ChangePointPlotProps, {}> {
 
-    public shouldComponentUpdate(nextProps: ChangePointsPlotProps): boolean {
+    public shouldComponentUpdate(nextProps: ChangePointPlotProps): boolean {
         return this.props.pixelsPerSecond !== nextProps.pixelsPerSecond ||
             this.props.height !== nextProps.height ||
             this.props.timestamps !== nextProps.timestamps;
@@ -44,7 +44,7 @@ export class ChangePointsPlot extends React.Component<ChangePointsPlotProps, {}>
     }
 }
 
-interface ChangePointsRangePlotProps {
+interface ChangePointRangePlotProps {
     // Zooming factor.
     rangeStart: number;
     pixelsPerSecond: number;
@@ -55,14 +55,14 @@ interface ChangePointsRangePlotProps {
 
 
 
-interface ChangePointsRangePlotState {
+interface ChangePointRangePlotState {
     timestamps: number[];
 }
 
 
 
-export class ChangePointsRangePlot extends EventListenerComponent<ChangePointsRangePlotProps, ChangePointsRangePlotState> {
-    constructor(props: ChangePointsRangePlotProps, context: any) {
+export class ChangePointRangePlot extends EventListenerComponent<ChangePointRangePlotProps, ChangePointRangePlotState> {
+    constructor(props: ChangePointRangePlotProps, context: any) {
         super(props, context, [stores.labelingStore.suggestedChangePointsChanged]);
 
         this.state = {
@@ -76,7 +76,7 @@ export class ChangePointsRangePlot extends EventListenerComponent<ChangePointsRa
         });
     }
 
-    public componentWillReceiveProps(newProps: ChangePointsRangePlotProps): void {
+    public componentWillReceiveProps(newProps: ChangePointRangePlotProps): void {
         this.setState({
             timestamps: stores.labelingStore.changePoints
         });
@@ -86,7 +86,7 @@ export class ChangePointsRangePlot extends EventListenerComponent<ChangePointsRa
     public render(): JSX.Element {
         return (
             <g className='changepoints' transform={`translate(${-this.props.pixelsPerSecond * this.props.rangeStart},0)`}>
-                <ChangePointsPlot
+                <ChangePointPlot
                     timestamps={this.state.timestamps}
                     pixelsPerSecond={this.props.pixelsPerSecond}
                     height={this.props.plotHeight}
