@@ -4,8 +4,8 @@ import { AlignedTimeSeries, Track } from '../../stores/dataStructures/alignment'
 import { SignalsViewMode } from '../../stores/dataStructures/labeling';
 import { SensorTimeSeries, TimeSeriesKind, VideoTimeSeries } from '../../stores/dataStructures/dataset';
 import { AutocorrelogramPlot } from '../common/AutocorrelogramPlot';
-import { SensorTimeSeriesRangePlot } from '../common/SensorPlot';
-import { VideoFrame, VideoTimeSeriesRangePlot } from '../common/VideoPlot';
+import { SensorRangePlot } from '../common/SensorPlot';
+import { VideoFrame, VideoRangePlot } from '../common/VideoPlot';
 import * as d3 from 'd3';
 import * as React from 'react';
 
@@ -186,7 +186,7 @@ export class TrackView extends React.Component<TrackViewProps, {}> {
                     return (
                         <g transform={`translate(${xStart}, 0)`} key={`ts-${alignedTimeSeries.id}-${t}`}>
                             <g opacity={1}>
-                                <VideoTimeSeriesRangePlot
+                                <VideoRangePlot
                                     timeSeries={video}
                                     rangeStart={tStart}
                                     pixelsPerSecond={pps}
@@ -224,7 +224,7 @@ export class TrackView extends React.Component<TrackViewProps, {}> {
                                     plotWidth={xEnd - xStart}
                                     plotHeight={chunkHeight}
                                     />
-                                <SensorTimeSeriesRangePlot
+                                <SensorRangePlot
                                     timeSeries={timeSeries as SensorTimeSeries}
                                     rangeStart={tStart}
                                     pixelsPerSecond={pps}
@@ -240,7 +240,7 @@ export class TrackView extends React.Component<TrackViewProps, {}> {
                     default:
                         return (
                             <g transform={`translate(${xStart}, ${ySeries})`} key={`ts-${alignedTimeSeries.id}-${t}`}>
-                                <SensorTimeSeriesRangePlot
+                                <SensorRangePlot
                                     timeSeries={timeSeries as SensorTimeSeries}
                                     rangeStart={tStart}
                                     pixelsPerSecond={pps}

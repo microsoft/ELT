@@ -3,9 +3,9 @@ import {getUniqueIDForObject} from '../../stores/utils';
 import * as React from 'react';
 
 
-// Component VideoTimeSeriesRangePlot
+// Component VideoRangePlot
 // Display a video as frame thumbnails.
-export interface VideoTimeSeriesRangePlotProps {
+export interface VideoRangePlotProps {
     timeSeries: VideoTimeSeries;    // The VideoTimeSeries object to display.
     pixelsPerSecond: number;        // Scaling factor.
     plotWidth: number;              // Width of the plot.
@@ -16,9 +16,9 @@ export interface VideoTimeSeriesRangePlotProps {
 }
 
 
-export class VideoTimeSeriesRangePlot extends React.Component<VideoTimeSeriesRangePlotProps, {}> {
+export class VideoRangePlot extends React.Component<VideoRangePlotProps, {}> {
 
-    public shouldComponentUpdate(nextProps: VideoTimeSeriesRangePlotProps): boolean {
+    public shouldComponentUpdate(nextProps: VideoRangePlotProps): boolean {
         // We consider the timeSeries object and colorScale constant, so any change inside these objects will not trigger an update.
         // To change the timeSeries, replace it with another object, don't update it directly.
         return nextProps.timeSeries !== this.props.timeSeries ||

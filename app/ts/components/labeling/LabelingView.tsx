@@ -9,7 +9,7 @@ import {KeyCode} from '../../stores/dataStructures/types';
 import * as stores from '../../stores/stores';
 import {EventListenerComponent} from '../common/EventListenerComponent';
 import {TrackView} from '../common/TrackView';
-import {ChangePointsRangePlot} from './ChangePointPlot';
+import {ChangePointRangePlot} from './ChangePointPlot';
 import {LabelKind} from './LabelPlot';
 import {LabelsRangePlot} from './LabelsRangePlot';
 import * as d3 from 'd3';
@@ -348,7 +348,7 @@ export class LabelingView extends EventListenerComponent<LabelingViewProps, Labe
                     <g className='labels' transform={`translate(0, ${labelAreaY0})`}>
                         {
                             this.state.suggestionEnabled ? (
-                                <ChangePointsRangePlot
+                                <ChangePointRangePlot
                                     pixelsPerSecond={this.state.pixelsPerSecond}
                                     rangeStart={this.state.detailedViewStart}
                                     plotWidth={this.props.viewWidth}
