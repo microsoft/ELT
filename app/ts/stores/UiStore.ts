@@ -1,8 +1,8 @@
 // App-level UI Store: Manages the curernt tab.
 
 import * as actions from '../actions/Actions';
-import { TransitionController } from '../common/common';
-import { TabID } from '../common/ui/types';
+import { TransitionController } from '../stores/utils';
+import { TabID } from '../stores/dataStructures/types';
 import { globalDispatcher } from '../dispatcher/globalDispatcher';
 import { NodeEvent } from './NodeEvent';
 import * as stores from './stores';

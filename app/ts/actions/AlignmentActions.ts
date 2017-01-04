@@ -1,6 +1,6 @@
 // Alignment actions.
 
-import {AlignedTimeSeries, Marker, MarkerCorrespondence, Track} from '../common/common';
+import {AlignedTimeSeries, Marker, MarkerCorrespondence, Track} from '../stores/dataStructures/alignment';
 import {ActionBase} from './ActionBase';
 import {CommonActions} from './CommonActions';
 

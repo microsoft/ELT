@@ -1,6 +1,4 @@
-import {Label} from '../../common/labeling';
-
-
+import {Label} from '../../stores/dataStructures/labeling';
 
 interface ModelMessageBase {
     kind: string;

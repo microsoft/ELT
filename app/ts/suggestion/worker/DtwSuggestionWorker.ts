@@ -1,13 +1,8 @@
 // The webworker entry point for the worker-based DTW model factory.
 
-import { Dataset } from '../../common/dataset';
-import { Label } from '../../common/labeling';
-import {
-    DtwAlgorithm,
-    LabelingSuggestionCallback,
-    LabelingSuggestionModel,
-    LabelingSuggestionProgress
-} from '../suggestion';
+import { Dataset } from '../../stores/dataStructures/dataset';
+import { Label } from '../../stores/dataStructures/labeling';
+import { DtwAlgorithm, LabelingSuggestionCallback, LabelingSuggestionModel, LabelingSuggestionProgress} from '../suggestion';
 import { ModelBuildMessage, ModelMessage, SetDatasetMessage } from './SuggestionWorkerMessage';
 import { EventEmitter } from 'events';
 

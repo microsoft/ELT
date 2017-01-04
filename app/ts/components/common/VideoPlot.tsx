@@ -1,5 +1,5 @@
-import {VideoTimeSeries} from '../../common/dataset';
-import {getUniqueIDForObject} from '../../common/ui/utils';
+import {VideoTimeSeries} from '../../stores/dataStructures/dataset';
+import {getUniqueIDForObject} from '../../stores/utils';
 import * as React from 'react';
 
 

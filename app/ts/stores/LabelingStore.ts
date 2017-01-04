@@ -1,7 +1,11 @@
 import * as actions from '../actions/Actions';
-import {AlignedTimeSeries, Label, LabelConfirmationState, mergeTimeRangeArrays, SavedLabelingState, TimeRangeIndex} from '../common/common';
-import {PerItemEventListeners, resampleColumn } from '../common/common';
-import {Dataset, SensorTimeSeries} from '../common/dataset';
+import {AlignedTimeSeries} from '../stores/dataStructures/alignment';
+import {Label, LabelConfirmationState} from '../stores/dataStructures/labeling';
+import {SavedLabelingState} from '../stores/dataStructures/project';
+import {mergeTimeRangeArrays, TimeRangeIndex} from '../stores/dataStructures/timeRangeIndex';
+import {resampleColumn } from '../stores/dataStructures/sampling';
+import {PerItemEventListeners } from '../stores/utils';
+import {Dataset, SensorTimeSeries} from '../stores/dataStructures/dataset';
 import {globalDispatcher} from '../dispatcher/globalDispatcher';
 import {AlignmentStore} from './AlignmentStore';
 import {NodeEvent, NodeItemEvent} from './NodeEvent';

@@ -1,7 +1,8 @@
 // UI states for alignment.
 
 import * as Actions from '../actions/Actions';
-import {AlignedTimeSeries, AlignmentState, LayoutParameters, Marker, MarkerCorrespondence, Track } from '../common/common';
+import {AlignedTimeSeries, AlignmentState, Marker, MarkerCorrespondence, Track } from '../stores/dataStructures/alignment';
+import { LayoutParameters } from '../stores/dataStructures/LayoutParameters';
 import {globalDispatcher} from '../dispatcher/globalDispatcher';
 import {NodeEvent} from './NodeEvent';
 import {alignmentLabelingStore, alignmentLabelingUiStore, alignmentStore} from './stores';

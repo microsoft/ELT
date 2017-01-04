@@ -1,6 +1,6 @@
 // Slider to adjust suggestion confidence threshold.
 
-import {startDragging} from '../../common/common';
+import {startDragging} from '../../stores/utils';
 import * as d3 from 'd3';
 import * as React from 'react';
 

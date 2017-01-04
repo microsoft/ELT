@@ -1,5 +1,5 @@
 import * as actions from '../actions/Actions';
-import {TransitionController} from '../common/common';
+import {TransitionController} from '../stores/utils';
 import {globalDispatcher} from '../dispatcher/globalDispatcher';
 import {NodeEvent} from './NodeEvent';
 import {alignmentLabelingStore} from './stores';

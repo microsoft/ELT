@@ -2,11 +2,9 @@ import * as d3 from 'd3';
 import * as fs from 'fs';
 import * as path_module from 'path';
 
-import {autocorrelogram} from '../algorithms/Autocorrelation';
-import {Dataset, loadSensorTimeSeriesFromFile, loadVideoTimeSeriesFromFile, SensorTimeSeries, TimeSeriesKind} from '../dataset';
-import {Label, LabelConfirmationState} from '../labeling';
-
-
+import {autocorrelogram} from '../common/algorithms/Autocorrelation';
+import {Dataset, loadSensorTimeSeriesFromFile, loadVideoTimeSeriesFromFile, SensorTimeSeries, TimeSeriesKind} from './dataStructures/dataset';
+import {Label, LabelConfirmationState} from './dataStructures/labeling';
 
 export function startDragging(
     move?: (e: MouseEvent) => void,

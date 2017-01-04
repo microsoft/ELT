@@ -1,4 +1,4 @@
-import { resampleColumn } from '../common/common';
+import { resampleColumn } from '../stores/dataStructures/sampling';
 import * as ell from 'emll';
 
 // Generate DTW code for Arduino and Microbit.
@@ -26,8 +26,6 @@ export function makeVector(l: any): any {
         return result2;
     }
 }
-
-
 
 function generateEllPrototypes(
     sampleRate: number,

@@ -1,7 +1,7 @@
 // Suggestion model classes and suggestion engine.
 
-import { Dataset } from '../common/dataset';
-import { Label } from '../common/labeling';
+import { Dataset } from '../stores/dataStructures/dataset';
+import { Label } from '../stores/dataStructures/labeling';
 import * as stores from '../stores/stores';
 import { DtwAlgorithm } from './suggestion';
 import { EventEmitter } from 'events';

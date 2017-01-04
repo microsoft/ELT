@@ -2,10 +2,9 @@
 // Store alignment markers and correspondences (connections between markers).
 
 import * as Actions from '../actions/Actions';
-import {
-    AlignedTimeSeries, Marker, MarkerCorrespondence, SavedAlignmentState,
-    SavedMarker, SavedMarkerCorrespondence, TransitionController
-} from '../common/common';
+import {AlignedTimeSeries, Marker, MarkerCorrespondence} from '../stores/dataStructures/alignment';
+import {SavedAlignmentState, SavedMarker, SavedMarkerCorrespondence} from '../stores/dataStructures/project';
+import {TransitionController} from '../stores/utils';
 import { globalDispatcher } from '../dispatcher/globalDispatcher';
 import { AlignmentLabelingStore } from './AlignmentLabelingStore';
 import { AlignmentLabelingUiStore } from './AlignmentLabelingUiStore';

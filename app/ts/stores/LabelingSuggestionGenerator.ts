@@ -1,7 +1,8 @@
 import * as Actions from '../actions/Actions';
 import { pelt } from '../common/algorithms/pelt';
-import { ArrayThrottler, Label, LabelConfirmationState } from '../common/common';
-import { SensorTimeSeries } from '../common/dataset';
+import { Label, LabelConfirmationState } from '../stores/dataStructures/labeling';
+import { ArrayThrottler} from '../stores/utils';
+import { SensorTimeSeries } from '../stores/dataStructures/dataset';
 import { computeDimensionsMipmapLevels } from '../components/common/Mipmap';
 import { globalDispatcher } from '../dispatcher/globalDispatcher';
 import { DtwSuggestionModelBuilder, LabelingSuggestionCallback, LabelingSuggestionEngine, LabelingSuggestionProgress }

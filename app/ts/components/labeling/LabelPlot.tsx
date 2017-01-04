@@ -1,5 +1,5 @@
-import {startDragging} from '../../common/common';
-import {Label, LabelConfirmationState} from '../../common/labeling';
+import {startDragging} from '../../stores/utils';
+import {Label, LabelConfirmationState} from '../../stores/dataStructures/labeling';
 import * as stores from '../../stores/stores';
 import {SVGGlyphiconButton} from '../svgcontrols/buttons';
 import * as d3 from 'd3';

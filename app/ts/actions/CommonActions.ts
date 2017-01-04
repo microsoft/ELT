@@ -1,6 +1,6 @@
 // Common actions.
 
-import {Track} from '../common/common';
+import {Track} from '../stores/dataStructures/alignment';
 import {ActionBase} from './ActionBase';
 
 

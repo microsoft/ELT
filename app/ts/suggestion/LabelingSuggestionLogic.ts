@@ -1,8 +1,8 @@
 // Declares logics to run suggestions.
 
-import { Dataset } from './dataset';
-import { Label, TimeRange } from './labeling';
-import { TimeRangeIndex } from './timeRangeIndex';
+import { Dataset } from '../stores/dataStructures/dataset';
+import { Label, TimeRange } from '../stores/dataStructures/labeling';
+import { TimeRangeIndex } from '../stores/dataStructures/timeRangeIndex';
 import * as d3 from 'd3';
 
 
