@@ -1,12 +1,10 @@
-import * as stores from '../../stores/stores';
-import * as dialogs from '../dialogs/dialogs';
-import { LabelingSettingsView } from '../labeling/LabelingSettingsView';
-import * as path from 'path';
 import * as React from 'react';
-
+import * as dialogs from '../dialogs/dialogs';
+import * as stores from '../../stores/stores';
+import * as path from 'path';
 
 // The 'Home' menu.
-export class FileMenu extends React.Component<{}, {}> {
+export class HomeMenu extends React.Component<{}, {}> {
     constructor(props: {}, context: any) {
         super(props, context);
     }
@@ -58,67 +56,3 @@ export class FileMenu extends React.Component<{}, {}> {
         );
     }
 }
-
-// The 'Options' menu.
-export class OptionsMenu extends React.Component<{}, {}> {
-    constructor(props: {}, context: any) {
-        super(props, context);
-    }
-
-    public render(): JSX.Element {
-        return (
-            <div className='app-menu options-menu'>
-                <h1>Options</h1>
-                <LabelingSettingsView />
-            </div>
-        );
-    }
-}
-
-
-
-
-// interface DeploymentMenuState {
-//     arduinoCode?: string;
-//     microbitCode?: string;
-// }
-
-// export class DeploymentMenu extends React.Component<{}, DeploymentMenuState> {
-//     constructor(props: {}, context: any) {
-//         super(props, context);
-//         this.state = { arduinoCode: '', microbitCode: '' };
-//         this.deployModel = this.deployModel.bind(this);
-//     }
-
-//     public componentDidMount(): void {
-//         labelingSuggestionGenerator.getDeploymentCode('arduino', (code) => {
-//             this.setState({ arduinoCode: code });
-//         });
-//         labelingSuggestionGenerator.getDeploymentCode('microbit', (code) => {
-//             this.setState({ microbitCode: code });
-//         });
-//     }
-
-//     private deployModel(): void {
-//         labelingSuggestionGenerator.getDeploymentCode('arduino', (code) => {
-//             this.setState({ arduinoCode: code });
-//             electron.remote.clipboard.clear();
-//             electron.remote.clipboard.writeText(code);
-//         });
-//     }
-
-//     public render(): JSX.Element {
-//         return (
-//             <div className='app-menu deployment-menu'>
-//                 <h1>Deploy</h1>
-//                 <p>Here is the Arduino code to run your model in a device.</p>
-//                 <p><pre>{this.state.arduinoCode}</pre></p>
-//                 <p>
-//                     <button className='tbtn tbtn-tile tbtn-l3' onClick={this.deployModel}>
-//                         <span className='glyphicon glyphicon-export'></span>Deploy Model
-//                     </button>
-//                 </p>
-//             </div>
-//         );
-//     }
-// }

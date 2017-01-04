@@ -6,7 +6,8 @@ import * as stores from '../stores/stores';
 import { EventListenerComponent } from './common/EventListenerComponent';
 import { NavigationColumn, NavigationColumnItem } from './common/NavigationColumn';
 import { DeploymentPanel } from './deployment/DeploymentPanel';
-import { FileMenu, OptionsMenu } from './menus/menus';
+import { HomeMenu } from './menus/HomeMenu';
+import { OptionsMenu } from './menus/OptionsMenu';
 import { WorkPanel } from './WorkPanel';
 import { remote } from 'electron';
 import * as React from 'react';
@@ -89,7 +90,7 @@ export class App extends EventListenerComponent<{}, AppState> {
                     }
                 }>
                     <NavigationColumnItem title='Home' name='file' iconClass='glyphicon glyphicon-home'>
-                        <FileMenu />
+                        <HomeMenu />
                     </NavigationColumnItem>
                     <NavigationColumnItem title='Alignment' name='alignment' showButton={true} iconClass={'glyphicon glyphicon-time'}>
                         <WorkPanel mode='alignment' />
