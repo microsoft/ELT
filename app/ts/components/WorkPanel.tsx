@@ -4,8 +4,8 @@ import * as Actions from '../actions/Actions';
 import {LayoutParameters} from '../stores/dataStructures/LayoutParameters';
 import {KeyCode} from '../stores/dataStructures/types';
 import {AlignmentView} from './alignment/AlignmentView';
-import {AlignmentToolbarView} from './alignment/ToolbarView';
-import {LabelingToolbarView} from './labeling/LabelingToolbarView';
+import {AlignmentToolbar} from './alignment/AlignmentToolbar';
+import {LabelingToolbar} from './labeling/LabelingToolbar';
 import {LabelingView} from './labeling/LabelingView';
 import {ReferenceTrackDetail} from './ReferenceTrackDetail';
 import {ReferenceTrackOverview} from './ReferenceTrackOverview';
@@ -183,14 +183,14 @@ export class WorkPanel extends React.Component<AlignmentLabelingViewProps, Align
 
                 {
                     this.props.mode === 'alignment' || this.props.mode === 'featuring' ? (
-                        <AlignmentToolbarView
+                        <AlignmentToolbar
                             top={layout.toolbarViewY0}
                             left={layout.toolbarViewX0}
                             viewWidth={layout.toolbarViewX1 - layout.toolbarViewX0}
                             viewHeight={layout.toolbarViewY1 - layout.toolbarViewY0}
                             />
                     ) : this.props.mode === 'labeling' ? (
-                        <LabelingToolbarView
+                        <LabelingToolbar
                             top={layout.toolbarViewY0}
                             left={layout.toolbarViewX0}
                             viewWidth={layout.toolbarViewX1 - layout.toolbarViewX0}

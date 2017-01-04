@@ -9,14 +9,14 @@ import * as React from 'react';
 
 
 
-export interface LabelingToolbarViewProps {
+export interface LabelingToolbarProps {
     top: number;
     left: number;
     viewWidth: number;
     viewHeight: number;
 }
 
-export interface LabelingToolbarViewState {
+export interface LabelingToolbarState {
     labels: Label[];
 
     suggestionEnabled: boolean;
@@ -24,13 +24,13 @@ export interface LabelingToolbarViewState {
     timeCursor: number;
 }
 
-export class LabelingToolbarView extends EventListenerComponent<LabelingToolbarViewProps, LabelingToolbarViewState> {
+export class LabelingToolbar extends EventListenerComponent<LabelingToolbarProps, LabelingToolbarState> {
     public refs: {
         [name: string]: Element,
         fileSelector: HTMLInputElement
     };
 
-    constructor(props: LabelingToolbarViewProps, context: any) {
+    constructor(props: LabelingToolbarProps, context: any) {
         super(props, context, [
             stores.labelingStore.labelsArrayChanged,
             stores.alignmentLabelingUiStore.referenceViewTimeCursorChanged,
