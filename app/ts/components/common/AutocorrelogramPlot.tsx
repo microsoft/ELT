@@ -1,4 +1,4 @@
-import {autocorrelogram} from '../../common/algorithms/Autocorrelation';
+import {autocorrelogram} from '../../suggestion/algorithms/Autocorrelation';
 import {SensorTimeSeries} from '../../stores/dataStructures/dataset';
 import * as d3 from 'd3';
 import * as React from 'react';
