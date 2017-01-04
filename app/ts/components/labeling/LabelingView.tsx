@@ -1,8 +1,11 @@
 // The main labeling view.
 
 import * as actions from '../../actions/Actions';
-import {Label, LabelConfirmationState, LayoutParameters, SignalsViewMode, startDragging, Track} from '../../common/common';
-import {KeyCode} from '../../common/ui/types';
+import {Track} from '../../stores/dataStructures/alignment';
+import {Label, LabelConfirmationState, SignalsViewMode} from '../../stores/dataStructures/labeling';
+import {LayoutParameters} from '../../stores/dataStructures/LayoutParameters';
+import {startDragging} from '../../stores/utils';
+import {KeyCode} from '../../stores/dataStructures/types';
 import * as stores from '../../stores/stores';
 import {EventListenerComponent} from '../common/EventListenerComponent';
 import {TrackView} from '../common/TrackView';

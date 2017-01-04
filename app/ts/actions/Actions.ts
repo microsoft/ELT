@@ -1,6 +1,6 @@
 // Gather all app actions here.
 
-import {TabID} from '../common/ui/types';
+import {TabID} from '../stores/dataStructures/types';
 import {ActionBase} from './ActionBase';
 
 export module Actions {

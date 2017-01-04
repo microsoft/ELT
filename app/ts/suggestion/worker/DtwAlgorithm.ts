@@ -2,8 +2,9 @@
 
 import { DBA } from '../../common/algorithms/DBA';
 import { MultipleSpringAlgorithm, MultipleSpringAlgorithmBestMatch } from '../../common/algorithms/SpringAlgorithm';
-import { Label, LabelConfirmationState, resampleDatasetRowMajor } from '../../common/common';
-import { Dataset } from '../../common/dataset';
+import { resampleDatasetRowMajor } from '../../stores/dataStructures/sampling';
+import { Label, LabelConfirmationState } from '../../stores/dataStructures/labeling';
+import { Dataset } from '../../stores/dataStructures/dataset';
 import { generateArduinoCodeForDtwModel, generateMicrobitCodeForDtwModel } from '../DtwDeployment';
 import { LabelingSuggestionCallback, LabelingSuggestionModel } from '../LabelingSuggestionEngine';
 

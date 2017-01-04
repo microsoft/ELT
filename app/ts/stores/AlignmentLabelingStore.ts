@@ -2,10 +2,10 @@
 // Stores the information about tracks and handles project load/save and undo/redo state saving.
 
 import * as actions from '../actions/Actions';
-import { AlignedTimeSeries, Track } from '../common/common';
-import { SavedAlignedTimeSeries, SavedAlignmentSnapshot, SavedLabelingSnapshot, SavedProject, SavedTrack } from '../common/common';
+import { AlignedTimeSeries, Track } from '../stores/dataStructures/alignment';
+import { SavedAlignedTimeSeries, SavedAlignmentSnapshot, SavedLabelingSnapshot, SavedProject, SavedTrack } from '../stores/dataStructures/project';
 import { loadMultipleSensorTimeSeriesFromFile, loadRawSensorTimeSeriesFromFile, loadVideoTimeSeriesFromFile, TimeSeries }
-    from '../common/dataset';
+    from '../stores/dataStructures/dataset';
 import { globalDispatcher } from '../dispatcher/globalDispatcher';
 import { HistoryTracker } from './HistoryTracker';
 import { NodeEvent } from './NodeEvent';

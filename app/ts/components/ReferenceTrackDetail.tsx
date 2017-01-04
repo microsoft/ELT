@@ -1,7 +1,8 @@
 // The video track in the app.
 
 import * as Actions from '../actions/Actions';
-import { startDragging, Track } from '../common/common';
+import { Track } from '../stores/dataStructures/alignment';
+import { startDragging } from '../stores/utils';
 import * as stores from '../stores/stores';
 import { EventListenerComponent } from './common/EventListenerComponent';
 import { TimeAxis } from './common/TimeAxis';

@@ -1,7 +1,7 @@
 // The toolbar view for labeling.
 
 import * as actions from '../../actions/Actions';
-import {Label} from '../../common/common';
+import {Label} from '../../stores/dataStructures/labeling';
 import * as stores from '../../stores/stores';
 import {EventListenerComponent} from '../common/EventListenerComponent';
 import {InlineClassesListView} from './ClassesListView';

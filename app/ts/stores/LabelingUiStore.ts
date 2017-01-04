@@ -3,8 +3,9 @@
 // Options for labeling and suggestions (move to elsewhere?)
 
 import * as actions from '../actions/Actions';
-import {getLabelingSuggestionLogic, Label, LabelingSuggestionLogic, LabelingSuggestionLogicType, PartialLabel,
-    PerItemEventListeners, SignalsViewMode} from '../common/common';
+import {getLabelingSuggestionLogic, LabelingSuggestionLogic, LabelingSuggestionLogicType} from '../suggestion/LabelingSuggestionLogic';
+import {Label, PartialLabel, SignalsViewMode} from '../stores/dataStructures/labeling';
+import {PerItemEventListeners} from '../stores/utils';
 import {globalDispatcher} from '../dispatcher/globalDispatcher';
 import {LabelingStore} from './LabelingStore';
 import {NodeEvent, NodeItemEvent} from './NodeEvent';

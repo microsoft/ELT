@@ -1,8 +1,10 @@
 // The 'Overview' view that is shared by both alignment and labeling.
 
 import * as Actions from '../actions/Actions';
-import { LayoutParameters, makePathDFromPoints, startDragging, Track } from '../common/common';
-import { KeyCode } from '../common/ui/types';
+import { Track } from '../stores/dataStructures/alignment';
+import { makePathDFromPoints, startDragging } from '../stores/utils';
+import { LayoutParameters } from '../stores/dataStructures/LayoutParameters';
+import { KeyCode } from '../stores/dataStructures/types';
 import * as stores from '../stores/stores';
 import { EventListenerComponent } from './common/EventListenerComponent';
 import { TimeAxis } from './common/TimeAxis';

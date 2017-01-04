@@ -1,8 +1,8 @@
 // The combined view class for Alignment and Labeling.
 
 import * as Actions from '../actions/Actions';
-import {LayoutParameters} from '../common/common';
-import {KeyCode} from '../common/ui/types';
+import {LayoutParameters} from '../stores/dataStructures/LayoutParameters';
+import {KeyCode} from '../stores/dataStructures/types';
 import {AlignmentView} from './alignment/AlignmentView';
 import {AlignmentToolbarView} from './alignment/ToolbarView';
 import {LabelingToolbarView} from './labeling/LabelingToolbarView';

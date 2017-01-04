@@ -2,7 +2,8 @@
 // FIXME: There's currently no settings for alignment, and some of the settings are shared but all in this file.
 
 import * as Actions from '../../actions/Actions';
-import { LabelingSuggestionLogicType, SignalsViewMode } from '../../common/common';
+import { SignalsViewMode } from '../../stores/dataStructures/labeling';
+import { LabelingSuggestionLogicType } from '../../suggestion/LabelingSuggestionLogic';
 import { labelingSuggestionGenerator } from '../../stores/LabelingSuggestionGenerator';
 import * as stores from '../../stores/stores';
 import { ConfidenceSlider } from '../common/ConfidenceSlider';

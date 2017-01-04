@@ -1,7 +1,7 @@
 // Labeling actions.
 
-import {LabelingSuggestionLogicType, SignalsViewMode} from '../common/common';
-import {Label, PartialLabel} from '../common/labeling';
+import {SignalsViewMode, Label, PartialLabel} from '../stores/dataStructures/labeling';
+import {LabelingSuggestionLogicType} from '../suggestion/LabelingSuggestionLogic';
 import {ActionBase} from './ActionBase';
 import {CommonActions} from './CommonActions';
 

@@ -1,9 +1,15 @@
 // Generate DTW code for Arduino and Microbit.
-import {resampleColumn} from '../common/common';
+import {resampleColumn} from '../stores/dataStructures/sampling';
+
+export interface ReferenceLabel {
+    series: number[][];
+    variance: number;
+    className: string;
+}
 
 
-
-const templateArduino = `// HOWTO-dtwDeployment.ts:
+//TODO: marked for removal
+const templateArduino = `// HOWTO:
 // Call setupRecognizer(0.2) first.
 // Then, call String className = recognize(sample);
 // "NONE" will be returned if nothing is detected.
@@ -104,7 +110,7 @@ String recognize(float* sample) {
 }
 `;
 
-
+//TODO: marked for removal
 const templateMicrobit = `// HOWTO:
 // Call setupRecognizer() first.
 // Then, call let className = recognize([ input.acceleration(Dimension.X), input.acceleration(Dimension.Y), input.acceleration(Dimension.Z) ]);
@@ -206,12 +212,7 @@ basic.forever(() => {
 `;
 
 
-export interface ReferenceLabel {
-    series: number[][];
-    variance: number;
-    className: string;
-}
-
+//TODO: marked for removal
 export function generateArduinoCodeForDtwModel(sampleRate: number, arduinoSampleRate: number, references: ReferenceLabel[]): string {
     let index = 1;
     const lines = [];
@@ -263,7 +264,7 @@ export function generateArduinoCodeForDtwModel(sampleRate: number, arduinoSample
         ;
 }
 
-
+//TODO: marked for removal
 export function generateMicrobitCodeForDtwModel(sampleRate: number, arduinoSampleRate: number, references: ReferenceLabel[]): string {
     let index = 1;
     const lines = [];
@@ -315,3 +316,6 @@ export function generateMicrobitCodeForDtwModel(sampleRate: number, arduinoSampl
         .replace('%%MATCH_COMPARISON%%', matchComparisonLines.map((x) => '    ' + x).join('\n'))
         ;
 }
+
+
+

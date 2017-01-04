@@ -1,7 +1,8 @@
 // TrackView: display a single track in the app.
 
-import { AlignedTimeSeries, SignalsViewMode, Track } from '../../common/common';
-import { SensorTimeSeries, TimeSeriesKind, VideoTimeSeries } from '../../common/dataset';
+import { AlignedTimeSeries, Track } from '../../stores/dataStructures/alignment';
+import { SignalsViewMode } from '../../stores/dataStructures/labeling';
+import { SensorTimeSeries, TimeSeriesKind, VideoTimeSeries } from '../../stores/dataStructures/dataset';
 import { AutocorrelogramPlot } from '../common/AutocorrelogramPlot';
 import { SensorTimeSeriesRangePlot } from '../common/SensorPlot';
 import { VideoFrame, VideoTimeSeriesRangePlot } from '../common/VideoPlot';

@@ -1,7 +1,7 @@
 // The view that manages the list of classes.
 
 import * as actions from '../../actions/Actions';
-import {KeyCode} from '../../common/ui/types';
+import {KeyCode} from '../../stores/dataStructures/types';
 import * as stores from '../../stores/stores';
 import {EventListenerComponent} from '../common/EventListenerComponent';
 import * as React from 'react';

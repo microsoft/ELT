@@ -1,7 +1,7 @@
 // The main view for the app.
 
 import * as Actions from '../actions/Actions';
-import { TabID } from '../common/ui/types';
+import { TabID } from '../stores/dataStructures/types';
 import * as stores from '../stores/stores';
 import { EventListenerComponent } from './common/EventListenerComponent';
 import { NavigationColumn, NavigationColumnItem } from './common/NavigationColumn';

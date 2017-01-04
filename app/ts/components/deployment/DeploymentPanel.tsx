@@ -1,4 +1,4 @@
-import { LayoutParameters } from '../../common/common';
+import { LayoutParameters } from '../../stores/dataStructures/LayoutParameters';
 import { generateEllModel } from '../../common/dtwModelGeneration';
 import { labelingSuggestionGenerator } from '../../stores/LabelingSuggestionGenerator';
 import * as stores from '../../stores/stores';

@@ -1,7 +1,7 @@
 // LabelsRangePlot: Render labels efficiently.
 
-import {getUniqueIDForObject} from '../../common/common';
-import {Label, LabelConfirmationState} from '../../common/labeling';
+import {getUniqueIDForObject} from '../../stores/utils';
+import {Label, LabelConfirmationState} from '../../stores/dataStructures/labeling';
 import * as stores from '../../stores/stores';
 import {EventListenerComponent} from '../common/EventListenerComponent';
 import {LabelKind, LabelPlot} from './LabelPlot';

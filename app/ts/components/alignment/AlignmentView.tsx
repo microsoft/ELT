@@ -3,8 +3,10 @@
 // - Handles alignment keyboard events.
 
 import * as actions from '../../actions/Actions';
-import { AlignedTimeSeries, Marker, SignalsViewMode, startDragging, Track } from '../../common/common';
-import { KeyCode } from '../../common/ui/types';
+import { AlignedTimeSeries, Marker, Track} from '../../stores/dataStructures/alignment';
+import { SignalsViewMode} from '../../stores/dataStructures/labeling';
+import { startDragging } from '../../stores/utils';
+import { KeyCode } from '../../stores/dataStructures/types';
 import * as stores from '../../stores/stores';
 import { EventListenerComponent } from '../common/EventListenerComponent';
 import { TimeAxis } from '../common/TimeAxis';

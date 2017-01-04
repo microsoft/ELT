@@ -1,7 +1,7 @@
 // Warps SPRINGDTWSuggestionModelFactory with a WebWorker.
 
-import { Dataset } from '../common/dataset';
-import { Label } from '../common/labeling';
+import { Dataset } from '../stores/dataStructures/dataset';
+import { Label } from '../stores/dataStructures/labeling';
 import { LabelingSuggestionCallback, LabelingSuggestionModel, LabelingSuggestionModelBuilder } from './LabelingSuggestionEngine';
 import { ModelSpecificMessage, SuggestionWorkerMessage } from './worker/SuggestionWorkerMessage';
 import { EventEmitter } from 'events';

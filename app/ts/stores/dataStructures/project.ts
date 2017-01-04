@@ -2,7 +2,7 @@
 
 import {Track} from './alignment';
 import {Label} from './labeling';
-import {TabID} from './ui/types';
+import {TabID} from '../../stores/dataStructures/types';
 
 // These saved states are JSON.stringify()-able objects that can be saved directly to disk in JSON format.
 

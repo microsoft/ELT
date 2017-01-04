@@ -1,5 +1,5 @@
-import { SensorTimeSeries } from '../../common/dataset';
-import { getUniqueIDForObject, isSameArray } from '../../common/ui/utils';
+import { SensorTimeSeries } from '../../stores/dataStructures/dataset';
+import { getUniqueIDForObject, isSameArray } from '../../stores/utils';
 import { MipmapCache } from './Mipmap';
 import * as d3 from 'd3';
 import * as React from 'react';
