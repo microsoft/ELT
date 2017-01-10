@@ -1,4 +1,5 @@
-// Warps SPRINGDTWSuggestionModelFactory with a WebWorker.
+// Wraps SPRINGDTWSuggestionModelFactory with a WebWorker.
+// Wraps DtwSuggestionModelBuilder with a WebWorker?
 
 import { Dataset } from '../stores/dataStructures/dataset';
 import { Label } from '../stores/dataStructures/labeling';
@@ -41,6 +42,20 @@ class WorkerModel extends LabelingSuggestionModel {
         }
     }
 
+    public getDeploymentCode(platform: string, callback: (code: string) => any): void {
+        const callbackID = 'cb' + this._currentCallbackID.toString();
+        this._currentCallbackID += 1;
+
+        this._registeredCallbacks.set(callbackID, callback);
+        this._callback2ID.set(callback, callbackID);
+
+        this._parent.postModelMessage(this._modelID, {
+            kind: 'get-deployment-code',
+            callbackID: callbackID,
+            platform: platform
+        });
+    }
+
     public computeSuggestion(
         dataset: Dataset,
         timestampStart: number,
@@ -80,19 +95,6 @@ class WorkerModel extends LabelingSuggestionModel {
         }
     }
 
-    public getDeploymentCode(platform: string, callback: (code: string) => any): void {
-        const callbackID = 'cb' + this._currentCallbackID.toString();
-        this._currentCallbackID += 1;
-
-        this._registeredCallbacks.set(callbackID, callback);
-        this._callback2ID.set(callback, callbackID);
-
-        this._parent.postModelMessage(this._modelID, {
-            kind: 'get-deployment-code',
-            callbackID: callbackID,
-            platform: platform
-        });
-    }
 
     public dispose(): void {
         this._parent.postModelMessage(this._modelID, {
@@ -156,7 +158,7 @@ export class DtwSuggestionModelBuilder extends LabelingSuggestionModelBuilder {
                 dataset: dataset.serialize()
             });
             this._currentDataset = dataset;
-        }
+        }   
     }
 
 

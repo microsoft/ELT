@@ -19,6 +19,7 @@ export class DtwModelStore extends EventEmitter {
   public set prototypeSampleRate(prototypeSampleRate: number) {
     this._prototypeSampleRate = prototypeSampleRate;
   }
+  
   constructor() {
     super();
     this._prototypes = [];

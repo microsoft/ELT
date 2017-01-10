@@ -36,6 +36,7 @@ export abstract class LabelingSuggestionModel {
 
     public abstract cancelSuggestion(callback: LabelingSuggestionCallback): void;
 
+    //TODO: should model implement this?
     public abstract getDeploymentCode(platform: string, callback: (code: string) => any): void;
 
     public abstract dispose(): void;
@@ -51,7 +52,6 @@ export abstract class LabelingSuggestionModelBuilder {
 }
 
 
-
 interface LabelingSuggestionCallbackInfo {
     callback: LabelingSuggestionCallback;
     model: LabelingSuggestionModel;
@@ -63,7 +63,6 @@ interface LabelingSuggestionCallbackInfo {
         generation: number
     };
 }
-
 
 
 // Manages the life-cycle of suggestion models and run suggestions with the newest built model.

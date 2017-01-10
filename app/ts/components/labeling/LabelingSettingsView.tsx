@@ -4,7 +4,7 @@
 import * as Actions from '../../actions/Actions';
 import { SignalsViewMode } from '../../stores/dataStructures/labeling';
 import { LabelingSuggestionLogicType } from '../../suggestion/LabelingSuggestionLogic';
-import { labelingSuggestionGenerator } from '../../stores/LabelingSuggestionGenerator';
+import { labelingSuggestionGenerator } from '../../suggestion/LabelingSuggestionGenerator';
 import * as stores from '../../stores/stores';
 import { ConfidenceSlider } from '../common/ConfidenceSlider';
 import { EventListenerComponent } from '../common/EventListenerComponent';

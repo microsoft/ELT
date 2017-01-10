@@ -7,7 +7,7 @@ import { computeDimensionsMipmapLevels } from '../components/common/Mipmap';
 import { globalDispatcher } from '../dispatcher/globalDispatcher';
 import { DtwSuggestionModelBuilder, LabelingSuggestionCallback, LabelingSuggestionEngine, LabelingSuggestionProgress }
     from '../suggestion/suggestion';
-import { alignmentLabelingUiStore, labelingStore, labelingUiStore } from './stores';
+import { alignmentLabelingUiStore, labelingStore, labelingUiStore } from '../stores/stores';
 import { EventEmitter } from 'events';
 
 

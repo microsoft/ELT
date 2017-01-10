@@ -9,7 +9,6 @@ import { generateArduinoCodeForDtwModel, generateMicrobitCodeForDtwModel } from 
 import { LabelingSuggestionCallback, LabelingSuggestionModel } from '../LabelingSuggestionEngine';
 
 
-
 interface ReferenceLabel {
     series: number[][];
     variance: number;
@@ -41,7 +40,6 @@ function averageFunction(x: number[][]): number[] {
     }
     return mean;
 }
-
 
 
 function groupBy<InputType>(input: InputType[], groupFunc: (itype: InputType) => string): { group: string, items: InputType[] }[] {
@@ -318,7 +316,7 @@ class DtwSuggestionModel extends LabelingSuggestionModel {
 
 export module DtwAlgorithm {
 
-    export function createModel(dataset: Dataset, labels: Label[]): DtwSuggestionModel {
+    export function createModel(dataset: Dataset, labels: Label[]): LabelingSuggestionModel {
         const maxDuration = labels.map((label) => label.timestampEnd - label.timestampStart).reduce((a, b) => Math.max(a, b), 0);
         const sampleRate = 100 / maxDuration; // / referenceDuration;
         const references = getAverageLabelsPerClass(dataset, labels, sampleRate);
@@ -326,9 +324,7 @@ export module DtwAlgorithm {
     }
 
     export function getReferenceLabels(dataset: Dataset, labels: Label[]): ReferenceLabel[] {
-        const maxDuration = labels
-            .map(label => label.timestampEnd - label.timestampStart)
-            .reduce((a, b) => Math.max(a, b), 0);
+        const maxDuration = labels.map(label => label.timestampEnd - label.timestampStart).reduce((a, b) => Math.max(a, b), 0);
         const sampleRate = 100 / maxDuration; // / referenceDuration;
         return getAverageLabelsPerClass(dataset, labels, sampleRate);
     }

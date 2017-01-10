@@ -1,6 +1,6 @@
 import { LayoutParameters } from '../../stores/dataStructures/LayoutParameters';
 import { generateEllModel } from '../../suggestion/ELLDtwModelGeneration';
-import { labelingSuggestionGenerator } from '../../stores/LabelingSuggestionGenerator';
+import { labelingSuggestionGenerator } from '../../suggestion/LabelingSuggestionGenerator';
 import * as stores from '../../stores/stores';
 import { ScriptEditor } from './ScriptEditor';
 import { DeploymentToolbar } from './DeploymentToolbar';
@@ -11,21 +11,16 @@ import * as os from 'os';
 import * as path from 'path';
 import * as React from 'react';
 
-
-
 // Configuration
 const useEllModel = true; // vs. Donghao model
 const confidenceThreshold = 0.2;
 const useStoredModel = false;
-
 
 // utility function for copying file
 function copyTextFile(sourceFilename: string, targetFilename: string): void {
     const text = fs.readFileSync(sourceFilename, 'utf-8');
     fs.writeFileSync(targetFilename, text);
 }
-
-
 
 interface Tab {
     isReadOnly: boolean;

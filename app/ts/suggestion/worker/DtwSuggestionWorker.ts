@@ -24,7 +24,7 @@ export class DtwSuggestionWorker extends EventEmitter {
         this.addListener('model.build', (data: ModelBuildMessage) => {
             const labels = data.labels;
             const buildCallbackID = data.callbackID;
-
+ 
             const model = DtwAlgorithm.createModel(this._dataset, labels);
 
             const modelID = 'model-' + this._currentModelID.toString();

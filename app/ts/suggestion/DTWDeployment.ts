@@ -8,7 +8,6 @@ export interface ReferenceLabel {
 }
 
 
-//TODO: marked for removal
 const templateArduino = `// HOWTO:
 // Call setupRecognizer(0.2) first.
 // Then, call String className = recognize(sample);
@@ -110,7 +109,6 @@ String recognize(float* sample) {
 }
 `;
 
-//TODO: marked for removal
 const templateMicrobit = `// HOWTO:
 // Call setupRecognizer() first.
 // Then, call let className = recognize([ input.acceleration(Dimension.X), input.acceleration(Dimension.Y), input.acceleration(Dimension.Z) ]);
@@ -264,7 +262,6 @@ export function generateArduinoCodeForDtwModel(sampleRate: number, arduinoSample
         ;
 }
 
-//TODO: marked for removal
 export function generateMicrobitCodeForDtwModel(sampleRate: number, arduinoSampleRate: number, references: ReferenceLabel[]): string {
     let index = 1;
     const lines = [];
