@@ -4,6 +4,8 @@
 import * as Actions from '../../actions/Actions';
 import { remote } from 'electron';
 import * as React from 'react';
+import { alignmentLabelingStore, alignmentLabelingUiStore, uiStore } from '../../stores/stores';
+import { observer } from 'mobx-react';
 
 
 export interface AlignmentToolbarProps {
@@ -13,7 +15,7 @@ export interface AlignmentToolbarProps {
     viewHeight: number;
 }
 
-
+@observer
 export class AlignmentToolbar extends React.Component<AlignmentToolbarProps, {}> {
     public refs: {
         [name: string]: Element
@@ -37,7 +39,7 @@ export class AlignmentToolbar extends React.Component<AlignmentToolbarProps, {}>
             },
             (fileNames: string[]) => {
                 if (fileNames && fileNames.length === 1) {
-                    new Actions.CommonActions.LoadReferenceTrack(fileNames[0]).dispatch();
+                    alignmentLabelingStore.loadReferenceTrack(fileNames[0]);
                 }
             });
     }
@@ -56,10 +58,10 @@ export class AlignmentToolbar extends React.Component<AlignmentToolbarProps, {}>
             (fileNames: string[]) => {
                 if (fileNames && fileNames.length === 1) {
                     if (fileNames[0].match(/\.tsv$/i)) {
-                        new Actions.CommonActions.LoadSensorTrack(fileNames[0]).dispatch();
+                        alignmentLabelingStore.loadSensorTrack(fileNames[0]);
                     }
                     if (fileNames[0].match(/\.(webm|mp4|mov)$/i)) {
-                        new Actions.CommonActions.LoadVideoTrack(fileNames[0]).dispatch();
+                        alignmentLabelingStore.loadVideoTrack(fileNames[0]);
                     }
                 }
             });
@@ -89,34 +91,52 @@ export class AlignmentToolbar extends React.Component<AlignmentToolbarProps, {}>
                 <span className='sep' />
                 {' '}
                 <button className='tbtn tbtn-l3' title='Zoom in'
-                    onClick={() => new Actions.CommonActions.ReferenceViewPanAndZoom(0, -0.2, 'center').dispatch()}>
+                    onClick={() => {
+                        alignmentLabelingUiStore.referenceViewPanAndZoom(0, -0.2, 'center');
+                        uiStore.referenceViewPanAndZoom(0, -0.2, 'center');
+                    } }>
                     <span className='glyphicon icon-only glyphicon-zoom-in'></span>
                 </button>
                 {' '}
                 <button className='tbtn tbtn-l3' title='Zoom out'
-                    onClick={() => new Actions.CommonActions.ReferenceViewPanAndZoom(0, +0.2, 'center').dispatch()}>
+                    onClick={() => {
+                        alignmentLabelingUiStore.referenceViewPanAndZoom(0, +0.2, 'center');
+                        uiStore.referenceViewPanAndZoom(0, +0.2, 'center');
+                    } }>
                     <span className='glyphicon icon-only glyphicon-zoom-out'></span>
                 </button>
                 {' '}
                 <span className='sep' />
                 {' '}
                 <button className='tbtn tbtn-l3' title='Go to the beginning'
-                    onClick={() => new Actions.CommonActions.ReferenceViewPanAndZoom(-1e10, 0).dispatch()}>
+                    onClick={() => {
+                        alignmentLabelingUiStore.referenceViewPanAndZoom(-1e10, 0);
+                        uiStore.referenceViewPanAndZoom(-1e10, 0);
+                    } }>
                     <span className='glyphicon icon-only glyphicon-fast-backward'></span>
                 </button>
                 {' '}
                 <button className='tbtn tbtn-l3' title='Go to the previous page'
-                    onClick={() => new Actions.CommonActions.ReferenceViewPanAndZoom(-0.6, 0).dispatch()}>
+                    onClick={() => {
+                        alignmentLabelingUiStore.referenceViewPanAndZoom(-0.6, 0);
+                        uiStore.referenceViewPanAndZoom(-0.6, 0);
+                    } }>
                     <span className='glyphicon icon-only glyphicon-backward'></span>
                 </button>
                 {' '}
                 <button className='tbtn tbtn-l3' title='Go to the next page'
-                    onClick={() => new Actions.CommonActions.ReferenceViewPanAndZoom(+0.6, 0).dispatch()}>
+                    onClick={() => {
+                        alignmentLabelingUiStore.referenceViewPanAndZoom(+0.6, 0);
+                        uiStore.referenceViewPanAndZoom(+0.6, 0);
+                    } }>
                     <span className='glyphicon icon-only glyphicon-forward'></span>
                 </button>
                 {' '}
                 <button className='tbtn tbtn-l3' title='Go to the end'
-                    onClick={() => new Actions.CommonActions.ReferenceViewPanAndZoom(+1e10, 0).dispatch()}>
+                    onClick={() => {
+                        alignmentLabelingUiStore.referenceViewPanAndZoom(+1e10, 0);
+                        uiStore.referenceViewPanAndZoom(+1e10, 0)
+                    } }>
                     <span className='glyphicon icon-only glyphicon-fast-forward'></span>
                 </button>
             </div>

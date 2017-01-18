@@ -3,8 +3,8 @@
 // - Handles alignment keyboard events.
 
 import * as actions from '../../actions/Actions';
-import { AlignedTimeSeries, Marker, Track} from '../../stores/dataStructures/alignment';
-import { SignalsViewMode} from '../../stores/dataStructures/labeling';
+import { AlignedTimeSeries, Marker, Track } from '../../stores/dataStructures/alignment';
+import { SignalsViewMode } from '../../stores/dataStructures/labeling';
 import { startDragging } from '../../stores/utils';
 import { KeyCode } from '../../stores/dataStructures/types';
 import * as stores from '../../stores/stores';
@@ -14,7 +14,7 @@ import { TrackView } from '../common/TrackView';
 import { SVGGlyphiconButton } from '../svgcontrols/buttons';
 import * as d3 from 'd3';
 import * as React from 'react';
-
+import { observer } from 'mobx-react';
 
 
 
@@ -38,23 +38,15 @@ export interface AlignmentViewState {
     signalsViewMode?: SignalsViewMode;
 }
 
-export class AlignmentView extends EventListenerComponent<AlignmentViewProps, AlignmentViewState> {
+@observer
+export class AlignmentView extends React.Component<AlignmentViewProps, AlignmentViewState> {
     public refs: {
         [key: string]: Element,
         interactionRect: Element
     };
 
     constructor(props: AlignmentViewProps, context: any) {
-        super(props, context, [
-            stores.alignmentLabelingStore.tracksChanged,
-            stores.alignmentLabelingUiStore.referenceViewChanged,
-            stores.alignmentLabelingUiStore.referenceViewTimeCursorChanged,
-            stores.alignmentUiStore.tracksLayoutChanged,
-            stores.alignmentUiStore.seriesTimeCursorChanged,
-            stores.alignmentUiStore.selectionChanged,
-            stores.alignmentStore.markersChanged,
-            stores.labelingUiStore.signalsViewModeChanged
-        ]);
+        super(props, context);
 
         this.state = this.computeState();
 
@@ -86,11 +78,9 @@ export class AlignmentView extends EventListenerComponent<AlignmentViewProps, Al
         if (event.srcElement === document.body) {
             if (event.keyCode === KeyCode.BACKSPACE || event.keyCode === KeyCode.DELETE) {
                 if (stores.alignmentUiStore.selectedMarker) {
-                    new actions.AlignmentActions.DeleteMarker(
-                        stores.alignmentUiStore.selectedMarker).dispatch();
+                    stores.alignmentStore.deleteMarker(stores.alignmentUiStore.selectedMarker);
                 } else if (stores.alignmentUiStore.selectedCorrespondence) {
-                    new actions.AlignmentActions.DeleteMarkerCorrespondence(
-                        stores.alignmentUiStore.selectedCorrespondence).dispatch();
+                    stores.alignmentStore.deleteMarkerCorrespondence(stores.alignmentUiStore.selectedCorrespondence);
                 }
             }
         }
@@ -109,9 +99,11 @@ export class AlignmentView extends EventListenerComponent<AlignmentViewProps, Al
             const scale = d3.scaleLinear()
                 .domain([timeSeries.referenceStart, timeSeries.referenceEnd])
                 .range([timeSeries.timeSeries[0].timestampStart, timeSeries.timeSeries[0].timestampEnd]);
-            new actions.CommonActions.SetReferenceViewTimeCursor(scale.invert(t)).dispatch();
+            stores.alignmentLabelingUiStore.setReferenceViewTimeCursor(scale.invert(t));
+            stores.uiStore.setReferenceViewTimeCursor(scale.invert(t));
+
         } else {
-            new actions.AlignmentActions.SetSeriesTimeCursor(timeSeries, t).dispatch();
+            stores.alignmentUiStore.setSeriesTimeCursor(timeSeries, t);
         }
     }
 
@@ -129,39 +121,38 @@ export class AlignmentView extends EventListenerComponent<AlignmentViewProps, Al
                     moved = true;
                     if (timeSeries.aligned) {
                         const dt = (x1 - x0) / stores.alignmentLabelingUiStore.referenceViewPPS;
-                        new actions.CommonActions.SetReferenceViewZooming(
-                            referenceRangeStart - dt, null).dispatch();
+                        stores.alignmentLabelingUiStore.setReferenceViewZoomingAction(referenceRangeStart - dt, null);
                     } else {
                         const dt = (x1 - x0) / pps;
-                        new actions.AlignmentActions.SetTimeSeriesZooming(timeSeries, rangeStart - dt, null).dispatch();
+                        stores.alignmentUiStore.setTimeSeriesZooming(timeSeries, rangeStart - dt, null);
                     }
                 }
             },
             upEvent => {
                 if (!moved) {
-                    new actions.AlignmentActions.AddMarker({
+                    const marker: Marker = {
                         timeSeries: timeSeries,
                         localTimestamp: t
-                    }).dispatch();
+                    };
+                    stores.alignmentStore.addMarker(marker);
                 }
             });
     }
 
-    private onTrackMouseLeave(
-        event: React.MouseEvent<Element>, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number): void {
-        new actions.AlignmentActions.SetSeriesTimeCursor(timeSeries, null).dispatch();
+    private onTrackMouseLeave(event: React.MouseEvent<Element>, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number): void {
+        stores.alignmentUiStore.setSeriesTimeCursor(timeSeries, null);
     }
 
-    private onTrackMouseEnter(
-        event: React.MouseEvent<Element>, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number): void {
-        new actions.AlignmentActions.SetSeriesTimeCursor(timeSeries, t).dispatch();
+    private onTrackMouseEnter(event: React.MouseEvent<Element>, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number): void {
+        stores.alignmentUiStore.setSeriesTimeCursor(timeSeries, t);
     }
 
 
     private onTrackWheel(
         event: React.WheelEvent<Element>, track: Track, timeSeries: AlignedTimeSeries, _: number, pps: number, deltaY: number): void {
         if (track === stores.alignmentLabelingStore.referenceTrack || timeSeries.aligned) {
-            new actions.CommonActions.ReferenceViewPanAndZoom(0, deltaY / 1000, 'cursor').dispatch();
+            stores.alignmentLabelingUiStore.referenceViewPanAndZoom(0, deltaY / 1000, 'cursor');
+            stores.uiStore.referenceViewPanAndZoom(0, deltaY / 1000, 'cursor');
         } else {
             const scale = d3.scaleLinear()
                 .domain([timeSeries.referenceStart, timeSeries.referenceEnd])
@@ -173,7 +164,7 @@ export class AlignmentView extends EventListenerComponent<AlignmentViewProps, Al
             const k = Math.exp(-deltaY / 1000);
             const newPPS = oldPPS * k;
             const newStart = oldStart / k + scale.invert(t) * (1 - 1 / k);
-            new actions.AlignmentActions.SetTimeSeriesZooming(timeSeries, newStart, newPPS).dispatch();
+            stores.alignmentUiStore.setTimeSeriesZooming(timeSeries, newStart, newPPS);
         }
     }
 
@@ -201,7 +192,7 @@ export class AlignmentView extends EventListenerComponent<AlignmentViewProps, Al
 
     private startCreatingCorrespondence(marker: Marker, knob: 'top' | 'bottom', event: React.MouseEvent<Element>): void {
         // Select the marker first.
-        new actions.AlignmentActions.SelectMarker(marker).dispatch();
+        stores.alignmentUiStore.selectMarker(marker);
         // Enter start creating correspondence state.
         this.setState({
             isCreatingCorrespondence: true,
@@ -246,7 +237,7 @@ export class AlignmentView extends EventListenerComponent<AlignmentViewProps, Al
                 });
 
                 if (lastCandidate !== marker && lastCandidate !== null) {
-                    new actions.AlignmentActions.AddMarkerCorrespondence(marker, lastCandidate).dispatch();
+                    stores.alignmentStore.addMarkerCorrespondence(marker, lastCandidate);
                 }
             });
     }
@@ -340,12 +331,12 @@ export class AlignmentView extends EventListenerComponent<AlignmentViewProps, Al
 
                     <g transform={`translate(${this.props.viewWidth + 4}, 0)`}>
                         <SVGGlyphiconButton x={0} y={0} width={20} height={20} text='remove'
-                            onClick={event => new actions.CommonActions.DeleteTrack(track).dispatch()} />
+                            onClick={event => stores.alignmentLabelingStore.deleteTrack(track)} />
                         <SVGGlyphiconButton x={0} y={20}
                             width={20} height={20}
                             text={track.minimized ? 'plus' : 'minus'}
                             onClick={event =>
-                                new actions.AlignmentActions.SetTrackMinimized(track, !track.minimized).dispatch()} />
+                                stores.alignmentUiStore.setTrackMinimized(track, !track.minimized)} />
                     </g>
                 </g>
             );
@@ -370,7 +361,7 @@ export class AlignmentView extends EventListenerComponent<AlignmentViewProps, Al
                         key={`correspondence-handler-${index}`}
                         x1={l1.x} x2={l2.x} y1={y1} y2={y2}
                         onClick={() =>
-                            new actions.AlignmentActions.SelectMarkerCorrespondence(correspondence).dispatch()}
+                            stores.alignmentUiStore.selectMarkerCorrespondence(correspondence)}
                         />
                 </g>
             );
@@ -410,28 +401,29 @@ export class AlignmentView extends EventListenerComponent<AlignmentViewProps, Al
                         } }
                         onMouseEnter={event => {
                             if (marker.timeSeries.track === stores.alignmentLabelingStore.referenceTrack) {
-                                new actions.CommonActions.SetReferenceViewTimeCursor(marker.localTimestamp).dispatch();
+                                stores.alignmentLabelingUiStore.setReferenceViewTimeCursor(marker.localTimestamp);
+                                stores.uiStore.setReferenceViewTimeCursor(marker.localTimestamp);
                             } else {
-                                new actions.AlignmentActions.SetSeriesTimeCursor(marker.timeSeries, marker.localTimestamp).dispatch();
+                                stores.alignmentUiStore.setSeriesTimeCursor(marker.timeSeries, marker.localTimestamp);
                             }
                         } }
                         onMouseDown={event => {
-                            new actions.AlignmentActions.SelectMarker(marker).dispatch();
+                            stores.alignmentUiStore.selectMarker(marker);
                             let isFirstUpdate = true;
                             startDragging(
                                 (moveEvent: MouseEvent) => {
                                     const newT = this.getMarkerLayout(marker).xScaleInvert(this.getRelativePosition(moveEvent)[0]);
-                                    new actions.AlignmentActions.UpdateMarker(marker, newT, false, isFirstUpdate).dispatch();
+                                    stores.alignmentStore.updateMarker(marker, newT, false, isFirstUpdate);
                                     isFirstUpdate = false;
                                     if (marker.timeSeries.track === stores.alignmentLabelingStore.referenceTrack) {
-                                        new actions.CommonActions.SetReferenceViewTimeCursor(newT).dispatch();
+                                        stores.alignmentLabelingUiStore.setReferenceViewTimeCursor(newT);
+                                        stores.uiStore.setReferenceViewTimeCursor(newT);
                                     } else {
-                                        new actions.AlignmentActions.SetSeriesTimeCursor(marker.timeSeries, newT).dispatch();
+                                        stores.alignmentUiStore.setSeriesTimeCursor(marker.timeSeries, newT);
                                     }
                                 },
-                                () => {
-                                    new actions.AlignmentActions.UpdateMarker(marker, marker.localTimestamp, true, false).dispatch();
-                                });
+                                () => { stores.alignmentStore.updateMarker(marker, marker.localTimestamp, true, false); }
+                            );
                         } }
                         />
                     <circle

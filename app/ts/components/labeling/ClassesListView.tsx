@@ -3,9 +3,8 @@
 import * as actions from '../../actions/Actions';
 import {KeyCode} from '../../stores/dataStructures/types';
 import * as stores from '../../stores/stores';
-import {EventListenerComponent} from '../common/EventListenerComponent';
 import * as React from 'react';
-
+import {observer} from 'mobx-react';
 
 
 export interface ClassesListViewState {
@@ -14,18 +13,15 @@ export interface ClassesListViewState {
     currentClass?: string;
 }
 
-
-export class ClassesListView extends EventListenerComponent<{}, ClassesListViewState> {
+@observer
+export class ClassesListView extends React.Component<{}, ClassesListViewState> {
     public refs: {
         [key: string]: Element,
         inputClassName: HTMLInputElement
     };
 
     constructor(props: {}, context: any) {
-        super(props, context, [
-            stores.labelingStore.classesChanged,
-            stores.labelingUiStore.currentClassChanged
-        ]);
+        super(props, context);
 
         this.state = {
             classes: stores.labelingStore.classes,
@@ -38,8 +34,8 @@ export class ClassesListView extends EventListenerComponent<{}, ClassesListViewS
     private addClass(): void {
         const text = this.refs.inputClassName.value.trim();
         if (text.length > 0) {
-            new actions.LabelingActions.AddClass(text).dispatch();
-            new actions.LabelingActions.SelectClass(text).dispatch();
+            stores.labelingStore.addClass(text);
+            stores.labelingUiStore.selectClass(text);
         }
         this.refs.inputClassName.value = '';
     }
@@ -64,7 +60,7 @@ export class ClassesListView extends EventListenerComponent<{}, ClassesListViewS
                         } }
                         onBlur={(e) => {
                             const v = (e.target as HTMLInputElement).value;
-                            new actions.LabelingActions.RenameClass(c, v).dispatch();
+                            stores.labelingStore.renameClass(c, v);
                         } }
                         />
                 );
@@ -75,7 +71,7 @@ export class ClassesListView extends EventListenerComponent<{}, ClassesListViewS
                     key={`class-${i}`}
                     role='button'
                     onClick={ () => {
-                        new actions.LabelingActions.SelectClass(c).dispatch();
+                        stores.labelingUiStore.selectClass(c);
                     } }
                     >
                     <span className='badge-classname' style={ { backgroundColor: this.state.classColors[i] } }></span>
@@ -87,7 +83,7 @@ export class ClassesListView extends EventListenerComponent<{}, ClassesListViewS
                                     () => {
                                         if (confirm(`Are you sure to delete the class '${c}'? '+
                                         'All the labels in this class will be deleted.`)) {
-                                            new actions.LabelingActions.RemoveClass(c).dispatch();
+                                            stores.labelingStore.removeClass(c);
                                         }
                                     }
                                 }><span className='glyphicon glyphicon-remove icon-only'></span></button>
@@ -137,17 +133,15 @@ export interface InlineClassesListViewState {
 }
 
 
-export class InlineClassesListView extends EventListenerComponent<{}, InlineClassesListViewState> {
+@observer
+export class InlineClassesListView extends React.Component<{}, InlineClassesListViewState> {
     public refs: {
         [key: string]: Element,
         wrapper: Element
     };
 
     constructor(props: {}, context: any) {
-        super(props, context, [
-            stores.labelingStore.classesChanged,
-            stores.labelingUiStore.currentClassChanged
-        ]);
+        super(props, context);
 
         this.state = {
             classes: stores.labelingStore.classes,

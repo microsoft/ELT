@@ -6,7 +6,7 @@ import * as stores from '../../stores/stores';
 import {EventListenerComponent} from '../common/EventListenerComponent';
 import {LabelKind, LabelPlot} from './LabelPlot';
 import * as React from 'react';
-
+import {observer} from 'mobx-react';
 
 
 export interface LabelsRangePlotProps {
@@ -25,18 +25,11 @@ interface LabelsRangePlotState {
     threeLeastConfidentSuggestions: Label[];
 }
 
-
-export class LabelsRangePlot extends EventListenerComponent<LabelsRangePlotProps, LabelsRangePlotState> {
+@observer
+export class LabelsRangePlot extends React.Component<LabelsRangePlotProps, LabelsRangePlotState> {
 
     constructor(props: LabelsRangePlotProps, context: any) {
-        super(props, context, [
-            stores.labelingStore.classesChanged,
-            stores.labelingStore.labelsArrayChanged,
-            stores.labelingStore.suggestedLabelsArrayChanged,
-            stores.labelingUiStore.suggestionLogicChanged,
-            stores.labelingUiStore.hoveringLabelChanged,
-            stores.labelingUiStore.selectedLabelsChanged
-        ]);
+        super(props, context);
         this.state = this.computeState(props);
         this.updateState = this.updateState.bind(this);
     }

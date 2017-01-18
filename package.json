@@ -49,6 +49,8 @@
     "flux": "^2.1.1",
     "jquery": "^2.2.2",
     "less": "^2.7.1",
+    "mobx": "^3.0.0",
+    "mobx-react": "^4.1.0",
     "monaco-editor": "^0.7.0",
     "react": "^15.4.1",
     "react-bootstrap": "^0.30.3",

@@ -13,7 +13,7 @@ import { LabelKind } from './labeling/LabelPlot';
 import { LabelsRangePlot } from './labeling/LabelsRangePlot';
 import * as d3 from 'd3';
 import * as React from 'react';
-
+import {observer} from 'mobx-react';
 
 export interface ReferenceTrackOverviewProps {
     mode: string;
@@ -21,7 +21,6 @@ export interface ReferenceTrackOverviewProps {
     viewHeight: number;
     downReach: number;
 }
-
 
 interface ReferenceTrackOverviewState {
     referenceTrack: Track;
@@ -34,19 +33,15 @@ interface ReferenceTrackOverviewState {
     referenceTimeCursor: number;
 }
 
-
-export class ReferenceTrackOverview extends EventListenerComponent<ReferenceTrackOverviewProps, ReferenceTrackOverviewState> {
+@observer
+export class ReferenceTrackOverview extends React.Component<ReferenceTrackOverviewProps, ReferenceTrackOverviewState> {
     public refs: {
         [key: string]: Element,
         interactionRect: Element
     };
 
     constructor(props: ReferenceTrackOverviewProps, context: any) {
-        super(props, context, [
-            stores.alignmentLabelingUiStore.referenceViewTimeCursorChanged,
-            stores.alignmentLabelingUiStore.referenceViewChanged,
-            stores.alignmentStore.alignmentChanged
-        ]);
+        super(props, context);
 
         this.state = this.computeState();
 
@@ -69,8 +64,8 @@ export class ReferenceTrackOverview extends EventListenerComponent<ReferenceTrac
         } else {
             return {
                 referenceTrack: stores.alignmentLabelingStore.referenceTrack,
-                referenceTimestampStart: stores.alignmentLabelingUiStore.referenceTimestampStart,
-                referenceTimestampEnd: stores.alignmentLabelingUiStore.referenceTimestampEnd,
+                referenceTimestampStart: stores.alignmentLabelingStore.referenceTimestampStart,
+                referenceTimestampEnd: stores.alignmentLabelingStore.referenceTimestampEnd,
                 referenceViewStart: stores.alignmentLabelingUiStore.referenceViewStart,
                 referenceViewEnd:
                 stores.alignmentLabelingUiStore.referenceViewStart +
@@ -87,17 +82,20 @@ export class ReferenceTrackOverview extends EventListenerComponent<ReferenceTrac
     private onKeyDown(event: KeyboardEvent): void {
         if (event.srcElement === document.body) {
             if (event.keyCode === KeyCode.LEFT) {
-                new Actions.CommonActions.ReferenceViewPanAndZoom(-0.6, 0).dispatch();
+                stores.alignmentLabelingUiStore.referenceViewPanAndZoom(-0.6, 0);
+                stores.uiStore.referenceViewPanAndZoom(-0.6, 0);
             }
             if (event.keyCode === KeyCode.RIGHT) {
-                new Actions.CommonActions.ReferenceViewPanAndZoom(+0.6, 0).dispatch();
+                stores.alignmentLabelingUiStore.referenceViewPanAndZoom(+0.6, 0);
+                stores.uiStore.referenceViewPanAndZoom(+0.6, 0);
             }
         }
     }
 
     private onMouseWheel(event: React.WheelEvent<Element>): void {
         // Decide the zooming factor.
-        new Actions.CommonActions.ReferenceViewPanAndZoom(0, event.deltaY / 1000, 'center').dispatch();
+        stores.alignmentLabelingUiStore.referenceViewPanAndZoom(0, event.deltaY / 1000, 'center');
+        stores.uiStore.referenceViewPanAndZoom(0, event.deltaY / 1000, 'center');
     }
 
     private detailedViewCursorPosition(event: React.MouseEvent<Element>): void {
@@ -105,15 +103,14 @@ export class ReferenceTrackOverview extends EventListenerComponent<ReferenceTrac
         const t = x / this.props.viewWidth * (this.state.referenceTimestampEnd - this.state.referenceTimestampStart) +
             this.state.referenceTimestampStart;
         const timeWindow = stores.alignmentLabelingUiStore.referenceViewDuration;
-        new Actions.CommonActions.SetReferenceViewZooming(t - timeWindow / 2, null, true).dispatch();
+        stores.alignmentLabelingUiStore.setReferenceViewZoomingAction(t - timeWindow / 2, null, true);
     }
 
     public componentDidMount(): void {
-        super.componentDidMount();
         window.addEventListener('keydown', this.onKeyDown);
     }
+
     public componentWillUnmount(): void {
-        super.componentWillUnmount();
         window.removeEventListener('keydown', this.onKeyDown);
     }
 
@@ -121,14 +118,9 @@ export class ReferenceTrackOverview extends EventListenerComponent<ReferenceTrac
         const newStart = Math.min(t0, t1);
         const newEnd = Math.max(t0, t1);
         if (mode === 'start' || mode === 'end') {
-            new Actions.CommonActions.SetReferenceViewZooming(
-                newStart,
-                this.props.viewWidth / (newEnd - newStart)
-            ).dispatch();
+            stores.alignmentLabelingUiStore.setReferenceViewZoomingAction(newStart,this.props.viewWidth / (newEnd - newStart));
         } else {
-            new Actions.CommonActions.SetReferenceViewZooming(
-                newStart
-            ).dispatch();
+            stores.alignmentLabelingUiStore.setReferenceViewZoomingAction(newStart);
         }
     }
 
@@ -174,7 +166,8 @@ export class ReferenceTrackOverview extends EventListenerComponent<ReferenceTrac
         const x = this.getRelativePosition(event)[0];
         const t = x / this.props.viewWidth * (this.state.referenceTimestampEnd - this.state.referenceTimestampStart) +
             this.state.referenceTimestampStart;
-        new Actions.CommonActions.SetReferenceViewTimeCursor(t).dispatch();
+        stores.alignmentLabelingUiStore.setReferenceViewTimeCursor(t);
+        stores.uiStore.setReferenceViewTimeCursor(t);
     }
 
     public render(): JSX.Element {

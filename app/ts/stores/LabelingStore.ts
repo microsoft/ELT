@@ -1,19 +1,20 @@
 import * as actions from '../actions/Actions';
-import {AlignedTimeSeries} from '../stores/dataStructures/alignment';
-import {Label, LabelConfirmationState} from '../stores/dataStructures/labeling';
-import {SavedLabelingState} from '../stores/dataStructures/project';
-import {mergeTimeRangeArrays, TimeRangeIndex} from '../stores/dataStructures/timeRangeIndex';
-import {resampleColumn } from '../stores/dataStructures/sampling';
-import {PerItemEventListeners } from '../stores/utils';
-import {Dataset, SensorTimeSeries} from '../stores/dataStructures/dataset';
-import {globalDispatcher} from '../dispatcher/globalDispatcher';
-import {AlignmentStore} from './AlignmentStore';
-import {NodeEvent, NodeItemEvent} from './NodeEvent';
-import {alignmentLabelingStore, alignmentLabelingUiStore, labelingUiStore, uiStore} from './stores';
-import {UiStore} from './UiStore';
+import { AlignedTimeSeries } from '../stores/dataStructures/alignment';
+import { Label, LabelConfirmationState, PartialLabel } from '../stores/dataStructures/labeling';
+import { SavedLabelingState } from '../stores/dataStructures/project';
+import { mergeTimeRangeArrays, TimeRangeIndex } from '../stores/dataStructures/timeRangeIndex';
+import { resampleColumn } from '../stores/dataStructures/sampling';
+import { PerItemEventListeners } from '../stores/utils';
+import { Dataset, SensorTimeSeries } from '../stores/dataStructures/dataset';
+import { globalDispatcher } from '../dispatcher/globalDispatcher';
+import { AlignmentStore } from './AlignmentStore';
+import { NodeEvent, NodeItemEvent } from './NodeEvent';
+import { alignmentLabelingStore, alignmentLabelingUiStore, labelingUiStore, uiStore } from './stores';
+import { UiStore } from './UiStore';
 import * as d3 from 'd3';
-import {EventEmitter} from 'events';
-
+import { EventEmitter } from 'events';
+import { observer } from 'mobx-react';
+import { action, observable, computed } from 'mobx';
 
 const colorbrewer6 = [
     '#a6cee3', '#b2df8a', '#fb9a99', '#fdbf6f', '#cab2d6', '#ffff99'
@@ -26,8 +27,7 @@ const d3category20 = [
     '#c7c7c7', '#bcbd22', '#dbdb8d', '#17becf', '#9edae5'
 ];
 
-
-export class LabelingStore extends EventEmitter {
+export class LabelingStore {
     private _labelsIndex: TimeRangeIndex<Label>;
     private _windowLabelsIndex: TimeRangeIndex<Label>;
     private _windowAccuracyLabelsIndex: TimeRangeIndex<Label>;
@@ -36,22 +36,55 @@ export class LabelingStore extends EventEmitter {
     private _windowLabelIndexHistory: TimeRangeIndex<Label>[];
     private _windowLabelsHistory: Label[][];
 
-    private _changePoints: number[];
-
-    private _classes: string[];
-    private _classColors: string[];
-    private _classColormap: { [name: string]: string };
-    private _timestampConfirmed: number;
+    @observable public changePoints: number[];
+    @observable public classes: string[];
+    @observable public classColors: string[];
+    @observable public classColormap: { [name: string]: string };
+    @observable public timestampConfirmed: number;
 
     private _labelChangedListeners: PerItemEventListeners<Label>;
 
-    private _alignedDataset: Dataset;
+    @observable public alignedDataset: Dataset;
     private _shouldUpdateAlignedDatasetOnNextTabChange: boolean;
+ 
 
+    // FIXME: when to use computed vs just a regular function?   
+    @computed public get labels(): Label[] {
+        return this._labelsIndex.getRanges();
+    }
+
+    @computed public get suggestions(): Label[] {
+        return this._suggestedLabelsIndex.getRanges();
+    }
+  
+    // FIXME: possibly make these computed
+    public getLabelsInRange(tmin: number, tmax: number): Label[] {
+        return mergeTimeRangeArrays(
+            this._labelsIndex.getRangesInRange(tmin, tmax),
+            this._suggestedLabelsIndex.getRangesInRange(tmin, tmax));
+    }
+
+    public getLabelsAtTime(time: number): Label[] {
+        return this._labelsIndex.getRangesInRange(time, time);
+    }
+
+    public getWindowLabelsInRange(tmin: number, tmax: number): Label[] {
+        return this._windowLabelsIndex.getRangesInRange(tmin, tmax);
+    }
+
+    public getWindowAccuracyLabelsInRange(tmin: number, tmax: number): Label[] {
+        return this._windowAccuracyLabelsIndex.getRangesInRange(tmin, tmax);
+    }
+
+    public getWindowHistoryLabelsInRange(tmin: number, tmax: number, historyIndex: number): Label[] {
+        return this._windowLabelIndexHistory[historyIndex].getRangesInRange(tmin, tmax);
+    }
+
+    public getActualLabelsInRange(tmin: number, tmax: number): Label[] {
+        return this._labelsIndex.getRangesInRange(tmin, tmax);
+    }
 
     constructor(alignmentStore: AlignmentStore, uiStore: UiStore) {
-        super();
-
         this._labelsIndex = new TimeRangeIndex<Label>();
         this._windowLabelsIndex = new TimeRangeIndex<Label>();
         this._suggestedLabelsIndex = new TimeRangeIndex<Label>();
@@ -60,15 +93,15 @@ export class LabelingStore extends EventEmitter {
         this._windowLabelIndexHistory = [];
         this._windowLabelsHistory = [];
 
-        this._classes = ['IGNORE', 'Positive'];
+        this.classes = ['IGNORE', 'Positive'];
         this.updateColors();
-        this._timestampConfirmed = null;
+        this.timestampConfirmed = null;
 
-        this._changePoints = [];
+        this.changePoints = [];
 
         this._labelChangedListeners = new PerItemEventListeners<Label>();
 
-        this._alignedDataset = null;
+        this.alignedDataset = null;
         this._shouldUpdateAlignedDatasetOnNextTabChange = false;
         alignmentStore.alignmentChanged.on(this.updateAlignedDataset.bind(this));
         uiStore.tabChanged.on(() => {
@@ -78,288 +111,246 @@ export class LabelingStore extends EventEmitter {
             }
         });
 
-        globalDispatcher.register(action => {
-            // Updating labels.
-            if (action instanceof actions.LabelingActions.AddLabel) {
-                alignmentLabelingStore.labelingHistoryRecord();
-                this._labelsIndex.add(action.label);
-                this.labelsArrayChanged.emit();
-            }
+    }
 
-            if (action instanceof actions.LabelingActions.RemoveLabel) {
-                alignmentLabelingStore.labelingHistoryRecord();
-                if (this._labelsIndex.has(action.label)) {
-                    this._labelsIndex.remove(action.label);
-                    this.labelsArrayChanged.emit();
-                }
-                if (this._suggestedLabelsIndex.has(action.label)) {
-                    action.label.state = LabelConfirmationState.REJECTED;
-                    this.labelChanged.emit(action.label);
-                    this.labelsChanged.emit();
-                }
-            }
+    @action
+    public addLabel(label: Label): void {
+        alignmentLabelingStore.labelingHistoryRecord();
+        this._labelsIndex.add(label);
+    }
 
-            if (action instanceof actions.LabelingActions.UpdateLabel) {
-                alignmentLabelingStore.labelingHistoryRecord();
-                // Update the label info.
-                if (action.newLabel.timestampStart !== undefined) { action.label.timestampStart = action.newLabel.timestampStart; }
-                if (action.newLabel.timestampEnd !== undefined) { action.label.timestampEnd = action.newLabel.timestampEnd; }
-                if (action.newLabel.className !== undefined) { action.label.className = action.newLabel.className; }
-                if (action.newLabel.state !== undefined) { action.label.state = action.newLabel.state; }
-                if (action.newLabel.suggestionConfidence !== undefined) {
-                    action.label.suggestionConfidence = action.newLabel.suggestionConfidence;
-                }
-                if (action.newLabel.suggestionGeneration !== undefined) {
-                    action.label.suggestionGeneration = action.newLabel.suggestionGeneration;
-                }
+    @action
+    public removeLabel(label: Label): void {
+        alignmentLabelingStore.labelingHistoryRecord();
+        if (this._labelsIndex.has(label)) {
+            this._labelsIndex.remove(label);
+        }
+        if (this._suggestedLabelsIndex.has(label)) {
+            label.state = LabelConfirmationState.REJECTED;
+        }
+    }
 
-                this.labelChanged.emit(action.label);
-                // Turn a suggestion into a label, criteria: BOTH ends confirmed.
-                if (this._suggestedLabelsIndex.has(action.label)) {
-                    if (action.label.state === LabelConfirmationState.CONFIRMED_BOTH) {
-                        this._suggestedLabelsIndex.remove(action.label);
-                        this._labelsIndex.add(action.label);
+    @action
+    public updateLabel(label: Label, newLabel: PartialLabel): void {
+        alignmentLabelingStore.labelingHistoryRecord();
+        // Update the label info.
+        if (newLabel.timestampStart !== undefined) { label.timestampStart = newLabel.timestampStart; }
+        if (newLabel.timestampEnd !== undefined) { label.timestampEnd = newLabel.timestampEnd; }
+        if (newLabel.className !== undefined) { label.className = newLabel.className; }
+        if (newLabel.state !== undefined) { label.state = newLabel.state; }
+        if (newLabel.suggestionConfidence !== undefined) {
+            label.suggestionConfidence = newLabel.suggestionConfidence;
+        }
+        if (newLabel.suggestionGeneration !== undefined) {
+            label.suggestionGeneration = newLabel.suggestionGeneration;
+        }
 
-                        const decision = labelingUiStore.suggestionLogic.onConfirmLabels({
-                            labelsConfirmed: [action.label],
-                            currentSuggestions: this._suggestedLabelsIndex
+        // Turn a suggestion into a label, criteria: BOTH ends confirmed.
+        if (this._suggestedLabelsIndex.has(label)) {
+            if (label.state === LabelConfirmationState.CONFIRMED_BOTH) {
+                this._suggestedLabelsIndex.remove(label);
+                this._labelsIndex.add(label);
+
+                const decision = labelingUiStore.suggestionLogic.onConfirmLabels({
+                    labelsConfirmed: [label],
+                    currentSuggestions: this._suggestedLabelsIndex
+                });
+                if (decision) {
+                    if (decision.confirmLabels) {
+                        decision.confirmLabels.forEach((label) => {
+                            label.state = LabelConfirmationState.CONFIRMED_BOTH;
+                            this._suggestedLabelsIndex.remove(label);
+                            this._labelsIndex.add(label);
                         });
-                        if (decision) {
-                            if (decision.confirmLabels) {
-                                decision.confirmLabels.forEach((label) => {
-                                    label.state = LabelConfirmationState.CONFIRMED_BOTH;
-                                    this.labelChanged.emit(label);
-                                    this._suggestedLabelsIndex.remove(label);
-                                    this._labelsIndex.add(label);
-                                });
-                            }
-                            if (decision.deleteLabels) {
-                                decision.deleteLabels.forEach((label) => {
-                                    this._suggestedLabelsIndex.remove(label);
-                                });
-                            }
-                            if (decision.rejectLabels) {
-                                decision.rejectLabels.forEach((label) => {
-                                    label.state = LabelConfirmationState.REJECTED;
-                                    this.labelChanged.emit(label);
-                                });
-                            }
-                        }
-
-                        this.suggestedLabelsArrayChanged.emit();
-                        this.labelsArrayChanged.emit();
                     }
-                }
-                this.labelsChanged.emit();
-            }
-
-            if (action instanceof actions.LabelingActions.SuggestLabels) {
-                const lastLabelTimestampEnd = action.timestampCompleted;
-                const thisGeneration = action.generation;
-                let labelsChanged = false;
-                const selectedLabels = labelingUiStore.selectedLabels;
-
-                if (lastLabelTimestampEnd !== null) {
-                    // get labels that are earlier than the current suggestion timestamp.
-                    const refreshDecision = labelingUiStore.suggestionLogic.refreshSuggestions({
-                        suggestionProgress: {
-                            timestampStart: action.timestampStart,
-                            timestampEnd: action.timestampEnd,
-                            timestampCompleted: action.timestampCompleted
-                        },
-                        currentSuggestions: this._suggestedLabelsIndex
-                    });
-                    let labelsToRemove = refreshDecision.deleteLabels;
-                    // Only remove unconfirmed suggestions of older generations.
-                    labelsToRemove = labelsToRemove.filter((label) =>
-                        label.suggestionGeneration < thisGeneration && label.state === LabelConfirmationState.UNCONFIRMED);
-                    // Don't remove selected suggestions.
-                    labelsToRemove = labelsToRemove.filter((label) => !selectedLabels.has(label));
-                    // Remove them.
-                    labelsToRemove.forEach((label) => this._suggestedLabelsIndex.remove(label));
-                    labelsChanged = labelsChanged || labelsToRemove.length > 0;
-                }
-                action.labels.forEach((label) => {
-                    const margin = (label.timestampEnd - label.timestampStart) * 0.15;
-                    if (this._labelsIndex.getRangesWithMargin(label.timestampStart, label.timestampEnd, margin).length === 0 &&
-                        this._suggestedLabelsIndex.getRangesWithMargin(label.timestampStart, label.timestampEnd, margin).length === 0) {
-                        this._suggestedLabelsIndex.add(label);
-                        labelsChanged = labelsChanged || true;
+                    if (decision.deleteLabels) {
+                        decision.deleteLabels.forEach((label) => {
+                            this._suggestedLabelsIndex.remove(label);
+                        });
                     }
-                });
-                if (labelsChanged) {
-                    this.suggestedLabelsArrayChanged.emit();
-                }
-            }
-
-            if (action instanceof actions.LabelingActions.SuggestChangePoints) {
-                this._changePoints = action.changePoints;
-                this.suggestedChangePointsChanged.emit();
-            }
-
-            if (action instanceof actions.LabelingActions.RemoveAllSuggestions) {
-                if (this._suggestedLabelsIndex.size() > 0) {
-                    this._suggestedLabelsIndex.clear();
-                    this.suggestedLabelsArrayChanged.emit();
-                }
-            }
-
-            if (action instanceof actions.LabelingActions.RemoveAllLabels) {
-                alignmentLabelingStore.labelingHistoryRecord();
-                if (this._labelsIndex.size() > 0) {
-                    this._labelsIndex.clear();
-                    this.labelsArrayChanged.emit();
-                }
-                if (this._suggestedLabelsIndex.size() > 0) {
-                    this._suggestedLabelsIndex.clear();
-                    this.suggestedLabelsArrayChanged.emit();
-                }
-            }
-
-            // Changing classes.
-            if (action instanceof actions.LabelingActions.AddClass) {
-                alignmentLabelingStore.labelingHistoryRecord();
-                if (this._classes.indexOf(action.className) < 0) {
-                    this._classes.push(action.className);
-                    this.updateColors();
-                    this.classesChanged.emit();
-                }
-            }
-
-            if (action instanceof actions.LabelingActions.RemoveClass) {
-                alignmentLabelingStore.labelingHistoryRecord();
-                // Remove the labels of that class.
-                const toRemove = [];
-                this._labelsIndex.forEach((label) => {
-                    if (label.className === action.className) {
-                        toRemove.push(label);
-                    }
-                });
-                if (toRemove.length > 0) {
-                    toRemove.forEach(this._labelsIndex.remove.bind(this._labelsIndex));
-                    this.labelsArrayChanged.emit();
-                }
-
-                // Remove the class.
-                const index = this._classes.indexOf(action.className);
-                if (index >= 0) {
-                    this._classes.splice(index, 1);
-                    this.updateColors();
-                    this.classesChanged.emit();
-                }
-            }
-
-            if (action instanceof actions.LabelingActions.RenameClass) {
-                alignmentLabelingStore.labelingHistoryRecord();
-                if (this._classes.indexOf(action.newClassName) < 0) {
-                    let renamed = false;
-                    this._labelsIndex.forEach((label) => {
-                        if (label.className === action.oldClassName) {
-                            label.className = action.newClassName;
-                            this.labelChanged.emit(label);
-                            renamed = true;
-                        }
-                    });
-                    this._suggestedLabelsIndex.forEach((label) => {
-                        if (label.className === action.oldClassName) {
-                            label.className = action.newClassName;
-                            this.labelChanged.emit(label);
-                            renamed = true;
-                        }
-                    });
-                    if (renamed) {
-                        this.labelsArrayChanged.emit();
-                        this.suggestedLabelsArrayChanged.emit();
-                    }
-
-                    const index = this._classes.indexOf(action.oldClassName);
-                    if (index >= 0) {
-                        this._classes[index] = action.newClassName;
-                        this.updateColors();
-                        this.classesChanged.emit();
-                        labelingUiStore.currentClass = action.newClassName;
+                    if (decision.rejectLabels) {
+                        decision.rejectLabels.forEach((label) => {
+                            label.state = LabelConfirmationState.REJECTED;
+                        });
                     }
                 }
             }
+        }
+    }
 
-            // // Temporary save/load stuff.
-            // if(action instanceof Actions.LabelingActions.SaveLabels) {
-            //     fs.writeFileSync(action.filename, JSON.stringify({
-            //         labels: this._labelsIndex.getRanges(),
-            //         classes: this._classes
-            //     }), 'utf-8');
-            // }
-            // if(action instanceof Actions.LabelingActions.LoadLabels) {
-            //     let content = fs.readFileSync(action.filename, 'utf-8');
-            //     let data = JSON.parse(content);
-            //     this._labelsIndex.clear();
-            //     this._labelsIndex.addRanges(data['labels']);
-            //     this._classes = data['classes'];
-            //     this._updateColors();
-            //     this.emitClassesChanged();
-            //     this.emitLabelsArrayChanged();
-            // }
+    @action
+    public suggestLabels(labels: Label[], timestampStart: number, timestampEnd: number, timestampCompleted: number, generation: number): void {
+        const lastLabelTimestampEnd = timestampCompleted;
+        const thisGeneration = generation;
+        let labelsChanged = false;
+        const selectedLabels = labelingUiStore.selectedLabels;
 
-            if (action instanceof actions.LabelingActions.ConfirmVisibleSuggestions) {
-                alignmentLabelingStore.labelingHistoryRecord();
-                // Get visible suggestions.
-                let visibleSuggestions = this._suggestedLabelsIndex.getRangesInRange(
-                    alignmentLabelingUiStore.referenceViewStart,
-                    alignmentLabelingUiStore.referenceViewEnd);
-                // Filter out rejected suggestions.
-                visibleSuggestions = visibleSuggestions.filter((x) => x.state !== LabelConfirmationState.REJECTED);
-                visibleSuggestions.forEach((label) => {
-                    label.state = LabelConfirmationState.CONFIRMED_BOTH;
-                    this._suggestedLabelsIndex.remove(label);
-                    this._labelsIndex.add(label);
-                    this.labelChanged.emit(label);
-                });
-                if (visibleSuggestions.length > 0) {
-                    this.labelsArrayChanged.emit();
-                    this.suggestedLabelsArrayChanged.emit();
-                }
+        if (lastLabelTimestampEnd !== null) {
+            // get labels that are earlier than the current suggestion timestamp.
+            const refreshDecision = labelingUiStore.suggestionLogic.refreshSuggestions({
+                suggestionProgress: {
+                    timestampStart: timestampStart,
+                    timestampEnd: timestampEnd,
+                    timestampCompleted: timestampCompleted
+                },
+                currentSuggestions: this._suggestedLabelsIndex
+            });
+            let labelsToRemove = refreshDecision.deleteLabels;
+            // Only remove unconfirmed suggestions of older generations.
+            labelsToRemove = labelsToRemove.filter((label) =>
+                label.suggestionGeneration < thisGeneration && label.state === LabelConfirmationState.UNCONFIRMED);
+            // Don't remove selected suggestions.
+            labelsToRemove = labelsToRemove.filter((label) => !selectedLabels.has(label));
+            // Remove them.
+            labelsToRemove.forEach((label) => this._suggestedLabelsIndex.remove(label));
+            labelsChanged = labelsChanged || labelsToRemove.length > 0;
+        }
+        labels.forEach((label) => {
+            const margin = (label.timestampEnd - label.timestampStart) * 0.15;
+            if (this._labelsIndex.getRangesWithMargin(label.timestampStart, label.timestampEnd, margin).length === 0 &&
+                this._suggestedLabelsIndex.getRangesWithMargin(label.timestampStart, label.timestampEnd, margin).length === 0) {
+                this._suggestedLabelsIndex.add(label);
+                labelsChanged = labelsChanged || true;
             }
-
         });
     }
 
+    @action
+    public suggestChangePoints(changePoints: number[]): void {
+        this.changePoints = changePoints;
+    }
+
+    // FIXME: removeAllSuggestions also called in LabelingSUggestionGenerator
+    @action
+    public removeAllSuggestions(): void {
+        if (this._suggestedLabelsIndex.size() > 0) {
+            this._suggestedLabelsIndex.clear();
+        }
+    }
+
+    @action
+    public removeAllLabels(): void {
+        alignmentLabelingStore.labelingHistoryRecord();
+        if (this._labelsIndex.size() > 0) {
+            this._labelsIndex.clear();
+        }
+        if (this._suggestedLabelsIndex.size() > 0) {
+            this._suggestedLabelsIndex.clear();
+        }
+    }
+
+    @action
+    public addClass(className: string): void {
+        alignmentLabelingStore.labelingHistoryRecord();
+        if (this.classes.indexOf(className) < 0) {
+            this.classes.push(className);
+            this.updateColors();
+        }
+    }
+
+    @action
+    public removeClass(className: string): void {
+        alignmentLabelingStore.labelingHistoryRecord();
+        // Remove the labels of that class.
+        const toRemove = [];
+        this._labelsIndex.forEach((label) => {
+            if (label.className === className) {
+                toRemove.push(label);
+            }
+        });
+        if (toRemove.length > 0) {
+            toRemove.forEach(this._labelsIndex.remove.bind(this._labelsIndex));
+        }
+
+        // Remove the class.
+        const index = this.classes.indexOf(className);
+        if (index >= 0) {
+            this.classes.splice(index, 1);
+            this.updateColors();
+        }
+    }
+
+    @action
+    public renameClass(oldClassName: string, newClassName: string): void {
+        alignmentLabelingStore.labelingHistoryRecord();
+        if (this.classes.indexOf(newClassName) < 0) {
+            let renamed = false;
+            this._labelsIndex.forEach((label) => {
+                if (label.className === oldClassName) {
+                    label.className = newClassName;
+                    renamed = true;
+                }
+            });
+            this._suggestedLabelsIndex.forEach((label) => {
+                if (label.className === oldClassName) {
+                    label.className = newClassName;
+                    renamed = true;
+                }
+            });
+            
+            const index = this.classes.indexOf(oldClassName);
+            if (index >= 0) {
+                this.classes[index] = newClassName;
+                this.updateColors();
+                labelingUiStore.currentClass = newClassName;
+            }
+        }
+    }
+
+    @action
+    public confirmVisibleSuggestions() {
+        alignmentLabelingStore.labelingHistoryRecord();
+        // Get visible suggestions.
+        let visibleSuggestions = this._suggestedLabelsIndex.getRangesInRange(
+            alignmentLabelingUiStore.referenceViewStart,
+            alignmentLabelingUiStore.referenceViewEnd);
+        // Filter out rejected suggestions.
+        visibleSuggestions = visibleSuggestions.filter((x) => x.state !== LabelConfirmationState.REJECTED);
+        visibleSuggestions.forEach((label) => {
+            label.state = LabelConfirmationState.CONFIRMED_BOTH;
+            this._suggestedLabelsIndex.remove(label);
+            this._labelsIndex.add(label);
+        });
+    }
+
+
     private updateColors(): void {
         // Update class colors, try to keep original colors.
-        this._classColors = this._classes.map(() => null);
+        this.classColors = this.classes.map(() => null);
         const usedColors = [];
-        if (this._classColormap) {
-            for (let i = 0; i < this._classes.length; i++) {
-                if (this._classColormap[this._classes[i]]) {
-                    this._classColors[i] = this._classColormap[this._classes[i]];
-                    usedColors.push(this._classColors[i]);
+        if (this.classColormap) {
+            for (let i = 0; i < this.classes.length; i++) {
+                if (this.classColormap[this.classes[i]]) {
+                    this.classColors[i] = this.classColormap[this.classes[i]];
+                    usedColors.push(this.classColors[i]);
                 } else {
-                    this._classColors[i] = null;
+                    this.classColors[i] = null;
                 }
             }
         }
 
         let palette = d3category20;
-        if (this._classes.length < 6) { palette = colorbrewer6; }
+        if (this.classes.length < 6) { palette = colorbrewer6; }
 
-        for (let i = 0; i < this._classes.length; i++) {
-            if (this._classColors[i] === null) {
-                if (this._classes[i] === 'IGNORE') {
-                    this._classColors[i] = '#CCC';
-                    usedColors.push(this._classColors[i]);
+        for (let i = 0; i < this.classes.length; i++) {
+            if (this.classColors[i] === null) {
+                if (this.classes[i] === 'IGNORE') {
+                    this.classColors[i] = '#CCC';
+                    usedColors.push(this.classColors[i]);
                 } else {
                     for (let j = 0; j < palette.length; j++) {
                         if (usedColors.indexOf(palette[j]) < 0) {
-                            this._classColors[i] = palette[j];
-                            usedColors.push(this._classColors[i]);
+                            this.classColors[i] = palette[j];
+                            usedColors.push(this.classColors[i]);
                             break;
                         }
                     }
                 }
             }
         }
-        this._classColormap = {};
-        for (let i = 0; i < this._classColors.length; i++) {
-            this._classColormap[this._classes[i]] = this._classColors[i];
+        this.classColormap = {};
+        for (let i = 0; i < this.classColors.length; i++) {
+            this.classColormap[this.classes[i]] = this.classColors[i];
         }
     }
 
@@ -416,8 +407,7 @@ export class LabelingStore extends EventEmitter {
         dataset.timestampStart = tMin;
         dataset.timestampEnd = tMax;
 
-        this._alignedDataset = dataset;
-        this.alignedDatasetChanged.emit();
+        this.alignedDataset = dataset;
     }
 
     // State saving and loading.
@@ -431,8 +421,8 @@ export class LabelingStore extends EventEmitter {
 
     public loadState(state: SavedLabelingState): void {
         if (state.classes) {
-            this._classes = state.classes;
-            this._classColormap = state.classColormap;
+            this.classes = state.classes;
+            this.classColormap = state.classColormap;
             this.updateColors();
         }
 
@@ -441,12 +431,7 @@ export class LabelingStore extends EventEmitter {
         for (const label of state.labels) {
             this._labelsIndex.add(label);
         }
-        // this.updateAlignedDataset(true);
-        this.classesChanged.emit();
-        this.labelsChanged.emit();
-        this.labelsArrayChanged.emit();
-        this.suggestedLabelsArrayChanged.emit();
-
+        
         // Update the current class.
         const nonIgnoreClases = this.classes.filter((x) => x !== 'IGNORE');
         labelingUiStore.currentClass = nonIgnoreClases.length > 0 ? nonIgnoreClases[0] : null;
@@ -455,107 +440,11 @@ export class LabelingStore extends EventEmitter {
     public reset(): void {
         this._labelsIndex.clear();
         this._suggestedLabelsIndex.clear();
-        this._classes = ['IGNORE', 'Positive'];
+        this.classes = ['IGNORE', 'Positive'];
         this.updateColors();
-        this._changePoints = [];
-        this.classesChanged.emit();
-        this.labelsChanged.emit();
-        this.labelsArrayChanged.emit();
-        this.suggestedLabelsArrayChanged.emit();
+        this.changePoints = [];
         const nonIgnoreClases = this.classes.filter((x) => x !== 'IGNORE');
         labelingUiStore.currentClass = nonIgnoreClases.length > 0 ? nonIgnoreClases[0] : null;
     }
-
-
-    public get alignedDataset(): Dataset {
-        return this._alignedDataset;
-    }
-
-    // public get datasetAutocorrelogram(): Dataset {
-    //     return this._datasetAutocorrelogram;
-    // }
-
-    public get labels(): Label[] {
-        return this._labelsIndex.getRanges();
-    }
-
-    public get suggestions(): Label[] {
-        return this._suggestedLabelsIndex.getRanges();
-    }
-
-    public get classes(): string[] {
-        return this._classes;
-    }
-
-    public get classColors(): string[] {
-        return this._classColors;
-    }
-
-    public get classColormap(): { [name: string]: string } {
-        return this._classColormap;
-    }
-
-    public get timestampConfirmed(): number {
-        return this._timestampConfirmed;
-    }
-
-    public get changePoints(): number[] {
-        return this._changePoints;
-    }
-
-    public getLabelsInRange(tmin: number, tmax: number): Label[] {
-        return mergeTimeRangeArrays(
-            this._labelsIndex.getRangesInRange(tmin, tmax),
-            this._suggestedLabelsIndex.getRangesInRange(tmin, tmax));
-    }
-
-    public getLabelsAtTime(time: number): Label[] {
-        return this._labelsIndex.getRangesInRange(time, time);
-    }
-
-    public getWindowLabelsInRange(tmin: number, tmax: number): Label[] {
-        return this._windowLabelsIndex.getRangesInRange(tmin, tmax);
-    }
-
-    public getWindowAccuracyLabelsInRange(tmin: number, tmax: number): Label[] {
-        return this._windowAccuracyLabelsIndex.getRangesInRange(tmin, tmax);
-    }
-
-    public getWindowHistoryLabelsInRange(tmin: number, tmax: number, historyIndex: number): Label[] {
-        return this._windowLabelIndexHistory[historyIndex].getRangesInRange(tmin, tmax);
-    }
-
-    public getActualLabelsInRange(tmin: number, tmax: number): Label[] {
-        return this._labelsIndex.getRangesInRange(tmin, tmax);
-    }
-
-
-    // LabelsArrayChanged: Fire when the collection of labels is changed (e.g., add new label(s), delete existing label(s)).
-    // does NOT fire when individual labels get updated, listen to LabelsChanged instead.
-    public labelsArrayChanged: NodeEvent = new NodeEvent(this, 'labels-array-changed');
-
-    // LabelsArrayChanged: Fire when the collection of labels is changed (e.g., add new label(s), delete existing label(s)).
-    // does NOT fire when individual labels get updated, listen to LabelsChanged instead.
-    public suggestedLabelsArrayChanged: NodeEvent = new NodeEvent(this, 'suggested-labels-array-changed');
-
-    // LabelsChanged: Fire when label(s) get updated.
-    // does NOT fire when adding/removing labels.
-    // To listen to individual labels, use addLabelChangedListener.
-    public labelsChanged: NodeEvent = new NodeEvent(this, 'labels-changed');
-
-    // ClassesChanged: Fire when the list of classes and/or colors of classes get changed.
-    public classesChanged: NodeEvent = new NodeEvent(this, 'classes-changed');
-
-    // AlignedDatasetChanged: Fire when the aligned dataset 
-    // (computed from the current alignment, only updated while in the labeling view) is changed.
-    public alignedDatasetChanged: NodeEvent = new NodeEvent(this, 'aligned-dataset-changed');
-
-    // SuggestedChangePointsChanged: When the changepoitn suggestion algorithm is completed.
-    public suggestedChangePointsChanged: NodeEvent = new NodeEvent(this, 'suggested-change-points-changed');
-
-    // Custom event emitting code, emit for individual labels.
-    // Fire when the specified label get updated (fired together with LabelsChanged).
-    // You can listen to individual labels with this function.
-    public labelChanged: NodeItemEvent<Label> = new NodeItemEvent<Label>();
 
 }

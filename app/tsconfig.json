@@ -8,7 +8,8 @@
         "target": "es5",
         "noImplicitAny": false,
         "jsx": "react",
-        "sourceMap": true
+        "sourceMap": true,
+        "experimentalDecorators": true
          //"forceConsistentCasingInFileNames": true //TODO: check if we need this
     },
     "exclude": [

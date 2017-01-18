@@ -14,7 +14,7 @@ import {LabelKind} from './LabelPlot';
 import {LabelsRangePlot} from './LabelsRangePlot';
 import * as d3 from 'd3';
 import * as React from 'react';
-
+import {observer} from 'mobx-react';
 
 export interface LabelingViewProps {
     // Viewport size.
@@ -39,25 +39,15 @@ interface LabelingViewState {
     hint_t1?: number;
 }
 
-
-export class LabelingView extends EventListenerComponent<LabelingViewProps, LabelingViewState> {
+@observer
+export class LabelingView extends React.Component<LabelingViewProps, LabelingViewState> {
     public refs: {
         [key: string]: Element,
         interactionRect: Element
     };
 
     constructor(props: LabelingViewProps, context: any) {
-        super(props, context, [
-            stores.alignmentLabelingStore.tracksChanged,
-            stores.alignmentLabelingUiStore.referenceViewChanged,
-            stores.alignmentLabelingUiStore.referenceViewTimeCursorChanged,
-            stores.labelingUiStore.selectedLabelsChanged,
-            stores.labelingUiStore.hoveringLabelChanged,
-            stores.labelingStore.labelsChanged,
-            stores.labelingUiStore.suggestionEnabledChanged,
-            stores.labelingUiStore.suggestionProgressChanged,
-            stores.labelingUiStore.signalsViewModeChanged
-        ]);
+        super(props, context);
 
         this.state = this.computeState();
         this.state.hint_t0 = null;
@@ -89,7 +79,7 @@ export class LabelingView extends EventListenerComponent<LabelingViewProps, Labe
             if (event.keyCode === KeyCode.BACKSPACE || event.keyCode === KeyCode.DELETE) {
                 if (stores.labelingUiStore.selectedLabels) {
                     stores.labelingUiStore.selectedLabels.forEach((label) => {
-                        new actions.LabelingActions.RemoveLabel(label).dispatch();
+                        stores.labelingStore.removeLabel(label);
                     });
                 }
             }
@@ -111,7 +101,8 @@ export class LabelingView extends EventListenerComponent<LabelingViewProps, Labe
     private onMouseMove(event: React.MouseEvent<Element>): void {
         const x = this.getRelativePosition(event)[0];
         const t = this.getTimeFromX(x);
-        new actions.CommonActions.SetReferenceViewTimeCursor(t).dispatch();
+        stores.alignmentLabelingUiStore.setReferenceViewTimeCursor(t);
+        stores.uiStore.setReferenceViewTimeCursor(t);
     }
 
     private getTimeFromX(x: number): number {
@@ -141,8 +132,8 @@ export class LabelingView extends EventListenerComponent<LabelingViewProps, Labe
                         className: stores.labelingUiStore.currentClass,
                         state: LabelConfirmationState.UNCONFIRMED
                     };
-                    new actions.LabelingActions.AddLabel(newLabel).dispatch();
-                    new actions.LabelingActions.SelectLabel(newLabel).dispatch();
+                    stores.labelingStore.addLabel(newLabel);
+                    stores.labelingUiStore.selectLabel(newLabel);
                 }
             }
         }
@@ -158,7 +149,7 @@ export class LabelingView extends EventListenerComponent<LabelingViewProps, Labe
 
         const isInteractionRect = event.target === this.refs.interactionRect;
         if (isInteractionRect) {
-            new actions.LabelingActions.ClearLabelSelection().dispatch();
+            stores.labelingUiStore.clearLabelSelection();
         }
 
         startDragging(
@@ -182,8 +173,8 @@ export class LabelingView extends EventListenerComponent<LabelingViewProps, Labe
                             className: stores.labelingUiStore.currentClass,
                             state: LabelConfirmationState.MANUAL
                         };
-                        new actions.LabelingActions.AddLabel(newLabel).dispatch();
-                        new actions.LabelingActions.SelectLabel(newLabel).dispatch();
+                        stores.labelingStore.addLabel(newLabel);
+                        stores.labelingUiStore.selectLabel(newLabel);
                     }
                 } else {
                     if (isInteractionRect && (upEvent as MouseEvent).shiftKey) {
@@ -200,8 +191,8 @@ export class LabelingView extends EventListenerComponent<LabelingViewProps, Labe
                                     className: stores.labelingUiStore.currentClass,
                                     state: LabelConfirmationState.UNCONFIRMED
                                 };
-                                new actions.LabelingActions.AddLabel(newLabel).dispatch();
-                                new actions.LabelingActions.SelectLabel(newLabel).dispatch();
+                                stores.labelingStore.addLabel(newLabel);
+                                stores.labelingUiStore.selectLabel(newLabel);
                             }
                         }
                     }
@@ -212,7 +203,8 @@ export class LabelingView extends EventListenerComponent<LabelingViewProps, Labe
 
     private onMouseWheel(event: React.WheelEvent<Element>): void {
         // Decide the zooming factor.
-        new actions.CommonActions.ReferenceViewPanAndZoom(0, event.deltaY / 1000).dispatch();
+        stores.alignmentLabelingUiStore.referenceViewPanAndZoom(0, event.deltaY / 1000);
+        stores.uiStore.referenceViewPanAndZoom(0, event.deltaY / 1000);
     }
 
     public render(): JSX.Element {
