@@ -10,6 +10,7 @@ import {LabelingView} from './labeling/LabelingView';
 import {ReferenceTrackDetail} from './ReferenceTrackDetail';
 import {ReferenceTrackOverview} from './ReferenceTrackOverview';
 import * as React from 'react';
+import * as stores from '../stores/stores';
 
 
 interface AlignmentLabelingViewProps {
@@ -75,7 +76,7 @@ export class WorkPanel extends React.Component<AlignmentLabelingViewProps, Align
         const layout = this.computeLayoutAttributes(containerWidth, containerHeight, this.props);
         this.setState({ layout: layout });
         setImmediate(() => {
-            new Actions.CommonActions.SetViewWidth(layout.referenceOverviewViewX1 - layout.referenceOverviewViewX0).dispatch();
+            stores.uiStore.setViewWidth(layout.referenceOverviewViewX1 - layout.referenceOverviewViewX0);
         });
     }
 

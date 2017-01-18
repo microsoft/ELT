@@ -1,7 +1,6 @@
 // AlignmentLabelingStore
 // Stores the information about tracks and handles project load/save and undo/redo state saving.
 
-import * as actions from '../actions/Actions';
 import { AlignedTimeSeries, Track } from '../stores/dataStructures/alignment';
 import { SavedAlignedTimeSeries, SavedAlignmentSnapshot, SavedLabelingSnapshot, SavedProject, SavedTrack } from '../stores/dataStructures/project';
 import { loadMultipleSensorTimeSeriesFromFile, loadRawSensorTimeSeriesFromFile, loadVideoTimeSeriesFromFile, TimeSeries }
@@ -12,7 +11,8 @@ import { NodeEvent } from './NodeEvent';
 import { alignmentLabelingUiStore, alignmentStore, labelingStore, uiStore } from './stores';
 import { EventEmitter } from 'events';
 import * as fs from 'fs';
-
+import { action, observable,computed} from 'mobx';
+import * as d3 from 'd3';
 
 // Try different names until cb(name) === true.
 function attemptNames(name: string, cb: (name: string) => boolean): string {
@@ -30,7 +30,6 @@ function deepClone<Type>(obj: Type): Type {
     return JSON.parse(JSON.stringify(obj)); // Is there a better way?
 }
 
-
 export class MappedLabel {
     public className: string;
     public timestampStart: number;
@@ -42,12 +41,14 @@ export class MappedLabel {
     }
 }
 
-
 // AlignmentLabelingStore: Stores the information about tracks and handles project load/save and undo/redo state saving.
-export class AlignmentLabelingStore extends EventEmitter {
+export class AlignmentLabelingStore {
     // Reference track and other tracks.
-    private _referenceTrack: Track;
-    private _tracks: Track[];
+    @observable public referenceTrack: Track;
+    @observable public tracks: Track[];
+
+    // The location of the saved/opened project.
+    @observable public projectFileLocation: string;
 
     // Track ID to actual track.
     private _trackIndex: Map<string, Track>;
@@ -57,166 +58,122 @@ export class AlignmentLabelingStore extends EventEmitter {
     private _alignmentHistory: HistoryTracker<SavedAlignmentSnapshot>;
     private _labelingHistory: HistoryTracker<SavedLabelingSnapshot>;
 
-    // The location of the saved/opened project.
-    private _projectFileLocation: string;
+    // Get timeseries by its ID.
+    public getTimeSeriesByID(id: string): AlignedTimeSeries {
+        return this._timeSeriesIndex.get(id);
+    }
+    // Get track by its ID.
+    public getTrackByID(id: string): Track {
+        return this._trackIndex.get(id);
+    }
+
+    // Keep the time range of the reference track.
+    @computed public get referenceTimestampStart() {
+        return this.referenceTrack.alignedTimeSeries ?
+            d3.min(this.referenceTrack.alignedTimeSeries, (x) => x.referenceStart)
+            : 0;
+    }
+    @computed public get referenceTimestampEnd() {
+        return this.referenceTrack.alignedTimeSeries ?
+            d3.max(this.referenceTrack.alignedTimeSeries, (x) => x.referenceEnd)
+            : 100;
+    }
 
 
-    public get referenceTrack(): Track { return this._referenceTrack; }
-    public get tracks(): Track[] { return this._tracks; }
-
-    public get projectFileLocation(): string { return this._projectFileLocation; }
-    public set projectFileLocation(fileName: string) { this._projectFileLocation = fileName; }
-
+    // Create new non-conflicting IDs.
+    public newTrackID(): string {
+        return attemptNames('track-', id => this.getTrackByID(id) === undefined);
+    }
+    public newTimeSeriesID(): string {
+        return attemptNames('series-', id => this.getTimeSeriesByID(id) === undefined);
+    }
 
     constructor() {
-        super();
-
         this._alignmentHistory = new HistoryTracker<SavedAlignmentSnapshot>();
         this._labelingHistory = new HistoryTracker<SavedLabelingSnapshot>();
 
-        this._referenceTrack = null;
-        this._tracks = [];
+        this.referenceTrack = null;
+        this.tracks = [];
         this.reindexTracksAndTimeSeries();
 
-        this._projectFileLocation = null;
+        this.projectFileLocation = null;
+    }
 
-        globalDispatcher.register(action => {
-            // Load the reference track.
-            if (action instanceof actions.CommonActions.NewProject) {
-                this.newProject();
-            }
-
-            if (action instanceof actions.CommonActions.LoadReferenceTrack) {
-                this.alignmentHistoryRecord();
-                loadVideoTimeSeriesFromFile(action.fileName, (video) => {
-                    const track: Track = {
-                        id: this.newTrackID(),
-                        alignedTimeSeries: [],
-                        minimized: false
-                    };
-                    track.alignedTimeSeries.push({
-                        id: this.newTimeSeriesID(),
-                        track: track,
-                        referenceStart: 0,
-                        referenceEnd: video.timestampEnd - video.timestampStart,
-                        timeSeries: [video],
-                        source: action.fileName,
-                        aligned: false
-                    });
-                    this._referenceTrack = track;
-                    this.reindexTracksAndTimeSeries();
-                    this.tracksChanged.emit();
-                });
-            }
-
-            // Load a video track.
-            if (action instanceof actions.CommonActions.LoadVideoTrack) {
-                this.alignmentHistoryRecord();
-                loadVideoTimeSeriesFromFile(action.fileName, (video) => {
-                    const track: Track = {
-                        id: this.newTrackID(),
-                        alignedTimeSeries: [],
-                        minimized: false
-                    };
-                    track.alignedTimeSeries.push({
-                        id: this.newTimeSeriesID(),
-                        track: track,
-                        referenceStart: 0,
-                        referenceEnd: video.timestampEnd - video.timestampStart,
-                        timeSeries: [video],
-                        source: action.fileName,
-                        aligned: false
-                    });
-                    this._tracks.push(track);
-                    this.reindexTracksAndTimeSeries();
-                    this.tracksChanged.emit();
-                });
-            }
-
-            // Load a sensor track.
-            if (action instanceof actions.CommonActions.LoadSensorTrack) {
-                this.alignmentHistoryRecord();
-                const sensors = loadMultipleSensorTimeSeriesFromFile(action.fileName);
-                const track: Track = {
-                    id: this.newTrackID(),
-                    alignedTimeSeries: [],
-                    minimized: false
-                };
-                track.alignedTimeSeries.push({
-                    id: this.newTimeSeriesID(),
-                    track: track,
-                    referenceStart: 0,
-                    referenceEnd: sensors[0].timestampEnd - sensors[0].timestampStart,
-                    timeSeries: sensors,
-                    source: action.fileName,
-                    aligned: false
-                });
-                this._tracks.push(track);
-                this.reindexTracksAndTimeSeries();
-                this.tracksChanged.emit();
-            }
-
-            if (action instanceof actions.CommonActions.DeleteTrack) {
-                this.alignmentHistoryRecord();
-                const index = this._tracks.indexOf(action.track);
-                this._tracks.splice(index, 1);
-                this.reindexTracksAndTimeSeries();
-                this.tracksChanged.emit();
-            }
-
-            if (action instanceof actions.CommonActions.SaveProject) {
-                const project = this.saveProject();
-                const json = JSON.stringify(project, null, 2);
-                fs.writeFileSync(action.fileName, json, 'utf-8');
-                this._projectFileLocation = action.fileName;
-                this.addToRecentProjects(action.fileName);
-            }
-
-            if (action instanceof actions.CommonActions.ExportLabels) {
-                this.exportLabels(action.fileName);
-            }
-
-            if (action instanceof actions.CommonActions.LoadProject) {
-                try {
-                    const json = fs.readFileSync(action.fileName, 'utf-8');
-                    const project = JSON.parse(json);
-                    this._projectFileLocation = null;
-                    this.alignmentHistoryReset();
-                    this.labelingHistoryReset();
-                    this.loadProject(project as SavedProject, () => {
-                        this._projectFileLocation = action.fileName;
-                        this.addToRecentProjects(action.fileName);
-                    });
-                } catch (e) {
-                    alert('Sorry, cannot load project file ' + action.fileName);
-                }
-            }
-
-            if (action instanceof actions.CommonActions.AlignmentUndo) {
-                this.alignmentUndo();
-            }
-
-            if (action instanceof actions.CommonActions.AlignmentRedo) {
-                this.alignmentRedo();
-            }
-
-            if (action instanceof actions.CommonActions.LabelingUndo) {
-                this.labelingUndo();
-            }
-
-            if (action instanceof actions.CommonActions.LabelingRedo) {
-                this.labelingRedo();
-            }
+    @action
+    public loadReferenceTrack(fileName: string): void {
+        this.alignmentHistoryRecord();
+        loadVideoTimeSeriesFromFile(fileName, (video) => {
+            const track: Track = {
+                id: this.newTrackID(),
+                alignedTimeSeries: [],
+                minimized: false
+            };
+            track.alignedTimeSeries.push({
+                id: this.newTimeSeriesID(),
+                track: track,
+                referenceStart: 0,
+                referenceEnd: video.timestampEnd - video.timestampStart,
+                timeSeries: [video],
+                source: fileName,
+                aligned: false
+            });
+            this.referenceTrack = track;
+            this.reindexTracksAndTimeSeries();
+            
         });
     }
 
+    @action
+    public loadVideoTrack(fileName: string): void {
+        this.alignmentHistoryRecord();
+        loadVideoTimeSeriesFromFile(fileName, (video) => {
+            const track: Track = {
+                id: this.newTrackID(),
+                alignedTimeSeries: [],
+                minimized: false
+            };
+            track.alignedTimeSeries.push({
+                id: this.newTimeSeriesID(),
+                track: track,
+                referenceStart: 0,
+                referenceEnd: video.timestampEnd - video.timestampStart,
+                timeSeries: [video],
+                source: fileName,
+                aligned: false
+            });
+            this.tracks.push(track);
+            this.reindexTracksAndTimeSeries();
+        });
+    }
+
+    @action
+    public loadSensorTrack(fileName: string): void {
+        this.alignmentHistoryRecord();
+        const sensors = loadMultipleSensorTimeSeriesFromFile(fileName);
+        const track: Track = {
+            id: this.newTrackID(),
+            alignedTimeSeries: [],
+            minimized: false
+        };
+        track.alignedTimeSeries.push({
+            id: this.newTimeSeriesID(),
+            track: track,
+            referenceStart: 0,
+            referenceEnd: sensors[0].timestampEnd - sensors[0].timestampStart,
+            timeSeries: sensors,
+            source: fileName,
+            aligned: false
+        });
+        this.tracks.push(track);
+        this.reindexTracksAndTimeSeries();
+    }
 
     // Recreate track index.
     private reindexTracksAndTimeSeries(): void {
         this._trackIndex = new Map<string, Track>();
         this._timeSeriesIndex = new Map<string, AlignedTimeSeries>();
-        if (this._referenceTrack !== null) {
-            const t = this._referenceTrack;
+        if (this.referenceTrack !== null) {
+            const t = this.referenceTrack;
             this._trackIndex.set(t.id, t);
             t.alignedTimeSeries.forEach((ts) => {
                 this._timeSeriesIndex.set(ts.id, ts);
@@ -230,36 +187,20 @@ export class AlignmentLabelingStore extends EventEmitter {
         });
     }
 
-    // Get timeseries by its ID.
-    public getTimeSeriesByID(id: string): AlignedTimeSeries {
-        return this._timeSeriesIndex.get(id);
+    @action
+    public deleteTrack(track: Track): void {
+        this.alignmentHistoryRecord();
+        const index = this.tracks.indexOf(track);
+        this.tracks.splice(index, 1);
+        this.reindexTracksAndTimeSeries();
     }
-    // Get track by its ID.
-    public getTrackByID(id: string): Track {
-        return this._trackIndex.get(id);
-    }
-
-    // Create new non-conflicting IDs.
-    public newTrackID(): string {
-        return attemptNames('track-', id => this.getTrackByID(id) === undefined);
-    }
-    public newTimeSeriesID(): string {
-        return attemptNames('series-', id => this.getTimeSeriesByID(id) === undefined);
-    }
-
-    // Tracks Changed event, when tracks are added/removed.
-    public tracksChanged: NodeEvent = new NodeEvent(this, 'tracks-changed');
-
-    // The list of recent project changed.
-    public recentProjectsChanged: NodeEvent = new NodeEvent(this, 'recent-projects-changed');
-
-
 
     public get recentProjects(): string[] {
         const value = localStorage.getItem('recent-projects');
         if (!value || value === '') { return []; }
         return JSON.parse(value);
     }
+    
     public addToRecentProjects(fileName: string): void {
         let existing = this.recentProjects;
         if (existing.indexOf(fileName) < 0) {
@@ -269,10 +210,35 @@ export class AlignmentLabelingStore extends EventEmitter {
             existing = [fileName].concat(existing);
         }
         localStorage.setItem('recent-projects', JSON.stringify(existing));
-        this.recentProjectsChanged.emit();
     }
 
-    public saveProject(): SavedProject {
+    @action
+    public loadProject(fileName: string): void {
+        try {
+            const json = fs.readFileSync(fileName, 'utf-8');
+            const project = JSON.parse(json);
+            this.projectFileLocation = null;
+            this.alignmentHistoryReset();
+            this.labelingHistoryReset();
+            this.loadProjectHelper(project as SavedProject, () => {
+                this.projectFileLocation = fileName;
+                this.addToRecentProjects(fileName);
+            });
+        } catch (e) {
+            alert('Sorry, cannot load project file ' + fileName);
+        }
+    }
+
+    @action
+    public saveProject(fileName: string) {
+        const project = this.saveProjectHelper();
+        const json = JSON.stringify(project, null, 2);
+        fs.writeFileSync(fileName, json, 'utf-8');
+        this.projectFileLocation = fileName;
+        this.addToRecentProjects(fileName);
+    }
+
+    public saveProjectHelper(): SavedProject {
         const saveTimeSeries = (timeSeries: AlignedTimeSeries): SavedAlignedTimeSeries => {
             return {
                 id: timeSeries.id,
@@ -360,7 +326,7 @@ export class AlignmentLabelingStore extends EventEmitter {
         });
     }
 
-    public loadProject(project: SavedProject, loadProjectCallback: () => any): void {
+    public loadProjectHelper(project: SavedProject, loadProjectCallback: () => any): void {
         const deferred = new DeferredCallbacks();
 
         // Load TimeSeries data from a file.
@@ -412,12 +378,9 @@ export class AlignmentLabelingStore extends EventEmitter {
 
         deferred.onComplete(() => {
             // Set the new tracks once they are loaded successfully.
-            this._referenceTrack = newReferenceTrack;
-            this._tracks = newTracks;
+            this.referenceTrack = newReferenceTrack;
+            this.tracks = newTracks;
             this.reindexTracksAndTimeSeries();
-
-            // We changed all tracks now.
-            this.tracksChanged.emit();
 
             // Load alignment and labeling.
             alignmentStore.loadState(project.alignment);
@@ -437,13 +400,10 @@ export class AlignmentLabelingStore extends EventEmitter {
     }
 
     public newProject(): void {
-        this._projectFileLocation = null;
-        this._referenceTrack = null;
-        this._tracks = [];
+        this.projectFileLocation = null;
+        this.referenceTrack = null;
+        this.tracks = [];
         this.reindexTracksAndTimeSeries();
-
-        // We changed all tracks now.
-        this.tracksChanged.emit();
 
         // Load alignment and labeling.
         alignmentStore.reset();
@@ -478,17 +438,16 @@ export class AlignmentLabelingStore extends EventEmitter {
             return result;
         };
         return {
-            referenceTrack: cloneTrack(this._referenceTrack),
-            tracks: this._tracks.map(cloneTrack),
+            referenceTrack: cloneTrack(this.referenceTrack),
+            tracks: this.tracks.map(cloneTrack),
             alignment: alignmentStore.saveState()
         };
     }
 
     public loadAlignmentSnapshot(snapshot: SavedAlignmentSnapshot): void {
-        this._referenceTrack = snapshot.referenceTrack;
-        this._tracks = snapshot.tracks;
+        this.referenceTrack = snapshot.referenceTrack;
+        this.tracks = snapshot.tracks;
         this.reindexTracksAndTimeSeries();
-        this.tracksChanged.emit();
         alignmentStore.loadState(snapshot.alignment);
     }
 
@@ -545,14 +504,8 @@ export class AlignmentLabelingStore extends EventEmitter {
             this.loadLabelingSnapshot(snapshot);
         }
     }
+
 }
-
-
-
-
-
-
-
 
 
 class DeferredCallbacks {

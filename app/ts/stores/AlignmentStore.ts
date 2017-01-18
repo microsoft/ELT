@@ -2,9 +2,9 @@
 // Store alignment markers and correspondences (connections between markers).
 
 import * as Actions from '../actions/Actions';
-import {AlignedTimeSeries, Marker, MarkerCorrespondence} from '../stores/dataStructures/alignment';
-import {SavedAlignmentState, SavedMarker, SavedMarkerCorrespondence} from '../stores/dataStructures/project';
-import {TransitionController} from '../stores/utils';
+import { AlignedTimeSeries, Marker, MarkerCorrespondence } from '../stores/dataStructures/alignment';
+import { SavedAlignmentState, SavedMarker, SavedMarkerCorrespondence } from '../stores/dataStructures/project';
+import { TransitionController } from '../stores/utils';
 import { globalDispatcher } from '../dispatcher/globalDispatcher';
 import { AlignmentLabelingStore } from './AlignmentLabelingStore';
 import { AlignmentLabelingUiStore } from './AlignmentLabelingUiStore';
@@ -12,8 +12,7 @@ import { NodeEvent } from './NodeEvent';
 import { alignmentLabelingStore, alignmentLabelingUiStore, alignmentUiStore } from './stores';
 import * as d3 from 'd3';
 import { EventEmitter } from 'events';
-
-
+import { action, observable } from 'mobx';
 
 // Take a snapshot from the alignmentStore, isolate all current rendering parametes.
 interface TimeSeriesStateSnapshotInfo {
@@ -94,119 +93,111 @@ export class TimeSeriesStateSnapshot {
 
 // AlignmentStore
 // Store alignment markers and correspondences (connections between markers).
-export class AlignmentStore extends EventEmitter {
+export class AlignmentStore {
 
     // Markers.
-    private _markers: Marker[];
+    @observable public markers: Marker[];
 
     // Correspondences between markers.
-    private _correspondences: MarkerCorrespondence[];
+    @observable public correspondences: MarkerCorrespondence[];
 
     // Manages alignment transitions:
     // TODO: move the transition handling to the view, handle transition for track add/remove.
     private _alignmentTransitionController: TransitionController;
 
     constructor(alignmentLabelingStore: AlignmentLabelingStore, alignmentLabelingUiStore: AlignmentLabelingUiStore) {
-        super();
 
-        this._markers = [];
-        this._correspondences = [];
+        this.markers = [];
+        this.correspondences = [];
         this._alignmentTransitionController = null;
 
         alignmentLabelingStore.tracksChanged.on(this.onTracksChanged.bind(this));
         alignmentLabelingUiStore.referenceViewChanged.on(this.rearrangeSeries.bind(this));
+    }
 
-        globalDispatcher.register(action => {
-            if (action instanceof Actions.AlignmentActions.AddMarker) {
-                alignmentLabelingStore.alignmentHistoryRecord();
-                this._markers.push(action.marker);
-                alignmentUiStore.selectedMarker = action.marker;
-                this.markersChanged.emit();
-            }
-            if (action instanceof Actions.AlignmentActions.UpdateMarker) {
-                if (action.recordState) {
-                    alignmentLabelingStore.alignmentHistoryRecord();
-                }
-                action.marker.localTimestamp = action.newLocalTimestamp;
-                if (action.recompute) {
-                    this.alignAllTimeSeries(true);
-                }
-                this.markersChanged.emit();
-            }
-            if (action instanceof Actions.AlignmentActions.AddMarkerCorrespondence) {
-                alignmentLabelingStore.alignmentHistoryRecord();
-                // Remove all conflicting correspondence.
-                this._correspondences = this._correspondences.filter((c) => {
-                    // Multiple connections.
-                    if (c.marker1 === action.marker1 && c.marker2.timeSeries === action.marker2.timeSeries) { return false; }
-                    if (c.marker1 === action.marker2 && c.marker2.timeSeries === action.marker1.timeSeries) { return false; }
-                    if (c.marker2 === action.marker1 && c.marker1.timeSeries === action.marker2.timeSeries) { return false; }
-                    if (c.marker2 === action.marker2 && c.marker1.timeSeries === action.marker1.timeSeries) { return false; }
-                    // Crossings.
-                    if (c.marker1.timeSeries === action.marker1.timeSeries && c.marker2.timeSeries === action.marker2.timeSeries) {
-                        if ((c.marker1.localTimestamp - action.marker1.localTimestamp) *
-                            (c.marker2.localTimestamp - action.marker2.localTimestamp) < 0) {
-                            return false;
-                        }
-                    }
-                    if (c.marker1.timeSeries === action.marker2.timeSeries && c.marker2.timeSeries === action.marker1.timeSeries) {
-                        if ((c.marker1.localTimestamp - action.marker2.localTimestamp) *
-                            (c.marker2.localTimestamp - action.marker1.localTimestamp) < 0) {
-                            return false;
-                        }
-                    }
-                    return true;
-                });
+    @action
+    public addMarker(marker: Marker): void {
+        alignmentLabelingStore.alignmentHistoryRecord();
+        this.markers.push(marker);
+        alignmentUiStore.selectedMarker = marker;
+    }
 
-                const corr = { marker1: action.marker1, marker2: action.marker2 };
-                this._correspondences.push(corr);
-                alignmentUiStore.selectedCorrespondence = corr;
-                this.alignAllTimeSeries(true);
-                this.markersChanged.emit();
-            }
-            if (action instanceof Actions.AlignmentActions.DeleteMarkerCorrespondence) {
-                alignmentLabelingStore.alignmentHistoryRecord();
-                const index = this._correspondences.indexOf(action.correspondence);
-                if (index >= 0) {
-                    this._correspondences.splice(index, 1);
-                    this.alignAllTimeSeries(true);
-                    this.markersChanged.emit();
+    @action
+    public updateMarker(marker: Marker, newLocalTimestamp: number, recompute: boolean = true, recordState: boolean = true): void {
+        if (recordState) {
+            alignmentLabelingStore.alignmentHistoryRecord();
+        }
+        marker.localTimestamp = newLocalTimestamp;
+        if (recompute) {
+            this.alignAllTimeSeries(true);
+        }
+    }
+
+    @action
+    public deleteMarker(marker: Marker): void {
+        alignmentLabelingStore.alignmentHistoryRecord();
+        const index = this.markers.indexOf(marker);
+        if (index >= 0) {
+            this.markers.splice(index, 1);
+            this.correspondences = this.correspondences.filter((c) => {
+                return c.marker1 !== marker && c.marker2 !== marker;
+            });
+            this.alignAllTimeSeries(true);
+        }
+    }
+
+    @action
+    public addMarkerCorrespondence(marker1: Marker, marker2: Marker): void {
+        alignmentLabelingStore.alignmentHistoryRecord();
+        // Remove all conflicting correspondence.
+        this.correspondences = this.correspondences.filter((c) => {
+            // Multiple connections.
+            if (c.marker1 === marker1 && c.marker2.timeSeries === marker2.timeSeries) { return false; }
+            if (c.marker1 === marker2 && c.marker2.timeSeries === marker1.timeSeries) { return false; }
+            if (c.marker2 === marker1 && c.marker1.timeSeries === marker2.timeSeries) { return false; }
+            if (c.marker2 === marker2 && c.marker1.timeSeries === marker1.timeSeries) { return false; }
+            // Crossings.
+            if (c.marker1.timeSeries === marker1.timeSeries && c.marker2.timeSeries === marker2.timeSeries) {
+                if ((c.marker1.localTimestamp - marker1.localTimestamp) *
+                    (c.marker2.localTimestamp - marker2.localTimestamp) < 0) {
+                    return false;
                 }
             }
-            if (action instanceof Actions.AlignmentActions.DeleteMarker) {
-                alignmentLabelingStore.alignmentHistoryRecord();
-                const index = this._markers.indexOf(action.marker);
-                if (index >= 0) {
-                    this._markers.splice(index, 1);
-                    this._correspondences = this._correspondences.filter((c) => {
-                        return c.marker1 !== action.marker && c.marker2 !== action.marker;
-                    });
-                    this.alignAllTimeSeries(true);
-                    this.markersChanged.emit();
+            if (c.marker1.timeSeries === marker2.timeSeries && c.marker2.timeSeries === marker1.timeSeries) {
+                if ((c.marker1.localTimestamp - marker2.localTimestamp) *
+                    (c.marker2.localTimestamp - marker1.localTimestamp) < 0) {
+                    return false;
                 }
             }
+            return true;
         });
+
+        const corr = { marker1: marker1, marker2: marker2 };
+        this.correspondences.push(corr);
+        alignmentUiStore.selectedCorrespondence = corr;
+        this.alignAllTimeSeries(true);
     }
 
-    public get markers(): Marker[] {
-        return this._markers;
-    }
-
-    public get correspondences(): MarkerCorrespondence[] {
-        return this._correspondences;
+    @action
+    public deleteMarkerCorrespondence(correspondence: MarkerCorrespondence): void {
+        alignmentLabelingStore.alignmentHistoryRecord();
+        const index = this.correspondences.indexOf(correspondence);
+        if (index >= 0) {
+            this.correspondences.splice(index, 1);
+            this.alignAllTimeSeries(true);
+        }
     }
 
     // On tracks changed.
     private onTracksChanged(): void {
         this.stopAnimation();
 
-        this._markers = this._markers.filter((m) => {
+        this.markers = this.markers.filter((m) => {
             return alignmentLabelingStore.getTimeSeriesByID(m.timeSeries.id) !== null;
         });
-        this._correspondences = this._correspondences.filter((c) => {
-            return this._markers.indexOf(c.marker1) >= 0 && this._markers.indexOf(c.marker2) >= 0;
+        this.correspondences = this.correspondences.filter((c) => {
+            return this.markers.indexOf(c.marker1) >= 0 && this.markers.indexOf(c.marker2) >= 0;
         });
-        this.markersChanged.emit();
 
         alignmentUiStore.onTracksChanged();
         this.alignAllTimeSeries(true);
@@ -219,7 +210,7 @@ export class AlignmentStore extends EventEmitter {
         let added = true;
         while (added) {
             added = false;
-            for (const c of this._correspondences) {
+            for (const c of this.correspondences) {
                 const h1 = result.has(c.marker1.timeSeries);
                 const h2 = result.has(c.marker2.timeSeries);
                 if (h1 !== h2) {
@@ -334,15 +325,8 @@ export class AlignmentStore extends EventEmitter {
                 snapshot0.applyInterpolate(snapshot1, t);
                 if (finish) {
                     snapshot1.apply();
-                    this.markersChanged.emit();
-                    this.alignmentChanged.emit();
-                } else {
-                    this.markersChanged.emit();
                 }
             });
-        } else {
-            this.markersChanged.emit();
-            this.alignmentChanged.emit();
         }
     }
 
@@ -381,14 +365,6 @@ export class AlignmentStore extends EventEmitter {
         }
     }
 
-    // Tracks Changed event, when tracks are added/removed.
-    // TODO: This is used in place for other (not-exist-yet) events, fix by adding more events. 
-    public markersChanged: NodeEvent = new NodeEvent(this, 'markers-changed');
-
-    // Alignment Changed event, when a new alignment is done (not fire when transition).
-    public alignmentChanged: NodeEvent = new NodeEvent(this, 'alignment-changed');
-
-
     // Save the alignment state.
     public saveState(): SavedAlignmentState {
         let markerIndex = 0;
@@ -411,8 +387,8 @@ export class AlignmentStore extends EventEmitter {
             };
         };
         return {
-            markers: this._markers.map(saveMarker),
-            correspondences: this._correspondences.map(saveMarkerCorrespondence),
+            markers: this.markers.map(saveMarker),
+            correspondences: this.correspondences.map(saveMarkerCorrespondence),
             timeSeriesStates: new TimeSeriesStateSnapshot(this).toObject()
         };
     }
@@ -421,8 +397,8 @@ export class AlignmentStore extends EventEmitter {
     public loadState(state: SavedAlignmentState): void {
         this.stopAnimation();
 
-        this._markers = [];
-        this._correspondences = [];
+        this.markers = [];
+        this.correspondences = [];
 
         const markerID2Marker = new Map<string, Marker>();
         for (const marker of state.markers) {
@@ -430,16 +406,15 @@ export class AlignmentStore extends EventEmitter {
                 timeSeries: alignmentLabelingStore.getTimeSeriesByID(marker.timeSeriesID),
                 localTimestamp: marker.localTimestamp
             };
-            this._markers.push(newMarker);
+            this.markers.push(newMarker);
             markerID2Marker.set(marker.id, newMarker);
         }
         for (const c of state.correspondences) {
-            this._correspondences.push({
+            this.correspondences.push({
                 marker1: markerID2Marker.get(c.marker1ID),
                 marker2: markerID2Marker.get(c.marker2ID)
             });
         }
-        this.markersChanged.emit();
         Object.keys(state.timeSeriesStates).forEach(id => {
             const tsState = state.timeSeriesStates[id];
             const ts = alignmentLabelingStore.getTimeSeriesByID(id);
@@ -457,10 +432,8 @@ export class AlignmentStore extends EventEmitter {
     public reset(): void {
         this.stopAnimation();
 
-        this._markers = [];
-        this._correspondences = [];
-
-        this.markersChanged.emit();
+        this.markers = [];
+        this.correspondences = [];
 
         this.alignAllTimeSeries(false);
     }

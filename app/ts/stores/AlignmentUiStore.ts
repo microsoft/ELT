@@ -1,15 +1,15 @@
 // UI states for alignment.
 
 import * as Actions from '../actions/Actions';
-import {AlignedTimeSeries, AlignmentState, Marker, MarkerCorrespondence, Track } from '../stores/dataStructures/alignment';
+import { AlignedTimeSeries, AlignmentState, Marker, MarkerCorrespondence, Track } from '../stores/dataStructures/alignment';
 import { LayoutParameters } from '../stores/dataStructures/LayoutParameters';
-import {globalDispatcher} from '../dispatcher/globalDispatcher';
-import {NodeEvent} from './NodeEvent';
-import {alignmentLabelingStore, alignmentLabelingUiStore, alignmentStore} from './stores';
+import { globalDispatcher } from '../dispatcher/globalDispatcher';
+import { NodeEvent } from './NodeEvent';
+import { alignmentLabelingStore, alignmentLabelingUiStore, alignmentStore } from './stores';
 import * as d3 from 'd3';
-import {EventEmitter} from 'events';
-
-
+import { EventEmitter } from 'events';
+import { observer } from 'mobx-react';
+import { action, observable } from 'mobx';
 
 
 // TrackLayout: stores where a track should be displayed.
@@ -20,7 +20,7 @@ export interface TrackLayout {
     height: number;
 }
 
-export class AlignmentUiStore extends EventEmitter {
+export class AlignmentUiStore {
 
     // Tracks layout information.
     // TODO: TrackLayout logic should be moved to the view class? Animation could happen when tracks get added/removed.
@@ -34,29 +34,14 @@ export class AlignmentUiStore extends EventEmitter {
     private _alignmentState: WeakMap<AlignedTimeSeries, AlignmentState>;
 
     // Currently selected markers OR correspondence (update one should cause the other to be null).
-    private _selectedMarker: Marker;
-    private _selectedCorrespondence: MarkerCorrespondence;
-
-    public get selectedMarker(): Marker { return this._selectedMarker; }
-    public get selectedCorrespondence(): MarkerCorrespondence { return this._selectedCorrespondence; }
-    public set selectedMarker(marker: Marker) {
-        this._selectedMarker = marker;
-        this._selectedCorrespondence = null;
-        this.selectionChanged.emit();
-    }
-    public set selectedCorrespondence(c: MarkerCorrespondence) {
-        this._selectedMarker = null;
-        this._selectedCorrespondence = c;
-        this.selectionChanged.emit();
-    }
+    @observable public selectedMarker: Marker;
+    @observable public selectedCorrespondence: MarkerCorrespondence;
 
     constructor() {
-        super();
-
         this._seriesTimeCursor = new WeakMap<AlignedTimeSeries, number>();
         this._alignmentState = new WeakMap<AlignedTimeSeries, AlignmentState>();
-        this._selectedMarker = null;
-        this._selectedCorrespondence = null;
+        this.selectedMarker = null;
+        this.selectedCorrespondence = null;
 
         this.getTimeCursor = this.getTimeCursor.bind(this);
 
@@ -66,68 +51,60 @@ export class AlignmentUiStore extends EventEmitter {
         //   alignmentStore is responsible to update the UI store when tracks changed,
         //   this is to prevent event ordering issues. 
 
-        globalDispatcher.register(action => {
-            // UIAction.
-            if (action instanceof Actions.CommonActions.UIAction) {
-                this.handleUiAction(action);
+    }
+
+    @action
+    public setReferenceViewTimeCursor(timeCursor: number): void {
+        const blocks = alignmentStore.getAlignedBlocks();
+        blocks.forEach((block) => {
+            if (alignmentStore.isBlockAligned(block)) {
+                block.forEach((series) => {
+                    const scale = d3.scaleLinear()
+                        .domain([series.referenceStart, series.referenceEnd])
+                        .range([series.timeSeries[0].timestampStart, series.timeSeries[0].timestampEnd]);
+                    this._seriesTimeCursor.set(series, scale(timeCursor));
+                });
             }
         });
     }
 
-    public handleUiAction(action: Actions.CommonActions.UIAction): void {
-        // SetReferenceViewTimeCursor
-        if (action instanceof Actions.CommonActions.SetReferenceViewTimeCursor) {
-            const blocks = alignmentStore.getAlignedBlocks();
-            blocks.forEach((block) => {
-                if (alignmentStore.isBlockAligned(block)) {
-                    block.forEach((series) => {
-                        const scale = d3.scaleLinear()
-                            .domain([series.referenceStart, series.referenceEnd])
-                            .range([series.timeSeries[0].timestampStart, series.timeSeries[0].timestampEnd]);
-                        this._seriesTimeCursor.set(series, scale(action.timeCursor));
-                    });
+    @action
+    public setSeriesTimeCursor(series: AlignedTimeSeries, timeCursor: number): void {
+        this._seriesTimeCursor.set(series, timeCursor);
+    }
+
+    @action
+    public setTimeSeriesZooming(series: AlignedTimeSeries, rangeStart?: number, pixelsPerSecond?: number): void {
+        const block = alignmentStore.getConnectedSeries(series);
+        block.forEach((series) => {
+            const currentState = this._alignmentState.get(series);
+            if (currentState) {
+                if (rangeStart !== null) {
+                    currentState.rangeStart = rangeStart;
                 }
-            });
-            this.seriesTimeCursorChanged.emit();
-        }
-        // SetSeriesTimeCursor
-        if (action instanceof Actions.AlignmentActions.SetSeriesTimeCursor) {
-            this._seriesTimeCursor.set(action.series, action.timeCursor);
-            this.seriesTimeCursorChanged.emit();
-        }
-        // SetTimeSeriesZooming
-        if (action instanceof Actions.AlignmentActions.SetTimeSeriesZooming) {
-            const block = alignmentStore.getConnectedSeries(action.series);
-            block.forEach((series) => {
-                const currentState = this._alignmentState.get(series);
-                if (currentState) {
-                    if (action.rangeStart !== null) {
-                        currentState.rangeStart = action.rangeStart;
-                    }
-                    if (action.pixelsPerSecond !== null) {
-                        currentState.pixelsPerSecond = action.pixelsPerSecond;
-                    }
+                if (pixelsPerSecond !== null) {
+                    currentState.pixelsPerSecond = pixelsPerSecond;
                 }
-            });
-            this.seriesTimeCursorChanged.emit();
-        }
-        // SelectMarker
-        if (action instanceof Actions.AlignmentActions.SelectMarker) {
-            this._selectedMarker = action.marker;
-            this._selectedCorrespondence = null;
-            this.selectionChanged.emit();
-        }
-        // SelectMarkerCorrespondence
-        if (action instanceof Actions.AlignmentActions.SelectMarkerCorrespondence) {
-            this._selectedCorrespondence = action.correspondence;
-            this._selectedMarker = null;
-            this.selectionChanged.emit();
-        }
-        if (action instanceof Actions.AlignmentActions.SetTrackMinimized) {
-            action.track.minimized = action.minimized;
-            this.computeTrackLayout();
-            this.tracksLayoutChanged.emit();
-        }
+            }
+        });
+    }
+
+    @action
+    public selectMarker(marker: Marker): void {
+        this.selectedMarker = marker;
+        this.selectedCorrespondence = null;
+    }
+
+    @action
+    public selectMarkerCorrespondence(correspondence: MarkerCorrespondence): void {
+        this.selectedCorrespondence = correspondence;
+        this.selectedMarker = null;
+    }
+
+    @action
+    public setTrackMinimized(track: Track, minimized: boolean): void {
+        track.minimized = minimized;
+        this.computeTrackLayout();
     }
 
     public onTracksChanged(): void {
@@ -173,7 +150,6 @@ export class AlignmentUiStore extends EventEmitter {
             });
             trackYCurrent += height + trackGap;
         });
-        this.tracksLayoutChanged.emit();
     }
 
     public getTimeCursor(series: AlignedTimeSeries): number {
@@ -192,9 +168,4 @@ export class AlignmentUiStore extends EventEmitter {
         // this.emitSeriesTimeCursorChanged();
     }
 
-    public seriesTimeCursorChanged: NodeEvent = new NodeEvent(this, 'series-time-cursor-changed');
-
-    public tracksLayoutChanged: NodeEvent = new NodeEvent(this, 'tracks-layout-changed');
-
-    public selectionChanged: NodeEvent = new NodeEvent(this, 'selection-changed');
 }

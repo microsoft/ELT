@@ -11,16 +11,17 @@ import { OptionsMenu } from './menus/OptionsMenu';
 import { WorkPanel } from './WorkPanel';
 import { remote } from 'electron';
 import * as React from 'react';
-
+import {observer} from 'mobx-react';
 
 export interface AppState {
     currentTab: string;
 }
 
 // Labeling app has some configuration code, then it calls LabelingView.
-export class App extends EventListenerComponent<{}, AppState> {
+@observer
+export class App extends React.Component<{}, AppState> {
     constructor(props: {}, context: any) {
-        super(props, context, [stores.uiStore.tabChanged]);
+        super(props, context);
 
         this.state = {
             currentTab: stores.uiStore.currentTab
@@ -30,14 +31,11 @@ export class App extends EventListenerComponent<{}, AppState> {
         this.onKeyDown = this.onKeyDown.bind(this);
     }
 
-
     public componentDidMount(): void {
-        super.componentDidMount();
         window.addEventListener('keydown', this.onKeyDown);
     }
 
     public componentWillUnmount(): void {
-        super.componentWillUnmount();
         window.removeEventListener('keydown', this.onKeyDown);
     }
 
@@ -58,14 +56,14 @@ export class App extends EventListenerComponent<{}, AppState> {
                 },
                 (fileNames: string[]) => {
                     if (fileNames && fileNames.length === 1) {
-                        new Actions.CommonActions.LoadProject(fileNames[0]).dispatch();
+                        stores.alignmentLabelingStore.loadProject(fileNames[0]);
                     }
                 });
         }
         // Ctrl-S: If we already have a project file, write to it; otherwise prompt for a new one.
         if (event.ctrlKey && event.keyCode === 'S'.charCodeAt(0)) {
             if (stores.alignmentLabelingStore.projectFileLocation) {
-                new Actions.CommonActions.SaveProject(stores.alignmentLabelingStore.projectFileLocation).dispatch();
+                stores.alignmentLabelingStore.saveProject(stores.alignmentLabelingStore.projectFileLocation);
             } else {
                 remote.dialog.showSaveDialog(
                     remote.BrowserWindow.getFocusedWindow(),
@@ -74,7 +72,7 @@ export class App extends EventListenerComponent<{}, AppState> {
                     },
                     (fileName: string) => {
                         if (fileName) {
-                            new Actions.CommonActions.SaveProject(fileName).dispatch();
+                            stores.alignmentLabelingStore.saveProject(fileName);
                         }
                     });
             }
@@ -86,7 +84,7 @@ export class App extends EventListenerComponent<{}, AppState> {
             <div className='app-container container-fluid'>
                 <NavigationColumn selected={this.state.currentTab} onSelect={
                     tab => {
-                        new Actions.Actions.SwitchTabAction(tab as TabID).dispatch();
+                        stores.uiStore.switchTab(tab as TabID);
                     }
                 }>
                     <NavigationColumnItem title='Home' name='file' iconClass='glyphicon glyphicon-home'>

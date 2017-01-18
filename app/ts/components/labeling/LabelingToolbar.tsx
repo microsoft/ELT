@@ -1,13 +1,13 @@
 // The toolbar view for labeling.
 
 import * as actions from '../../actions/Actions';
-import {Label} from '../../stores/dataStructures/labeling';
+import { Label } from '../../stores/dataStructures/labeling';
 import * as stores from '../../stores/stores';
-import {EventListenerComponent} from '../common/EventListenerComponent';
-import {InlineClassesListView} from './ClassesListView';
+import { EventListenerComponent } from '../common/EventListenerComponent';
+import { InlineClassesListView } from './ClassesListView';
 import * as React from 'react';
-
-
+import { observer } from 'mobx-react';
+import { labelingSuggestionGenerator } from '../../suggestion/LabelingSuggestionGenerator';
 
 export interface LabelingToolbarProps {
     top: number;
@@ -24,18 +24,15 @@ export interface LabelingToolbarState {
     timeCursor: number;
 }
 
-export class LabelingToolbar extends EventListenerComponent<LabelingToolbarProps, LabelingToolbarState> {
+@observer
+export class LabelingToolbar extends React.Component<LabelingToolbarProps, LabelingToolbarState> {
     public refs: {
         [name: string]: Element,
         fileSelector: HTMLInputElement
     };
 
     constructor(props: LabelingToolbarProps, context: any) {
-        super(props, context, [
-            stores.labelingStore.labelsArrayChanged,
-            stores.alignmentLabelingUiStore.referenceViewTimeCursorChanged,
-            stores.labelingUiStore.suggestionEnabledChanged
-        ]);
+        super(props, context);
 
         this.state = {
             labels: stores.labelingStore.labels,
@@ -64,29 +61,47 @@ export class LabelingToolbar extends EventListenerComponent<LabelingToolbarProps
                 height: this.props.viewHeight + 'px'
             }}>
                 <button className='tbtn tbtn-l3' title='Zoom in'
-                    onClick={ () => new actions.CommonActions.ReferenceViewPanAndZoom(0, -0.2, 'center').dispatch() }>
+                    onClick={() => {
+                        stores.alignmentLabelingUiStore.referenceViewPanAndZoom(0, -0.2, 'center');
+                        stores.uiStore.referenceViewPanAndZoom(0, -0.2, 'center')
+                    } }>
                     <span className='glyphicon icon-only glyphicon-zoom-in'></span></button>
                 {' '}
                 <button className='tbtn tbtn-l3' title='Zoom out'
-                    onClick={ () => new actions.CommonActions.ReferenceViewPanAndZoom(0, +0.2, 'center').dispatch() }>
+                    onClick={() => {
+                        stores.alignmentLabelingUiStore.referenceViewPanAndZoom(0, +0.2, 'center');
+                        stores.uiStore.referenceViewPanAndZoom(0, +0.2, 'center');
+                    } }>
                     <span className='glyphicon icon-only glyphicon-zoom-out'></span></button>
                 {' '}
                 <span className='sep' />
                 {' '}
                 <button className='tbtn tbtn-l3' title='Go to the beginning'
-                    onClick={ () => new actions.CommonActions.ReferenceViewPanAndZoom(-1e10, 0).dispatch() }>
+                    onClick={() => {
+                        stores.alignmentLabelingUiStore.referenceViewPanAndZoom(-1e10, 0);
+                        stores.uiStore.referenceViewPanAndZoom(-1e10, 0);
+                    } }>
                     <span className='glyphicon icon-only glyphicon-fast-backward'></span></button>
                 {' '}
                 <button className='tbtn tbtn-l3' title='Go to the previous page'
-                    onClick={ () => new actions.CommonActions.ReferenceViewPanAndZoom(-0.6, 0).dispatch() }>
+                    onClick={() => {
+                        stores.alignmentLabelingUiStore.referenceViewPanAndZoom(-0.6, 0);
+                        stores.uiStore.referenceViewPanAndZoom(-0.6, 0);
+                    } }>
                     <span className='glyphicon icon-only glyphicon-backward'></span></button>
                 {' '}
                 <button className='tbtn tbtn-l3' title='Go to the next page'
-                    onClick={ () => new actions.CommonActions.ReferenceViewPanAndZoom(+0.6, 0).dispatch() }>
+                    onClick={() => {
+                        stores.alignmentLabelingUiStore.referenceViewPanAndZoom(+0.6, 0);
+                        stores.uiStore.referenceViewPanAndZoom(+0.6, 0);
+                    } }>
                     <span className='glyphicon icon-only glyphicon-forward'></span></button>
                 {' '}
                 <button className='tbtn tbtn-l3' title='Go to the end'
-                    onClick={ () => new actions.CommonActions.ReferenceViewPanAndZoom(+1e10, 0).dispatch() }>
+                    onClick={() => {
+                        stores.alignmentLabelingUiStore.referenceViewPanAndZoom(+1e10, 0);
+                        stores.uiStore.referenceViewPanAndZoom(+1e10, 0);
+                    } }>
                     <span className='glyphicon icon-only glyphicon-fast-forward'></span></button>
                 {' '}
                 <span className='sep' />
@@ -100,7 +115,7 @@ export class LabelingToolbar extends EventListenerComponent<LabelingToolbarProps
                 <button className='tbtn tbtn-red' title='Delete all labels'
                     onClick={() => {
                         if (confirm('Are you sure to delete all labels?')) {
-                            new actions.LabelingActions.RemoveAllLabels().dispatch();
+                            stores.labelingStore.removeAllLabels();
                         }
                     } }>
                     <span className='glyphicon icon-only glyphicon-trash'></span>
@@ -120,14 +135,15 @@ export class LabelingToolbar extends EventListenerComponent<LabelingToolbarProps
                     <button
                         type='button'
                         className={`tbtn ${this.state.suggestionEnabled ? 'tbtn-l1 active' : 'tbtn-l3'}`}
-                        onClick={ () => new actions.LabelingActions.SetSuggestionEnabled(true).dispatch() }
+                        onClick={() => stores.labelingUiStore.setSuggestionEnabled(true)}
                         >On</button>
                     <button
                         type='button'
                         className={`tbtn ${!this.state.suggestionEnabled ? 'tbtn-l1 active' : 'tbtn-l3'}`}
-                        onClick={ () => {
-                            new actions.LabelingActions.SetSuggestionEnabled(false).dispatch();
-                            new actions.LabelingActions.RemoveAllSuggestions().dispatch();
+                        onClick={() => { stores.labelingUiStore.setSuggestionEnabled(false);
+
+                            stores.labelingStore.removeAllSuggestions();
+                            labelingSuggestionGenerator.removeAllSuggestions();
                         } }
                         >Off</button>
                 </span>
@@ -136,7 +152,7 @@ export class LabelingToolbar extends EventListenerComponent<LabelingToolbarProps
                     type='button'
                     className='tbtn tbtn-red'
                     title='Confirm all suggested labels'
-                    onClick={ () => new actions.LabelingActions.ConfirmVisibleSuggestions().dispatch() }
+                    onClick={() => stores.labelingStore.confirmVisibleSuggestions()}
                     ><span className='glyphicon icon-only glyphicon-ok'></span></button>
             </div>
         );

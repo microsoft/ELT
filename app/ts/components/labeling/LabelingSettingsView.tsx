@@ -11,6 +11,7 @@ import { EventListenerComponent } from '../common/EventListenerComponent';
 import * as React from 'react';
 
 
+
 export interface LabelingSettingsViewState {
     suggestionStatus: string;
     suggestionConfidenceThreshold: number;
@@ -72,25 +73,25 @@ export class LabelingSettingsView extends EventListenerComponent<{}, LabelingSet
     }
 
     private turnOnSuggestions(): void {
-        new Actions.LabelingActions.SetSuggestionEnabled(true).dispatch();
+        stores.labelingUiStore.setSuggestionEnabled(true);
     }
 
     private turnOffSuggestions(): void {
-        new Actions.LabelingActions.SetSuggestionEnabled(false).dispatch();
-        new Actions.LabelingActions.RemoveAllSuggestions().dispatch();
+        stores.labelingUiStore.setSuggestionEnabled(false);
+        stores.labelingStore.removeAllSuggestions();
+        labelingSuggestionGenerator.removeAllSuggestions();
     }
 
     private setConfidenceThreshold(value: number): void {
-        new Actions.LabelingActions.SetSuggestionConfidenceThreshold(
-            Math.max(0.001, Math.min(0.999, Math.pow(value, 1.0 / 0.3)))).dispatch();
+        stores.labelingUiStore.setSuggestionConfidenceThreshold(Math.max(0.001, Math.min(0.999, Math.pow(value, 1.0 / 0.3))));
     }
 
     private setSuggestionLogic(logicType: LabelingSuggestionLogicType): void {
-        new Actions.LabelingActions.SetSuggestionLogic(logicType).dispatch();
+        stores.labelingUiStore.setSuggestionLogic(logicType);
     }
 
     private setViewMode(viewMode: SignalsViewMode): void {
-        new Actions.LabelingActions.SetSignalsViewMode(viewMode).dispatch();
+        stores.labelingUiStore.setSignalsViewMode(viewMode);
     }
 
     public render(): JSX.Element {

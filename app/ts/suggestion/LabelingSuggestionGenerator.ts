@@ -1,7 +1,7 @@
 import * as Actions from '../actions/Actions';
 import { pelt } from '../suggestion/algorithms/pelt';
 import { Label, LabelConfirmationState } from '../stores/dataStructures/labeling';
-import { ArrayThrottler} from '../stores/utils';
+import { ArrayThrottler } from '../stores/utils';
 import { SensorTimeSeries } from '../stores/dataStructures/dataset';
 import { computeDimensionsMipmapLevels } from '../components/common/Mipmap';
 import { globalDispatcher } from '../dispatcher/globalDispatcher';
@@ -9,10 +9,11 @@ import { DtwSuggestionModelBuilder, LabelingSuggestionCallback, LabelingSuggesti
     from '../suggestion/suggestion';
 import { alignmentLabelingUiStore, labelingStore, labelingUiStore } from '../stores/stores';
 import { EventEmitter } from 'events';
-
-
+import { observer } from 'mobx-react';
+import { action } from 'mobx';
 
 // This object is not exactly a store - it doesn't listen to actions, but listen to store updates and dispatch actions.
+@observer
 export class LabelingSuggestionGenerator extends EventEmitter {
 
     private _engine: LabelingSuggestionEngine;
@@ -58,10 +59,7 @@ export class LabelingSuggestionGenerator extends EventEmitter {
                                 if (label.state === LabelConfirmationState.UNCONFIRMED ||
                                     label.state === LabelConfirmationState.CONFIRMED_START ||
                                     label.state === LabelConfirmationState.CONFIRMED_END) {
-                                    new Actions.LabelingActions.UpdateLabel(
-                                        label,
-                                        { state: LabelConfirmationState.CONFIRMED_BOTH })
-                                        .dispatch();
+                                    labelingStore.updateLabel(label, { state: LabelConfirmationState.CONFIRMED_BOTH });
                                 }
                             }
                         },
@@ -69,17 +67,16 @@ export class LabelingSuggestionGenerator extends EventEmitter {
                 });
         });
 
-        globalDispatcher.register(action => {
-            // Updating labels.
-            if (action instanceof Actions.LabelingActions.RemoveAllSuggestions) {
-                setTimeout(
+    }
+
+    @action
+    public removeAllSuggestions(): void {
+         setTimeout(
                     () => {
                         this._engine.cancelSuggestion(this._currentSuggestionCallback);
-                        new Actions.LabelingActions.SetSuggestionProgress(false, null, null, null).dispatch();
+                        labelingUiStore.setSuggestionProgress(false, null, null, null);
                     },
                     1);
-            }
-        });
     }
 
     private _currentModelStatus: string = 'IDLE';
@@ -118,7 +115,7 @@ export class LabelingSuggestionGenerator extends EventEmitter {
         setImmediate(() => {
             // Cancel current suggestion if running.
             this._engine.cancelSuggestion(this._currentSuggestionCallback);
-            new Actions.LabelingActions.SetSuggestionProgress(false, null, null, null).dispatch();
+            labelingUiStore.setSuggestionProgress(false, null, null, null);
             if (this._runSuggestionsTimeout) { clearTimeout(this._runSuggestionsTimeout); }
 
             if (labelingUiStore.suggestionEnabled) {
@@ -144,7 +141,7 @@ export class LabelingSuggestionGenerator extends EventEmitter {
 
         // Cancel the current suggestion.
         this._engine.cancelSuggestion(this._currentSuggestionCallback);
-        new Actions.LabelingActions.SetSuggestionProgress(false, null, null, null).dispatch();
+        labelingUiStore.setSuggestionProgress(false, null, null, null);
 
         // Get a new generation number.
         this._generation = new Date().getTime();
@@ -176,14 +173,13 @@ export class LabelingSuggestionGenerator extends EventEmitter {
         // Throttle suggestions so we don't update the view too often.
         this._throttler.setStationary([progress.timestampStart, progress.timestampEnd, progress.timestampCompleted, this._generation]);
         this._throttler.addItems(labels);
-        new Actions.LabelingActions.SetSuggestionProgress(
-            !completed, progress.timestampStart, progress.timestampCompleted, progress.timestampEnd, progress.confidenceHistogram)
-            .dispatch();
+        labelingUiStore.setSuggestionProgress(
+            !completed, progress.timestampStart, progress.timestampCompleted, progress.timestampEnd, progress.confidenceHistogram);
     }
 
     private addSuggestions(labels: Label[], stat: [number, number, number, number]): void {
         // On add suggestions.
-        new Actions.LabelingActions.SuggestLabels(labels, stat[0], stat[1], stat[2], stat[3]).dispatch();
+        labelingStore.suggestLabels(labels, stat[0], stat[1], stat[2], stat[3]);
     }
 }
 
@@ -226,6 +222,6 @@ export class LabelingChangePointSuggestionGenerator extends EventEmitter {
         const sampleRate = (dataset.timestampEnd - dataset.timestampStart) / (n - 1);
         const pts = pelt(data, 20 * Math.log(n), Math.ceil(3 / sampleRate));
         const timestamps = pts.map((p) => (p / (n - 1)) * (dataset.timestampEnd - dataset.timestampStart) + dataset.timestampStart);
-        new Actions.LabelingActions.SuggestChangePoints(timestamps).dispatch();
+        labelingStore.suggestChangePoints(timestamps);
     }
 }
