@@ -110,7 +110,7 @@ export class AlignmentLabelingStore {
             };
             track.alignedTimeSeries.push({
                 id: this.newTimeSeriesID(),
-                track: track,
+                track: observable.ref(track),
                 referenceStart: 0,
                 referenceEnd: video.timestampEnd - video.timestampStart,
                 timeSeries: [video],
@@ -134,7 +134,7 @@ export class AlignmentLabelingStore {
             };
             track.alignedTimeSeries.push({
                 id: this.newTimeSeriesID(),
-                track: track,
+                track: observable.ref(track),
                 referenceStart: 0,
                 referenceEnd: video.timestampEnd - video.timestampStart,
                 timeSeries: [video],
@@ -157,7 +157,7 @@ export class AlignmentLabelingStore {
         };
         track.alignedTimeSeries.push({
             id: this.newTimeSeriesID(),
-            track: track,
+            track: observable.ref(track),
             referenceStart: 0,
             referenceEnd: sensors[0].timestampEnd - sensors[0].timestampStart,
             timeSeries: sensors,
@@ -347,7 +347,7 @@ export class AlignmentLabelingStore {
         const loadTimeSeries = (track: Track, timeSeries: SavedAlignedTimeSeries): AlignedTimeSeries => {
             const result = {
                 id: timeSeries.id,
-                track: track,
+                track: observable.ref(track),
                 referenceStart: timeSeries.referenceStart,
                 referenceEnd: timeSeries.referenceEnd,
                 source: timeSeries.source,
@@ -423,7 +423,7 @@ export class AlignmentLabelingStore {
         const cloneTimeSeries = (parentTrack: Track, timeSeries: AlignedTimeSeries): AlignedTimeSeries => {
             return {
                 id: timeSeries.id,
-                track: parentTrack,
+                track: observable.ref(parentTrack),
                 source: timeSeries.source,
                 timeSeries: timeSeries.timeSeries,
                 referenceStart: timeSeries.referenceStart,
