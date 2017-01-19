@@ -90,6 +90,7 @@ export class WorkPanel extends React.Component<AlignmentLabelingViewProps, Align
         if (event.srcElement === document.body) {
             if (event.keyCode === KeyCode.SPACE) {
                 if (event.srcElement === document.body) {
+                    // commented out before mobx usage
                     // new LabelingActions.togglePlayPause();
                 }
             }

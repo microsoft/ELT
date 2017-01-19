@@ -21,7 +21,6 @@ export class HomeMenu extends React.Component<{}, {}> {
     // We should save one .labels file for each input file
     public exportLabels(): void {
         this.showExportLabelsDialog();
-        //new actions.CommonActions.ExportLabels().dispatch();
     }
 
     private showExportLabelsDialog(onSaved: () => any = null, onCanceled: () => any = null): void {

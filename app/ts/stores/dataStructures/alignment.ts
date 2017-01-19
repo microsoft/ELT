@@ -9,7 +9,7 @@ export interface MarkerCorrespondence {
 
 export interface AlignedTimeSeries {
     id: string;                 // The ID of this timeseries.
-   // track: Track;
+    track: Track;
     referenceStart: number;     // The starting point of the timeseries in reference time.
     referenceEnd: number;       // The ending point of the timeseries in reference time.
 
