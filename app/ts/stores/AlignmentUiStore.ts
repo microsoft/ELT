@@ -4,7 +4,7 @@ import { AlignedTimeSeries, AlignmentState, Marker, MarkerCorrespondence, Track 
 import { LayoutParameters } from '../stores/dataStructures/LayoutParameters';
 import { alignmentLabelingStore, alignmentLabelingUiStore, alignmentStore } from './stores';
 import * as d3 from 'd3';
-import { action, observable } from 'mobx';
+import { action, observable, ObservableMap } from 'mobx';
 
 
 // TrackLayout: stores where a track should be displayed.
@@ -15,26 +15,26 @@ export interface TrackLayout {
     height: number;
 }
 
+
+
 export class AlignmentUiStore {
 
-    // Tracks layout information.
     // TODO: TrackLayout logic should be moved to the view class? Animation could happen when tracks get added/removed.
-    private _trackLayout: WeakMap<Track, TrackLayout>;
+    @observable private _trackLayout: ObservableMap<TrackLayout>;
 
     // Individually stores current time cursor for timeSeries.
     // The timeCursors should be in the series's own timestamps.
-    private _seriesTimeCursor: WeakMap<AlignedTimeSeries, number>;
+    @observable private _seriesTimeCursor: ObservableMap<number>;
 
-    // Current alignment states.
-    private _alignmentState: WeakMap<AlignedTimeSeries, AlignmentState>;
+    @observable private _alignmentState: ObservableMap<AlignmentState>;
 
     // Currently selected markers OR correspondence (update one should cause the other to be null).
     @observable public selectedMarker: Marker;
     @observable public selectedCorrespondence: MarkerCorrespondence;
 
     constructor() {
-        this._seriesTimeCursor = new WeakMap<AlignedTimeSeries, number>();
-        this._alignmentState = new WeakMap<AlignedTimeSeries, AlignmentState>();
+        this._seriesTimeCursor = observable.map<number>();
+        this._alignmentState = observable.map<AlignmentState>();
         this.selectedMarker = null;
         this.selectedCorrespondence = null;
 
@@ -57,7 +57,7 @@ export class AlignmentUiStore {
                     const scale = d3.scaleLinear()
                         .domain([series.referenceStart, series.referenceEnd])
                         .range([series.timeSeries[0].timestampStart, series.timeSeries[0].timestampEnd]);
-                    this._seriesTimeCursor.set(series, scale(timeCursor));
+                    this._seriesTimeCursor.set(series.id.toString(), scale(timeCursor));
                 });
             }
         });
@@ -65,14 +65,14 @@ export class AlignmentUiStore {
 
     @action
     public setSeriesTimeCursor(series: AlignedTimeSeries, timeCursor: number): void {
-        this._seriesTimeCursor.set(series, timeCursor);
+        this._seriesTimeCursor.set(series.id.toString(), timeCursor);
     }
 
     @action
-    public setTimeSeriesZooming(series: AlignedTimeSeries, rangeStart?: number, pixelsPerSecond?: number): void {
-        const block = alignmentStore.getConnectedSeries(series);
-        block.forEach((series) => {
-            const currentState = this._alignmentState.get(series);
+    public setTimeSeriesZooming(alignedSeries: AlignedTimeSeries, rangeStart?: number, pixelsPerSecond?: number): void {
+        const block = alignmentStore.getConnectedSeries(alignedSeries);
+        block.forEach(series => {
+            const currentState = this._alignmentState.get(series.id.toString());
             if (currentState) {
                 if (rangeStart !== null) {
                     currentState.rangeStart = rangeStart;
@@ -105,8 +105,8 @@ export class AlignmentUiStore {
     public onTracksChanged(): void {
         for (const track of alignmentLabelingStore.tracks) {
             for (const series of track.alignedTimeSeries) {
-                if (!this._alignmentState.has(series)) {
-                    this._alignmentState.set(series, {
+                if (!this._alignmentState.has(series.id.toString())) {
+                    this._alignmentState.set(series.id.toString(), {
                         rangeStart: series.referenceStart,
                         pixelsPerSecond: alignmentLabelingUiStore.viewWidth / (series.referenceEnd - series.referenceStart)
                     });
@@ -117,7 +117,7 @@ export class AlignmentUiStore {
     }
 
     private computeTrackLayout(): void {
-        this._trackLayout = new WeakMap<Track, TrackLayout>();
+        this._trackLayout = observable.map<TrackLayout>();
 
         const smallOffset = 0;
         const axisOffset = 22;
@@ -127,7 +127,7 @@ export class AlignmentUiStore {
         const trackGap = LayoutParameters.alignmentTrackGap;
         if (alignmentLabelingStore.referenceTrack) {
             const track = alignmentLabelingStore.referenceTrack;
-            this._trackLayout.set(track, {
+            this._trackLayout.set(track.id.toString(), {
                 track: track,
                 y0: axisOffset + smallOffset - LayoutParameters.referenceDetailedViewHeightAlignment,
                 y1: axisOffset + smallOffset,
@@ -137,7 +137,7 @@ export class AlignmentUiStore {
         alignmentLabelingStore.tracks.forEach((track) => {
             const trackY = trackYCurrent;
             const height = track.minimized ? trackMinimizedHeight : trackHeight;
-            this._trackLayout.set(track, {
+            this._trackLayout.set(track.id.toString(), {
                 track: track,
                 y0: trackY,
                 y1: trackY + height,
@@ -148,18 +148,20 @@ export class AlignmentUiStore {
     }
 
     public getTimeCursor(series: AlignedTimeSeries): number {
-        return this._seriesTimeCursor.get(series);
+        return this._seriesTimeCursor.get(series.id.toString());
     }
 
     public getTrackLayout(track: Track): TrackLayout {
-        return this._trackLayout.get(track);
+        return this._trackLayout.get(track.id.toString());
     }
 
     public getAlignmentState(timeSeries: AlignedTimeSeries): AlignmentState {
-        return this._alignmentState.get(timeSeries);
+        return this._alignmentState.get(timeSeries.id.toString());
     }
+
+    @action
     public setAlignmentState(timeSeries: AlignedTimeSeries, state: AlignmentState): void {
-        this._alignmentState.set(timeSeries, state);
+        this._alignmentState.set(timeSeries.id.toString(), state);
         // this.emitSeriesTimeCursorChanged();
     }
 

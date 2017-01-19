@@ -35,14 +35,12 @@ export class LabelingToolbar extends React.Component<LabelingToolbarProps, {}> {
                 <button className='tbtn tbtn-l3' title='Zoom in'
                     onClick={() => {
                         stores.alignmentLabelingUiStore.referenceViewPanAndZoom(0, -0.2, 'center');
-                        stores.uiStore.referenceViewPanAndZoom(0, -0.2, 'center');
                     } }>
                     <span className='glyphicon icon-only glyphicon-zoom-in'></span></button>
                 {' '}
                 <button className='tbtn tbtn-l3' title='Zoom out'
                     onClick={() => {
                         stores.alignmentLabelingUiStore.referenceViewPanAndZoom(0, +0.2, 'center');
-                        stores.uiStore.referenceViewPanAndZoom(0, +0.2, 'center');
                     } }>
                     <span className='glyphicon icon-only glyphicon-zoom-out'></span></button>
                 {' '}
@@ -51,28 +49,24 @@ export class LabelingToolbar extends React.Component<LabelingToolbarProps, {}> {
                 <button className='tbtn tbtn-l3' title='Go to the beginning'
                     onClick={() => {
                         stores.alignmentLabelingUiStore.referenceViewPanAndZoom(-1e10, 0);
-                        stores.uiStore.referenceViewPanAndZoom(-1e10, 0);
                     } }>
                     <span className='glyphicon icon-only glyphicon-fast-backward'></span></button>
                 {' '}
                 <button className='tbtn tbtn-l3' title='Go to the previous page'
                     onClick={() => {
                         stores.alignmentLabelingUiStore.referenceViewPanAndZoom(-0.6, 0);
-                        stores.uiStore.referenceViewPanAndZoom(-0.6, 0);
                     } }>
                     <span className='glyphicon icon-only glyphicon-backward'></span></button>
                 {' '}
                 <button className='tbtn tbtn-l3' title='Go to the next page'
                     onClick={() => {
                         stores.alignmentLabelingUiStore.referenceViewPanAndZoom(+0.6, 0);
-                        stores.uiStore.referenceViewPanAndZoom(+0.6, 0);
                     } }>
                     <span className='glyphicon icon-only glyphicon-forward'></span></button>
                 {' '}
                 <button className='tbtn tbtn-l3' title='Go to the end'
                     onClick={() => {
                         stores.alignmentLabelingUiStore.referenceViewPanAndZoom(+1e10, 0);
-                        stores.uiStore.referenceViewPanAndZoom(+1e10, 0);
                     } }>
                     <span className='glyphicon icon-only glyphicon-fast-forward'></span></button>
                 {' '}

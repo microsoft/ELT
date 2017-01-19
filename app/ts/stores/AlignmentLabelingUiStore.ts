@@ -1,7 +1,7 @@
 import { Track } from '../stores/dataStructures/alignment';
 import { TransitionController } from '../stores/utils';
 import { alignmentLabelingStore } from './stores';
-import { action, IObservableArray, observable } from 'mobx';
+import { action, autorun, IObservableArray, observable } from 'mobx';
 
 
 export function startTransition(
@@ -50,6 +50,7 @@ export class AlignmentLabelingUiStore {
 
         // Listen to the track changed event from the alignmentLabelingStore.
         // alignmentLabelingStore.tracksChanged.on(this.onTracksChanged.bind(this));
+        autorun(this.onTracksChanged.bind(this));
     }
 
     // On tracks changed, update zooming parameters so that the views don't overflow.
@@ -87,8 +88,8 @@ export class AlignmentLabelingUiStore {
     // public get referenceTimestampStart(): number { return this._referenceTimestampStart; }
     // public get referenceTimestampEnd(): number { return this._referenceTimestampEnd; }
 
-    // Set the zooming parameters.
-    public setReferenceViewZooming(referenceViewStart: number, referenceViewPPS: number): void {
+    // Set the zooming parameters when a project is loaded.
+    public setProjectReferenceViewZooming(referenceViewStart: number, referenceViewPPS: number): void {
         [referenceViewStart, referenceViewPPS] = this.constrainDetailedViewZoomingParameters(referenceViewStart, referenceViewPPS);
         this.referenceViewStart = referenceViewStart;
         this.referenceViewPPS = referenceViewPPS;
@@ -100,22 +101,21 @@ export class AlignmentLabelingUiStore {
             this.constrainDetailedViewZoomingParameters(this.referenceViewStart, this.referenceViewPPS);
     }
 
-    // FIXME duplicate function names input parameter names
     @action
-    public setReferenceViewZoomingAction(referenceViewStartAction: number, referenceViewPPSAction: number = null, animate: boolean = false): void {
-        if (referenceViewStartAction === null) { referenceViewStartAction = this.referenceViewStart; }
-        if (referenceViewPPSAction === null) { referenceViewPPSAction = this.referenceViewPPS; }
-        const [referenceViewStart, referenceViewPPS] =
-            this.constrainDetailedViewZoomingParameters(referenceViewStartAction, referenceViewPPSAction);
+    public setReferenceViewZooming(referenceViewStart: number, referenceViewPPS: number = null, animate: boolean = false): void {
+        if (referenceViewStart === null) { referenceViewStart = this.referenceViewStart; }
+        if (referenceViewPPS === null) { referenceViewPPS = this.referenceViewPPS; }
+        const [start, pps] =
+            this.constrainDetailedViewZoomingParameters(referenceViewStart, referenceViewPPS);
         // Change current class to label's class.
-        if (this.referenceViewStart !== referenceViewStart || this.referenceViewPPS !== referenceViewPPS) {
+        if (this.referenceViewStart !== start || this.referenceViewPPS !== pps) {
             if (!animate) {
                 if (this._referenceViewTransition) {
                     this._referenceViewTransition.terminate();
                     this._referenceViewTransition = null;
                 }
-                this.referenceViewStart = referenceViewStart;
-                this.referenceViewPPS = referenceViewPPS;
+                this.referenceViewStart = start;
+                this.referenceViewPPS = pps;
             } else {
                 if (this._referenceViewTransition) {
                     this._referenceViewTransition.terminate();
@@ -123,8 +123,8 @@ export class AlignmentLabelingUiStore {
                 }
                 const start0 = this.referenceViewStart;
                 const zoom0 = this.referenceViewPPS;
-                const start1 = referenceViewStart;
-                const zoom1 = referenceViewPPS;
+                const start1 = start;
+                const zoom1 = pps;
                 this._referenceViewTransition = startTransition(100, 'linear', (t: number) => {
                     this.referenceViewStart = start0 + (start1 - start0) * t;
                     if (zoom1) {
@@ -136,7 +136,7 @@ export class AlignmentLabelingUiStore {
     }
 
     @action
-    public referenceViewPanAndZoom(zoom: number, percentage: number, zoomCenter: 'cursor' | 'center' = 'cursor'): void {
+    public referenceViewPanAndZoom(percentage: number, zoom: number, zoomCenter: 'cursor' | 'center' = 'cursor'): void {
         if (zoom !== 0) {
             const k = Math.exp(-zoom);
             // Two rules to compute new zooming.
@@ -148,18 +148,13 @@ export class AlignmentLabelingUiStore {
             if (zoomCenter === 'cursor') { timeCursor = this.referenceViewTimeCursor; }
             const newPPS = oldPPS * k;
             const newStart = oldStart / k + timeCursor * (1 - 1 / k);
-            this.setReferenceViewZoomingAction(newStart, newPPS, false);
+            this.setReferenceViewZooming(newStart, newPPS, false);
         }
         if (percentage !== 0) {
             const originalStart = this.referenceViewStart;
             const timeWidth = this.referenceViewDuration;
-            this.setReferenceViewZoomingAction(originalStart + timeWidth * percentage, null, true);
+            this.setReferenceViewZooming(originalStart + timeWidth * percentage, null, true);
 
-        }
-        if (percentage !== 0) {
-            const originalStart = this.referenceViewStart;
-            const timeWidth = this.referenceViewDuration;
-            this.setReferenceViewZoomingAction(originalStart + timeWidth * percentage, null, true);
         }
     }
 

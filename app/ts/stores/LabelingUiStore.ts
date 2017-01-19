@@ -101,7 +101,6 @@ export class LabelingUiStore {
     @action
     public hoverLabel(label: Label): void {
         if (this.hoveringLabel !== label) {
-            const old_label = this.hoveringLabel;
             this.hoveringLabel = label;
         }
     }
@@ -109,7 +108,7 @@ export class LabelingUiStore {
     @action
     public selectLabel(label: Label, ctrlSelect: boolean = false, shiftSelect: boolean = false): void {
         const previous_selected_labels: Label[] = [];
-        this.selectedLabels.forEach((label) => { previous_selected_labels.push(label); });
+        this.selectedLabels.forEach(lab => { previous_selected_labels.push(lab); });
         this.selectedLabels.clear();
         this.selectedLabels.add(label);
         // Change current class to label's class.
@@ -143,7 +142,6 @@ export class LabelingUiStore {
         const previous_selected_labels: Label[] = [];
         this.selectedLabels.forEach((label) => { previous_selected_labels.push(label); });
         this.selectedLabels.clear();
-    
     }
 
     @action
@@ -157,7 +155,13 @@ export class LabelingUiStore {
     }
 
     @action
-    public setSuggestionProgress(suggesting: boolean, timestampStart: number, timestampCompleted: number, timestampEnd: number, confidenceHistogram?: number[]): void {
+    public setSuggestionProgress(
+        suggesting: boolean,
+        timestampStart: number,
+        timestampCompleted: number,
+        timestampEnd: number,
+        confidenceHistogram?: number[]): void {
+
         this._isSuggesting = suggesting;
         this._suggestionTimestampStart = timestampStart;
         this._suggestionTimestampCompleted = timestampCompleted;
@@ -195,7 +199,7 @@ export class LabelingUiStore {
         this.signalsViewMode = mode;
     }
 
-        // FIXME: no one seems to call this?
+    // FIXME: no one seems to call this?
     @action
     public revealSelectedLabel(): void {
         let selectedLabel: Label = null;
@@ -203,9 +207,9 @@ export class LabelingUiStore {
         if (selectedLabel !== null) {
             if (selectedLabel.timestampStart < alignmentLabelingUiStore.referenceViewStart ||
                 selectedLabel.timestampEnd > alignmentLabelingUiStore.referenceViewEnd) {
-                    alignmentLabelingUiStore.setReferenceViewZoomingAction(
-                        selectedLabel.timestampStart - alignmentLabelingUiStore.referenceViewDuration * 0.2,
-                        null, true);
+                alignmentLabelingUiStore.setReferenceViewZooming(
+                    selectedLabel.timestampStart - alignmentLabelingUiStore.referenceViewDuration * 0.2,
+                    null, true);
             }
         }
     }

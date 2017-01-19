@@ -1,6 +1,5 @@
 // The 'Overview' view that is shared by both alignment and labeling.
 
-import { Track } from '../stores/dataStructures/alignment';
 import { LayoutParameters } from '../stores/dataStructures/LayoutParameters';
 import { KeyCode } from '../stores/dataStructures/types';
 import * as stores from '../stores/stores';
@@ -38,11 +37,9 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
         if (event.srcElement === document.body) {
             if (event.keyCode === KeyCode.LEFT) {
                 stores.alignmentLabelingUiStore.referenceViewPanAndZoom(-0.6, 0);
-                stores.uiStore.referenceViewPanAndZoom(-0.6, 0);
             }
             if (event.keyCode === KeyCode.RIGHT) {
                 stores.alignmentLabelingUiStore.referenceViewPanAndZoom(+0.6, 0);
-                stores.uiStore.referenceViewPanAndZoom(+0.6, 0);
             }
         }
     }
@@ -50,7 +47,6 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
     private onMouseWheel(event: React.WheelEvent<Element>): void {
         // Decide the zooming factor.
         stores.alignmentLabelingUiStore.referenceViewPanAndZoom(0, event.deltaY / 1000, 'center');
-        stores.uiStore.referenceViewPanAndZoom(0, event.deltaY / 1000, 'center');
     }
 
     private detailedViewCursorPosition(event: React.MouseEvent<Element>): void {
@@ -59,7 +55,7 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
         const end = stores.alignmentLabelingStore.referenceTimestampEnd;
         const t = x / this.props.viewWidth * (end - start) + start;
         const timeWindow = stores.alignmentLabelingUiStore.referenceViewDuration;
-        stores.alignmentLabelingUiStore.setReferenceViewZoomingAction(t - timeWindow / 2, null, true);
+        stores.alignmentLabelingUiStore.setReferenceViewZooming(t - timeWindow / 2, null, true);
     }
 
     public componentDidMount(): void {
@@ -74,9 +70,9 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
         const newStart = Math.min(t0, t1);
         const newEnd = Math.max(t0, t1);
         if (mode === 'start' || mode === 'end') {
-            stores.alignmentLabelingUiStore.setReferenceViewZoomingAction(newStart, this.props.viewWidth / (newEnd - newStart));
+            stores.alignmentLabelingUiStore.setReferenceViewZooming(newStart, this.props.viewWidth / (newEnd - newStart));
         } else {
-            stores.alignmentLabelingUiStore.setReferenceViewZoomingAction(newStart);
+            stores.alignmentLabelingUiStore.setReferenceViewZooming(newStart);
         }
     }
 
@@ -87,7 +83,7 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
         const scaling = (end - start) / this.props.viewWidth;
         const start0 = stores.alignmentLabelingUiStore.referenceViewStart;
         const end0 = stores.alignmentLabelingUiStore.referenceViewStart +
-                this.props.viewWidth / stores.alignmentLabelingUiStore.referenceViewPPS;
+            this.props.viewWidth / stores.alignmentLabelingUiStore.referenceViewPPS;
         startDragging((mouseEvent: MouseEvent) => {
             const x1 = mouseEvent.screenX;
             let offset = (x1 - x0) * scaling;
@@ -125,7 +121,6 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
         const end = stores.alignmentLabelingStore.referenceTimestampEnd;
         const t = x / this.props.viewWidth * (end - start) + start;
         stores.alignmentLabelingUiStore.setReferenceViewTimeCursor(t);
-        stores.uiStore.setReferenceViewTimeCursor(t);
     }
 
     public render(): JSX.Element {
@@ -148,7 +143,7 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
 
         const rangeX0 = xScale(stores.alignmentLabelingUiStore.referenceViewStart);
         const rangeX1 = xScale(stores.alignmentLabelingUiStore.referenceViewStart +
-                this.props.viewWidth / stores.alignmentLabelingUiStore.referenceViewPPS);
+            this.props.viewWidth / stores.alignmentLabelingUiStore.referenceViewPPS);
 
         const pathD = makePathDFromPoints([
             [xScale.range()[0], this.props.viewHeight],
@@ -158,7 +153,7 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
         ]);
 
         const cursor = stores.alignmentLabelingUiStore.referenceViewTimeCursor;
-
+        const cursorX = xScale(cursor);
         return (
             <g className='labeling-overview-view'>
                 <g className='labels' transform={`translate(0, ${videoY0})`}>
@@ -231,18 +226,8 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
                 </g>
 
                 <g className='time-cursor' transform='translate(0, 0)'>
-                    <line className='bg'
-                        x1={xScale(cursor)}
-                        y1={0}
-                        x2={xScale(cursor)}
-                        y2={this.props.viewHeight}
-                        />
-                    <line
-                        x1={xScale(cursor)}
-                        y1={0}
-                        x2={xScale(cursor)}
-                        y2={this.props.viewHeight}
-                        />
+                    <line className='bg' x1={cursorX} y1={0} x2={cursorX} y2={this.props.viewHeight} />
+                    <line x1={cursorX} y1={0} x2={cursorX} y2={this.props.viewHeight} />
                 </g>
 
                 <g className='brackets' transform='translate(0, 0)'>
