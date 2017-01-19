@@ -1,15 +1,16 @@
 import { LayoutParameters } from '../../stores/dataStructures/LayoutParameters';
+import * as stores from '../../stores/stores';
 import { generateEllModel } from '../../suggestion/ELLDtwModelGeneration';
 import { labelingSuggestionGenerator } from '../../suggestion/LabelingSuggestionGenerator';
-import * as stores from '../../stores/stores';
-import { ScriptEditor } from './ScriptEditor';
 import { DeploymentToolbar } from './DeploymentToolbar';
+import { ScriptEditor } from './ScriptEditor';
 import { ToolOutputPanel } from './ToolOutputPanel';
 import { execFileSync, spawn } from 'child_process';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import * as React from 'react';
+
 
 // Configuration
 const useEllModel = true; // vs. Donghao model

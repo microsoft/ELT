@@ -2,19 +2,16 @@
 // - Including tracks (but not the reference track), markers and correspondences.
 // - Handles alignment keyboard events.
 
-import * as actions from '../../actions/Actions';
 import { AlignedTimeSeries, Marker, Track } from '../../stores/dataStructures/alignment';
-import { SignalsViewMode } from '../../stores/dataStructures/labeling';
-import { startDragging } from '../../stores/utils';
 import { KeyCode } from '../../stores/dataStructures/types';
 import * as stores from '../../stores/stores';
-import { EventListenerComponent } from '../common/EventListenerComponent';
+import { startDragging } from '../../stores/utils';
 import { TimeAxis } from '../common/TimeAxis';
 import { TrackView } from '../common/TrackView';
 import { SVGGlyphiconButton } from '../svgcontrols/buttons';
 import * as d3 from 'd3';
-import * as React from 'react';
 import { observer } from 'mobx-react';
+import * as React from 'react';
 
 
 
@@ -25,17 +22,11 @@ export interface AlignmentViewProps {
 }
 
 export interface AlignmentViewState {
-    tracks?: Track[];
-    pixelsPerSecond?: number;
-    detailedViewStart?: number;
-
     isCreatingCorrespondence?: boolean;
     markerStartKnob?: 'top' | 'bottom';
     markerStart?: Marker;
     markerTarget?: Marker;
     currentPosition?: [number, number];
-
-    signalsViewMode?: SignalsViewMode;
 }
 
 @observer
@@ -47,10 +38,6 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
 
     constructor(props: AlignmentViewProps, context: any) {
         super(props, context);
-
-        this.state = this.computeState();
-
-        this.updateState = this.updateState.bind(this);
         this.onKeyDown = this.onKeyDown.bind(this);
         this.onTrackMouseMove = this.onTrackMouseMove.bind(this);
         this.onTrackMouseDown = this.onTrackMouseDown.bind(this);
@@ -58,19 +45,6 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
         this.onTrackMouseLeave = this.onTrackMouseLeave.bind(this);
         this.onTrackWheel = this.onTrackWheel.bind(this);
         this.getZoomTransform = this.getZoomTransform.bind(this);
-    }
-
-    protected updateState(): void {
-        this.setState(this.computeState());
-    }
-
-    private computeState(): AlignmentViewState {
-        return {
-            tracks: stores.alignmentLabelingStore.tracks,
-            detailedViewStart: stores.alignmentLabelingUiStore.referenceViewStart,
-            pixelsPerSecond: stores.alignmentLabelingUiStore.referenceViewPPS,
-            signalsViewMode: stores.labelingUiStore.signalsViewMode
-        };
     }
 
 
@@ -85,10 +59,10 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
             }
         }
         if (event.ctrlKey && event.keyCode === 'Z'.charCodeAt(0)) {
-            new actions.CommonActions.AlignmentUndo().dispatch();
+            //new actions.CommonActions.AlignmentUndo().dispatch();
         }
         if (event.ctrlKey && event.keyCode === 'Y'.charCodeAt(0)) {
-            new actions.CommonActions.AlignmentRedo().dispatch();
+            //new actions.CommonActions.AlignmentRedo().dispatch();
         }
     }
 
@@ -258,7 +232,7 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
         const alignmentState = stores.alignmentUiStore.getAlignmentState(timeSeries);
         const [rangeStart, pixelsPerSecond] = alignmentState ?
             [alignmentState.rangeStart, alignmentState.pixelsPerSecond] :
-            [this.state.detailedViewStart, this.state.pixelsPerSecond];
+            [stores.alignmentLabelingUiStore.referenceViewStart, stores.alignmentLabelingUiStore.referenceViewPPS];
         // scale: Reference -> Pixel.
         const sReferenceToPixel = d3.scaleLinear()
             .domain([rangeStart, rangeStart + this.props.viewWidth / pixelsPerSecond])
@@ -285,7 +259,10 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
     } {
         const state = stores.alignmentUiStore.getAlignmentState(series);
         if (!state) {
-            return { rangeStart: this.state.detailedViewStart, pixelsPerSecond: this.state.pixelsPerSecond };
+            return {
+                rangeStart: stores.alignmentLabelingUiStore.referenceViewStart,
+                pixelsPerSecond: stores.alignmentLabelingUiStore.referenceViewPPS
+            };
         } else {
             return { rangeStart: state.rangeStart, pixelsPerSecond: state.pixelsPerSecond };
         }
@@ -293,7 +270,7 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
 
 
     private renderTracks(): JSX.Element[] {
-        return this.state.tracks.map(track => {
+        return stores.alignmentLabelingStore.tracks.map(track => {
             const trackLayout = stores.alignmentUiStore.getTrackLayout(track);
             if (!trackLayout) { return null; }
             let timeAxis = null;
@@ -322,7 +299,7 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
                         onWheel={this.onTrackWheel}
                         zoomTransform={this.getZoomTransform}
                         useMipmap={true}
-                        signalsViewMode={this.state.signalsViewMode}
+                        signalsViewMode={stores.labelingUiStore.signalsViewMode}
                         />
 
                     <rect className='track-decoration'

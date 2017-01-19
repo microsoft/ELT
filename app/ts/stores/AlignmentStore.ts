@@ -1,17 +1,13 @@
 // AlignmentStore
 // Store alignment markers and correspondences (connections between markers).
 
-import * as Actions from '../actions/Actions';
 import { AlignedTimeSeries, Marker, MarkerCorrespondence } from '../stores/dataStructures/alignment';
 import { SavedAlignmentState, SavedMarker, SavedMarkerCorrespondence } from '../stores/dataStructures/project';
 import { TransitionController } from '../stores/utils';
-import { globalDispatcher } from '../dispatcher/globalDispatcher';
 import { AlignmentLabelingStore } from './AlignmentLabelingStore';
 import { AlignmentLabelingUiStore } from './AlignmentLabelingUiStore';
-import { NodeEvent } from './NodeEvent';
 import { alignmentLabelingStore, alignmentLabelingUiStore, alignmentUiStore } from './stores';
 import * as d3 from 'd3';
-import { EventEmitter } from 'events';
 import { action, observable } from 'mobx';
 
 // Take a snapshot from the alignmentStore, isolate all current rendering parametes.
@@ -111,8 +107,8 @@ export class AlignmentStore {
         this.correspondences = [];
         this._alignmentTransitionController = null;
 
-        alignmentLabelingStore.tracksChanged.on(this.onTracksChanged.bind(this));
-        alignmentLabelingUiStore.referenceViewChanged.on(this.rearrangeSeries.bind(this));
+        // alignmentLabelingStore.tracksChanged.on(this.onTracksChanged.bind(this));
+        // alignmentLabelingUiStore.referenceViewChanged.on(this.rearrangeSeries.bind(this));
     }
 
     @action

@@ -1,35 +1,18 @@
 // The view that manages the list of classes.
 
-import * as actions from '../../actions/Actions';
-import {KeyCode} from '../../stores/dataStructures/types';
+import { KeyCode } from '../../stores/dataStructures/types';
 import * as stores from '../../stores/stores';
+import { observer } from 'mobx-react';
 import * as React from 'react';
-import {observer} from 'mobx-react';
 
 
-export interface ClassesListViewState {
-    classes?: string[];
-    classColors?: string[];
-    currentClass?: string;
-}
 
 @observer
-export class ClassesListView extends React.Component<{}, ClassesListViewState> {
+export class ClassesListView extends React.Component<{}, {}> {
     public refs: {
         [key: string]: Element,
         inputClassName: HTMLInputElement
     };
-
-    constructor(props: {}, context: any) {
-        super(props, context);
-
-        this.state = {
-            classes: stores.labelingStore.classes,
-            classColors: stores.labelingStore.classColors,
-            currentClass: stores.labelingUiStore.currentClass
-        };
-    }
-
 
     private addClass(): void {
         const text = this.refs.inputClassName.value.trim();
@@ -40,17 +23,11 @@ export class ClassesListView extends React.Component<{}, ClassesListViewState> {
         this.refs.inputClassName.value = '';
     }
 
-    protected updateState(): void {
-        this.setState({
-            classes: stores.labelingStore.classes,
-            classColors: stores.labelingStore.classColors
-        });
-    }
-
     public render(): JSX.Element {
-        let listItems = this.state.classes.map((c, i) => {
+        const currentClass = stores.labelingUiStore.currentClass;
+        let listItems = stores.labelingStore.classes.map((c, i) => {
             let nameWidget = (<span>{c}</span>);
-            if (this.state.currentClass === c && c !== 'IGNORE') {
+            if (currentClass === c && c !== 'IGNORE') {
                 nameWidget = (
                     <input
                         type='text'
@@ -67,14 +44,14 @@ export class ClassesListView extends React.Component<{}, ClassesListViewState> {
             }
             return (
                 <div
-                    className={`classes-list-item clearfix ${this.state.currentClass === c ? 'active' : ''}`}
+                    className={`classes-list-item clearfix ${currentClass === c ? 'active' : ''}`}
                     key={`class-${i}`}
                     role='button'
-                    onClick={ () => {
+                    onClick={() => {
                         stores.labelingUiStore.selectClass(c);
                     } }
                     >
-                    <span className='badge-classname' style={ { backgroundColor: this.state.classColors[i] } }></span>
+                    <span className='badge-classname' style={{ backgroundColor: stores.labelingStore.classColors[i] }}></span>
                     {nameWidget}
                     {
                         c !== 'IGNORE' ? (
@@ -111,9 +88,9 @@ export class ClassesListView extends React.Component<{}, ClassesListViewState> {
                             if (event.keyCode === KeyCode.ENTER) {
                                 this.addClass();
                             }
-                        } } />{ ' ' }
+                        } } />{' '}
                     <button type='button' className='tbtn tbtn-l3'
-                        onClick={ () => { this.addClass(); } }>Add</button>
+                        onClick={() => { this.addClass(); } }>Add</button>
                 </div>
             </div>
         );
@@ -126,9 +103,6 @@ export class ClassesListView extends React.Component<{}, ClassesListViewState> {
 
 
 export interface InlineClassesListViewState {
-    classes?: string[];
-    classColors?: string[];
-    currentClass?: string;
     active?: boolean;
 }
 
@@ -142,23 +116,10 @@ export class InlineClassesListView extends React.Component<{}, InlineClassesList
 
     constructor(props: {}, context: any) {
         super(props, context);
-
         this.state = {
-            classes: stores.labelingStore.classes,
-            classColors: stores.labelingStore.classColors,
-            currentClass: stores.labelingUiStore.currentClass,
             active: false
         };
     }
-
-
-    protected updateState(): void {
-        this.setState({
-            classes: stores.labelingStore.classes,
-            classColors: stores.labelingStore.classColors
-        });
-    }
-
 
     private setActive(): void {
         this.setState({
@@ -181,15 +142,18 @@ export class InlineClassesListView extends React.Component<{}, InlineClassesList
     }
 
     public render(): JSX.Element {
+        const classes = stores.labelingStore.classes;
+        const classColors = stores.labelingStore.classColors;
+        const currentClass = stores.labelingUiStore.currentClass;
         return (
             <span className={`inline-classes-list-view ${this.state.active ? 'active' : ''}`}>
-                <span className='classname' role='button' onClick={event => this.setActive() }>
+                <span className='classname' role='button' onClick={event => this.setActive()}>
                     <span className='badge-classname'
-                        style={ { backgroundColor: this.state.classColors[this.state.classes.indexOf(this.state.currentClass)] } }>
+                        style={{ backgroundColor: classColors[classes.indexOf(currentClass)] }}>
                     </span>
-                    <span>{this.state.currentClass}</span>
+                    <span>{currentClass}</span>
                 </span>
-                <div ref='wrapper' className='classes-list-view-wrapper' style={ { display: this.state.active ? 'block' : 'none' } }>
+                <div ref='wrapper' className='classes-list-view-wrapper' style={{ display: this.state.active ? 'block' : 'none' }}>
                     <ClassesListView />
                 </div>
             </span>

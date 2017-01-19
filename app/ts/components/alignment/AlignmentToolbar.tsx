@@ -1,7 +1,6 @@
 // Alignment toolbar view.
 // - Toolbar buttons for alignment.
 
-import * as Actions from '../../actions/Actions';
 import { remote } from 'electron';
 import * as React from 'react';
 import { alignmentLabelingStore, alignmentLabelingUiStore, uiStore } from '../../stores/stores';

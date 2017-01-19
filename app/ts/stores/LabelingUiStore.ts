@@ -2,16 +2,13 @@
 // Labeling selection and hovering states.
 // Options for labeling and suggestions (move to elsewhere?)
 
-import * as actions from '../actions/Actions';
-import { getLabelingSuggestionLogic, LabelingSuggestionLogic, LabelingSuggestionLogicType } from '../suggestion/LabelingSuggestionLogic';
 import { Label, PartialLabel, SignalsViewMode } from '../stores/dataStructures/labeling';
 import { PerItemEventListeners } from '../stores/utils';
-import { globalDispatcher } from '../dispatcher/globalDispatcher';
+import { getLabelingSuggestionLogic, LabelingSuggestionLogic, LabelingSuggestionLogicType } from '../suggestion/LabelingSuggestionLogic';
 import { LabelingStore } from './LabelingStore';
-import { NodeEvent, NodeItemEvent } from './NodeEvent';
 import { alignmentLabelingUiStore, labelingStore } from './stores';
-import { EventEmitter } from 'events';
-import { action, observable, computed } from 'mobx';
+import { action, observable } from 'mobx';
+
 
 // LabelingUIStore
 // Labeling selection and hovering states.
@@ -80,9 +77,9 @@ export class LabelingUiStore {
 
         this._microAdjusterType = 'frame-drag';
 
-        // NOTICE THAT THIS STORES PARENT IS A LABELING STORE??
-        labelingStore.classesChanged.on(this.onClassesChanged.bind(this));
-        labelingStore.labelsArrayChanged.on(this.onLabelsArrayChanged.bind(this));
+        // // NOTICE THAT THIS STORES PARENT IS A LABELING STORE??
+        // labelingStore.classesChanged.on(this.onClassesChanged.bind(this));
+        // labelingStore.labelsArrayChanged.on(this.onLabelsArrayChanged.bind(this));
 
     }
 

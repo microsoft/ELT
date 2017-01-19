@@ -1,11 +1,8 @@
+import { Track } from '../stores/dataStructures/alignment';
 import { TransitionController } from '../stores/utils';
-import { globalDispatcher } from '../dispatcher/globalDispatcher';
-import { NodeEvent } from './NodeEvent';
 import { alignmentLabelingStore } from './stores';
-import * as d3 from 'd3';
-import { EventEmitter } from 'events';
-import { observer } from 'mobx-react';
-import { action, computed, observable } from 'mobx';
+import { action, IObservableArray, observable } from 'mobx';
+
 
 export function startTransition(
     duration: number,
@@ -49,17 +46,36 @@ export class AlignmentLabelingUiStore {
         this._referenceViewTransition = null;
         this.referenceViewTimeCursor = null;
 
-        // Listen to the track changed event from the alignmentLabelingStore.
-        alignmentLabelingStore.tracksChanged.on(this.onTracksChanged.bind(this));
+        (alignmentLabelingStore.tracks as IObservableArray<Track>).observe(this.onTracksChanged.bind(this));
 
+        // Listen to the track changed event from the alignmentLabelingStore.
+        // alignmentLabelingStore.tracksChanged.on(this.onTracksChanged.bind(this));
     }
 
     // On tracks changed, update zooming parameters so that the views don't overflow.
     public onTracksChanged(): void {
         if (alignmentLabelingStore.referenceTrack) {
-            [this.referenceViewStart, this.referenceViewPPS] = this.constrainDetailedViewZoomingParameters(this.referenceViewStart, this.referenceViewPPS);
+            [this.referenceViewStart, this.referenceViewPPS] =
+                this.constrainDetailedViewZoomingParameters(this.referenceViewStart, this.referenceViewPPS);
         }
     }
+
+    // Return updated zooming parameters so that they don't exceed the reference track range.
+    private constrainDetailedViewZoomingParameters(referenceViewStart: number, referenceViewPPS: number): [number, number] {
+        if (referenceViewStart === null) { referenceViewStart = this.referenceViewStart; }
+        if (referenceViewPPS === null) { referenceViewPPS = this.referenceViewPPS; }
+        // Check if we go outside of the view, if yes, tune the parameters.
+        if (alignmentLabelingStore) {
+            referenceViewPPS = Math.max(
+                this.viewWidth / (alignmentLabelingStore.referenceTimestampEnd - alignmentLabelingStore.referenceTimestampStart),
+                referenceViewPPS);
+            referenceViewStart = Math.max(
+                alignmentLabelingStore.referenceTimestampStart,
+                Math.min(alignmentLabelingStore.referenceTimestampEnd - this.viewWidth / referenceViewPPS, referenceViewStart));
+        }
+        return [referenceViewStart, referenceViewPPS];
+    }
+
 
     // Exposed properties.
     // Detailed view zooming and translation.
@@ -155,15 +171,4 @@ export class AlignmentLabelingUiStore {
         }
     }
 
-
-    // Return updated zooming parameters so that they don't exceed the reference track range.
-    private constrainDetailedViewZoomingParameters(referenceViewStart: number, referenceViewPPS: number): [number, number] {
-        if (referenceViewStart === null) { referenceViewStart = this.referenceViewStart; }
-        if (referenceViewPPS === null) { referenceViewPPS = this.referenceViewPPS; }
-        // Check if we go outside of the view, if yes, tune the parameters.
-        referenceViewPPS = Math.max(this.viewWidth / (alignmentLabelingStore.referenceTimestampEnd - alignmentLabelingStore.referenceTimestampStart), referenceViewPPS);
-        referenceViewStart = Math.max(alignmentLabelingStore.referenceTimestampStart, Math.min(alignmentLabelingStore.referenceTimestampEnd - this.viewWidth / referenceViewPPS, referenceViewStart));
-        return [referenceViewStart, referenceViewPPS];
-    }
-    
 }

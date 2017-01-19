@@ -1,17 +1,12 @@
 // App-level UI Store: Manages the curernt tab.
 
-import * as actions from '../actions/Actions';
-import { TransitionController } from '../stores/utils';
 import { TabID } from '../stores/dataStructures/types';
-import { globalDispatcher } from '../dispatcher/globalDispatcher';
-import { NodeEvent } from './NodeEvent';
+import { TransitionController } from '../stores/utils';
 import * as stores from './stores';
 import * as d3 from 'd3';
-import { EventEmitter } from 'events';
-import { observer } from 'mobx-react';
-import { action, observable } from 'mobx';
+import { action, autorun, observable } from 'mobx';
 
-@observer
+
 export class UiStore {
     @observable public currentTab: TabID;
     // Zooming view parameters.
@@ -44,8 +39,8 @@ export class UiStore {
         this._referenceViewTransition = null;
         this.referenceViewTimeCursor = null;
         // Listen to the track changed event from the alignmentLabelingStore.
-        stores.alignmentLabelingStore.tracksChanged.on(this.onTracksChanged.bind(this));
-       
+        // stores.alignmentLabelingStore.tracksChanged.on(this.onTracksChanged.bind(this));
+        autorun(() => this.onTracksChanged());
     }
 
     @action

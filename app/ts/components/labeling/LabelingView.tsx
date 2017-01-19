@@ -1,20 +1,18 @@
 // The main labeling view.
 
-import * as actions from '../../actions/Actions';
-import {Track} from '../../stores/dataStructures/alignment';
-import {Label, LabelConfirmationState, SignalsViewMode} from '../../stores/dataStructures/labeling';
-import {LayoutParameters} from '../../stores/dataStructures/LayoutParameters';
-import {startDragging} from '../../stores/utils';
-import {KeyCode} from '../../stores/dataStructures/types';
+import { LabelConfirmationState, SignalsViewMode } from '../../stores/dataStructures/labeling';
+import { LayoutParameters } from '../../stores/dataStructures/LayoutParameters';
+import { KeyCode } from '../../stores/dataStructures/types';
 import * as stores from '../../stores/stores';
-import {EventListenerComponent} from '../common/EventListenerComponent';
-import {TrackView} from '../common/TrackView';
-import {ChangePointRangePlot} from './ChangePointPlot';
-import {LabelKind} from './LabelPlot';
-import {LabelsRangePlot} from './LabelsRangePlot';
+import { startDragging } from '../../stores/utils';
+import { TrackView } from '../common/TrackView';
+import { ChangePointRangePlot } from './ChangePointPlot';
+import { LabelKind } from './LabelPlot';
+import { LabelsRangePlot } from './LabelsRangePlot';
 import * as d3 from 'd3';
+import { observer } from 'mobx-react';
 import * as React from 'react';
-import {observer} from 'mobx-react';
+
 
 export interface LabelingViewProps {
     // Viewport size.
@@ -24,17 +22,6 @@ export interface LabelingViewProps {
 
 
 interface LabelingViewState {
-    tracks?: Track[];
-    pixelsPerSecond?: number;
-    detailedViewStart?: number;
-    hoveringLabel?: Label;
-    timeCursor?: number;
-
-    suggestionEnabled?: boolean;
-    suggestionProgress?: number[]; // [ timestampStart, timestampCompleted, timestampEnd ]
-
-    signalsViewMode?: SignalsViewMode;
-
     hint_t0?: number;
     hint_t1?: number;
 }
@@ -48,30 +35,8 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
 
     constructor(props: LabelingViewProps, context: any) {
         super(props, context);
-
-        this.state = this.computeState();
-        this.state.hint_t0 = null;
-        this.state.hint_t1 = null;
-        this.state.suggestionProgress = null;
-
+        this.state = { hint_t0: null, hint_t1: null };
         this.onKeyDown = this.onKeyDown.bind(this);
-    }
-
-    protected updateState(): void {
-        this.setState(this.computeState());
-    }
-
-    private computeState(): LabelingViewState {
-        return {
-            tracks: stores.alignmentLabelingStore.tracks,
-            detailedViewStart: stores.alignmentLabelingUiStore.referenceViewStart,
-            pixelsPerSecond: stores.alignmentLabelingUiStore.referenceViewPPS,
-            hoveringLabel: stores.labelingUiStore.hoveringLabel,
-            timeCursor: stores.alignmentLabelingUiStore.referenceViewTimeCursor,
-            suggestionEnabled: stores.labelingUiStore.suggestionEnabled,
-            suggestionProgress: stores.labelingUiStore.suggestionProgress,
-            signalsViewMode: stores.labelingUiStore.signalsViewMode
-        };
     }
 
     private onKeyDown(event: KeyboardEvent): void {
@@ -85,10 +50,10 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
             }
         }
         if (event.ctrlKey && event.keyCode === 'Z'.charCodeAt(0)) { // Ctrl-Z
-            new actions.CommonActions.LabelingUndo().dispatch();
+            //new actions.CommonActions.LabelingUndo().dispatch();
         }
         if (event.ctrlKey && event.keyCode === 'Y'.charCodeAt(0)) { // Ctrl-Y
-            new actions.CommonActions.LabelingRedo().dispatch();
+            //new actions.CommonActions.LabelingRedo().dispatch();
         }
     }
 
@@ -106,7 +71,7 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
     }
 
     private getTimeFromX(x: number): number {
-        return x / this.state.pixelsPerSecond + this.state.detailedViewStart;
+        return x / stores.alignmentLabelingUiStore.referenceViewPPS + stores.alignmentLabelingUiStore.referenceViewStart;
     }
 
     private onDoubleClickChangePointDetection(event: React.MouseEvent<Element>): void {
@@ -230,22 +195,23 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
         const timeCursorY0 = timeAxisY1;
         const timeCursorY1 = labelAreaY1;
 
+        const start = stores.alignmentLabelingUiStore.referenceViewStart;
+        const pps = stores.alignmentLabelingUiStore.referenceViewPPS;
         // The time scale.
         const scale = d3.scaleLinear()
-            .domain([
-                this.state.detailedViewStart,
-                this.state.detailedViewStart + this.props.viewWidth / this.state.pixelsPerSecond])
+            .domain([start, start + this.props.viewWidth / pps])
             .range([0, this.props.viewWidth]);
 
         // Cursor
         let gCursor = null;
-        if (this.state.timeCursor !== null) {
+        const timeCursor = stores.alignmentLabelingUiStore.referenceViewTimeCursor;
+        if (timeCursor !== null) {
             gCursor = (
                 <g className='time-cursor'>
                     <line
-                        x1={scale(this.state.timeCursor) }
+                        x1={scale(timeCursor)}
                         y1={timeCursorY0}
-                        x2={scale(this.state.timeCursor) }
+                        x2={scale(timeCursor)}
                         y2={timeCursorY1}
                         />
                 </g>
@@ -258,9 +224,9 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
             gHint = (
                 <g className='time-hint'>
                     <rect
-                        x={scale(this.state.hint_t0) }
+                        x={scale(this.state.hint_t0)}
                         y={timeCursorY0}
-                        width={scale(this.state.hint_t1) - scale(this.state.hint_t0) }
+                        width={scale(this.state.hint_t1) - scale(this.state.hint_t0)}
                         height={timeCursorY1 - timeCursorY0}
                         />
                 </g>
@@ -268,27 +234,28 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
         }
 
         let suggestionProgress = null;
-        if (this.state.suggestionProgress) {
-            const [tStart, tCompleted] = this.state.suggestionProgress;
+        if (stores.labelingUiStore.suggestionProgress) {
+            const [tStart, tCompleted] = stores.labelingUiStore.suggestionProgress;
             suggestionProgress = (
                 <g>
                     <rect
-                        x={scale(tStart) }
+                        x={scale(tStart)}
                         y={timeAxisY1 - 3}
-                        width={scale(tCompleted) - scale(tStart) }
+                        width={scale(tCompleted) - scale(tStart)}
                         height={3}
-                        style={ { fill: '#AAA' } }
+                        style={{ fill: '#AAA' }}
                         />
                 </g>
             );
         }
 
-        const maxOverlapFactor = this.state.signalsViewMode === SignalsViewMode.TIMESERIES ? 0.4 : 0;
+        const signalsViewMode = stores.labelingUiStore.signalsViewMode;
+        const maxOverlapFactor = signalsViewMode === SignalsViewMode.TIMESERIES ? 0.4 : 0;
         const tracksViewHeight = sensorAreaY1 - sensorAreaY0;
         let trackViewTrackHeight = tracksViewHeight;
         let tracksViewTrackSpacing = 0;
-        if (this.state.tracks.length > 1) {
-            const n = this.state.tracks.length;
+        if (stores.alignmentLabelingStore.tracks.length > 1) {
+            const n = stores.alignmentLabelingStore.tracks.length;
             trackViewTrackHeight = tracksViewHeight / (n - n * maxOverlapFactor + maxOverlapFactor);
             tracksViewTrackSpacing = trackViewTrackHeight * (1 - maxOverlapFactor);
         }
@@ -296,10 +263,10 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
         return (
             <g className='labeling-detailed-view'>
                 <g
-                    onMouseMove={ event => this.onMouseMove(event) }
-                    onWheel={ event => this.onMouseWheel(event) }
-                    onMouseDown={ event => this.onMouseDownCreateLabel(event) }
-                    onDoubleClick={ event => this.onDoubleClickChangePointDetection(event) }
+                    onMouseMove={event => this.onMouseMove(event)}
+                    onWheel={event => this.onMouseWheel(event)}
+                    onMouseDown={event => this.onMouseDownCreateLabel(event)}
+                    onDoubleClick={event => this.onDoubleClickChangePointDetection(event)}
                     >
 
                     <rect ref='interactionRect'
@@ -308,20 +275,17 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
                         />
 
                     {
-                        this.state.tracks.map((track, index) => (
+                        stores.alignmentLabelingStore.tracks.map((track, index) => (
                             <g key={track.id}
                                 transform={`translate(0, ${sensorAreaY0 + tracksViewTrackSpacing * index})`}>
                                 <TrackView
                                     track={track}
-                                    zoomTransform= {ts => ({
-                                        rangeStart: this.state.detailedViewStart,
-                                        pixelsPerSecond: this.state.pixelsPerSecond
-                                    }) }
+                                    zoomTransform={ts => ({ rangeStart: start, pixelsPerSecond: pps })}
                                     viewHeight={trackViewTrackHeight}
                                     viewWidth={this.props.viewWidth}
                                     colorScale={LayoutParameters.seriesColorScale}
                                     useMipmap={true}
-                                    signalsViewMode={this.state.signalsViewMode}
+                                    signalsViewMode={signalsViewMode}
                                     />
                             </g>
                         ))
@@ -334,23 +298,23 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
                         y={timeAxisY1}
                         width={this.props.viewWidth}
                         height={labelBandHeight}
-                        style={ { stroke: 'none', fill: '#EEE', cursor: 'crosshair' } }
+                        style={{ stroke: 'none', fill: '#EEE', cursor: 'crosshair' }}
                         />
 
                     <g className='labels' transform={`translate(0, ${labelAreaY0})`}>
                         {
-                            this.state.suggestionEnabled ? (
+                            stores.labelingUiStore.suggestionEnabled ? (
                                 <ChangePointRangePlot
-                                    pixelsPerSecond={this.state.pixelsPerSecond}
-                                    rangeStart={this.state.detailedViewStart}
+                                    pixelsPerSecond={pps}
+                                    rangeStart={start}
                                     plotWidth={this.props.viewWidth}
                                     plotHeight={10}
                                     />
                             ) : null
                         }
                         <LabelsRangePlot
-                            pixelsPerSecond={this.state.pixelsPerSecond}
-                            rangeStart={this.state.detailedViewStart}
+                            pixelsPerSecond={pps}
+                            rangeStart={start}
                             plotWidth={this.props.viewWidth}
                             plotHeight={labelAreaY1 - labelAreaY0}
                             labelKind={LabelKind.Detailed}

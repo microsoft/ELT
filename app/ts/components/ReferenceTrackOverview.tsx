@@ -1,19 +1,18 @@
 // The 'Overview' view that is shared by both alignment and labeling.
 
-import * as Actions from '../actions/Actions';
 import { Track } from '../stores/dataStructures/alignment';
-import { makePathDFromPoints, startDragging } from '../stores/utils';
 import { LayoutParameters } from '../stores/dataStructures/LayoutParameters';
 import { KeyCode } from '../stores/dataStructures/types';
 import * as stores from '../stores/stores';
-import { EventListenerComponent } from './common/EventListenerComponent';
+import { makePathDFromPoints, startDragging } from '../stores/utils';
 import { TimeAxis } from './common/TimeAxis';
 import { TrackView } from './common/TrackView';
 import { LabelKind } from './labeling/LabelPlot';
 import { LabelsRangePlot } from './labeling/LabelsRangePlot';
 import * as d3 from 'd3';
+import { observer } from 'mobx-react';
 import * as React from 'react';
-import {observer} from 'mobx-react';
+
 
 export interface ReferenceTrackOverviewProps {
     mode: string;
@@ -22,19 +21,9 @@ export interface ReferenceTrackOverviewProps {
     downReach: number;
 }
 
-interface ReferenceTrackOverviewState {
-    referenceTrack: Track;
-    // Time range.
-    referenceTimestampStart: number;
-    referenceTimestampEnd: number;
-    referenceViewStart: number;
-    referenceViewEnd: number;
-
-    referenceTimeCursor: number;
-}
 
 @observer
-export class ReferenceTrackOverview extends React.Component<ReferenceTrackOverviewProps, ReferenceTrackOverviewState> {
+export class ReferenceTrackOverview extends React.Component<ReferenceTrackOverviewProps, {}> {
     public refs: {
         [key: string]: Element,
         interactionRect: Element
@@ -42,41 +31,7 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
 
     constructor(props: ReferenceTrackOverviewProps, context: any) {
         super(props, context);
-
-        this.state = this.computeState();
-
-        this.updateState = this.updateState.bind(this);
         this.onKeyDown = this.onKeyDown.bind(this);
-    }
-
-    private computeState(): ReferenceTrackOverviewState {
-        if (!stores.alignmentLabelingStore.referenceTrack) {
-            return {
-                referenceTrack: null,
-                referenceTimestampStart: 0,
-                referenceTimestampEnd: 1,
-                referenceViewStart: stores.alignmentLabelingUiStore.referenceViewStart,
-                referenceViewEnd:
-                stores.alignmentLabelingUiStore.referenceViewStart +
-                this.props.viewWidth / stores.alignmentLabelingUiStore.referenceViewPPS,
-                referenceTimeCursor: stores.alignmentLabelingUiStore.referenceViewTimeCursor
-            };
-        } else {
-            return {
-                referenceTrack: stores.alignmentLabelingStore.referenceTrack,
-                referenceTimestampStart: stores.alignmentLabelingStore.referenceTimestampStart,
-                referenceTimestampEnd: stores.alignmentLabelingStore.referenceTimestampEnd,
-                referenceViewStart: stores.alignmentLabelingUiStore.referenceViewStart,
-                referenceViewEnd:
-                stores.alignmentLabelingUiStore.referenceViewStart +
-                this.props.viewWidth / stores.alignmentLabelingUiStore.referenceViewPPS,
-                referenceTimeCursor: stores.alignmentLabelingUiStore.referenceViewTimeCursor
-            };
-        }
-    }
-
-    protected updateState(): void {
-        this.setState(this.computeState());
     }
 
     private onKeyDown(event: KeyboardEvent): void {
@@ -100,8 +55,9 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
 
     private detailedViewCursorPosition(event: React.MouseEvent<Element>): void {
         const x = this.getRelativePosition(event)[0];
-        const t = x / this.props.viewWidth * (this.state.referenceTimestampEnd - this.state.referenceTimestampStart) +
-            this.state.referenceTimestampStart;
+        const start = stores.alignmentLabelingStore.referenceTimestampStart;
+        const end = stores.alignmentLabelingStore.referenceTimestampEnd;
+        const t = x / this.props.viewWidth * (end - start) + start;
         const timeWindow = stores.alignmentLabelingUiStore.referenceViewDuration;
         stores.alignmentLabelingUiStore.setReferenceViewZoomingAction(t - timeWindow / 2, null, true);
     }
@@ -118,7 +74,7 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
         const newStart = Math.min(t0, t1);
         const newEnd = Math.max(t0, t1);
         if (mode === 'start' || mode === 'end') {
-            stores.alignmentLabelingUiStore.setReferenceViewZoomingAction(newStart,this.props.viewWidth / (newEnd - newStart));
+            stores.alignmentLabelingUiStore.setReferenceViewZoomingAction(newStart, this.props.viewWidth / (newEnd - newStart));
         } else {
             stores.alignmentLabelingUiStore.setReferenceViewZoomingAction(newStart);
         }
@@ -126,31 +82,32 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
 
     private onStartDragRanges(event: React.MouseEvent<Element>, side: string): void {
         const x0 = event.screenX;
-        const scaling = (this.state.referenceTimestampEnd - this.state.referenceTimestampStart) / this.props.viewWidth;
-        const start0 = this.state.referenceViewStart;
-        const end0 = this.state.referenceViewEnd;
+        const start = stores.alignmentLabelingStore.referenceTimestampStart;
+        const end = stores.alignmentLabelingStore.referenceTimestampEnd;
+        const scaling = (end - start) / this.props.viewWidth;
+        const start0 = stores.alignmentLabelingUiStore.referenceViewStart;
+        const end0 = stores.alignmentLabelingUiStore.referenceViewStart +
+                this.props.viewWidth / stores.alignmentLabelingUiStore.referenceViewPPS;
         startDragging((mouseEvent: MouseEvent) => {
             const x1 = mouseEvent.screenX;
             let offset = (x1 - x0) * scaling;
             if (side === 'start') {
                 this.raiseOnDrag(
                     'start',
-                    Math.min(
-                        this.state.referenceTimestampEnd,
-                        Math.max(this.state.referenceTimestampStart, start0 + offset)),
+                    Math.min(end, Math.max(start, start0 + offset)),
                     end0);
             } else if (side === 'end') {
                 this.raiseOnDrag(
                     'end',
                     start0,
-                    Math.min(this.state.referenceTimestampEnd, Math.max(this.state.referenceTimestampStart, end0 + offset)));
+                    Math.min(end, Math.max(start, end0 + offset)));
             } else {
                 offset = Math.max(
                     offset,
-                    Math.max(this.state.referenceTimestampStart - start0, this.state.referenceTimestampStart - end0));
+                    Math.max(start - start0, start - end0));
                 offset = Math.min(
                     offset,
-                    Math.min(this.state.referenceTimestampEnd - start0, this.state.referenceTimestampEnd - end0));
+                    Math.min(end - start0, end - end0));
                 this.raiseOnDrag('both', start0 + offset, end0 + offset);
             }
         });
@@ -164,17 +121,20 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
 
     private onMouseMove(event: React.MouseEvent<Element>): void {
         const x = this.getRelativePosition(event)[0];
-        const t = x / this.props.viewWidth * (this.state.referenceTimestampEnd - this.state.referenceTimestampStart) +
-            this.state.referenceTimestampStart;
+        const start = stores.alignmentLabelingStore.referenceTimestampStart;
+        const end = stores.alignmentLabelingStore.referenceTimestampEnd;
+        const t = x / this.props.viewWidth * (end - start) + start;
         stores.alignmentLabelingUiStore.setReferenceViewTimeCursor(t);
         stores.uiStore.setReferenceViewTimeCursor(t);
     }
 
     public render(): JSX.Element {
-        if (!this.state.referenceTrack) { return (<g></g>); }
+        if (!stores.alignmentLabelingStore.referenceTrack) { return (<g></g>); }
 
+        const start = stores.alignmentLabelingStore.referenceTimestampStart;
+        const end = stores.alignmentLabelingStore.referenceTimestampEnd;
         const xScale = d3.scaleLinear()
-            .domain([this.state.referenceTimestampStart, this.state.referenceTimestampEnd])
+            .domain([start, end])
             .range([0, this.props.viewWidth]);
 
         const videoHeight = LayoutParameters.referenceOverviewViewVideoHeight;
@@ -186,8 +146,9 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
         const labelsY0 = videoY1;
         const labelsY1 = viewHeight;
 
-        const rangeX0 = xScale(this.state.referenceViewStart);
-        const rangeX1 = xScale(this.state.referenceViewEnd);
+        const rangeX0 = xScale(stores.alignmentLabelingUiStore.referenceViewStart);
+        const rangeX1 = xScale(stores.alignmentLabelingUiStore.referenceViewStart +
+                this.props.viewWidth / stores.alignmentLabelingUiStore.referenceViewPPS);
 
         const pathD = makePathDFromPoints([
             [xScale.range()[0], this.props.viewHeight],
@@ -196,17 +157,18 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
             [xScale.range()[1], this.props.viewHeight]
         ]);
 
+        const cursor = stores.alignmentLabelingUiStore.referenceViewTimeCursor;
+
         return (
             <g className='labeling-overview-view'>
                 <g className='labels' transform={`translate(0, ${videoY0})`}>
                     <TrackView
-                        track={this.state.referenceTrack}
+                        track={stores.alignmentLabelingStore.referenceTrack}
                         viewWidth={this.props.viewWidth}
                         viewHeight={videoY1 - videoY0}
                         zoomTransform={ts => ({
-                            rangeStart: this.state.referenceTimestampStart,
-                            pixelsPerSecond: this.props.viewWidth /
-                            (this.state.referenceTimestampEnd - this.state.referenceTimestampStart)
+                            rangeStart: start,
+                            pixelsPerSecond: this.props.viewWidth / (end - start)
                         })}
                         useMipmap={true}
                         />
@@ -221,9 +183,8 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
                                     viewWidth={this.props.viewWidth}
                                     viewHeight={labelsY1 - labelsY0}
                                     zoomTransform={ts => ({
-                                        rangeStart: this.state.referenceTimestampStart,
-                                        pixelsPerSecond: this.props.viewWidth /
-                                        (this.state.referenceTimestampEnd - this.state.referenceTimestampStart)
+                                        rangeStart: start,
+                                        pixelsPerSecond: this.props.viewWidth / (end - start)
                                     })}
                                     useMipmap={true}
                                     filterTimeSeries={(series) => series.aligned}
@@ -236,9 +197,8 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
                     {
                         this.props.mode === 'labeling' ? (
                             <LabelsRangePlot
-                                rangeStart={this.state.referenceTimestampStart}
-                                pixelsPerSecond={this.props.viewWidth /
-                                    (this.state.referenceTimestampEnd - this.state.referenceTimestampStart)}
+                                rangeStart={start}
+                                pixelsPerSecond={this.props.viewWidth / (end - start)}
                                 plotWidth={this.props.viewWidth}
                                 plotHeight={labelsY1 - labelsY0}
                                 labelKind={LabelKind.Overview}
@@ -272,15 +232,15 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
 
                 <g className='time-cursor' transform='translate(0, 0)'>
                     <line className='bg'
-                        x1={xScale(this.state.referenceTimeCursor)}
+                        x1={xScale(cursor)}
                         y1={0}
-                        x2={xScale(this.state.referenceTimeCursor)}
+                        x2={xScale(cursor)}
                         y2={this.props.viewHeight}
                         />
                     <line
-                        x1={xScale(this.state.referenceTimeCursor)}
+                        x1={xScale(cursor)}
                         y1={0}
-                        x2={xScale(this.state.referenceTimeCursor)}
+                        x2={xScale(cursor)}
                         y2={this.props.viewHeight}
                         />
                 </g>
