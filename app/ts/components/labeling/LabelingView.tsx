@@ -50,10 +50,10 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
             }
         }
         if (event.ctrlKey && event.keyCode === 'Z'.charCodeAt(0)) { // Ctrl-Z
-            //new actions.CommonActions.LabelingUndo().dispatch();
+            stores.alignmentLabelingStore.labelingUndo();
         }
         if (event.ctrlKey && event.keyCode === 'Y'.charCodeAt(0)) { // Ctrl-Y
-            //new actions.CommonActions.LabelingRedo().dispatch();
+            stores.alignmentLabelingStore.labelingRedo();
         }
     }
 
