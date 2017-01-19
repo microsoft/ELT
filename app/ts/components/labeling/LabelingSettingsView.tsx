@@ -1,47 +1,26 @@
 // The settings (options) view for labeling. 
 // FIXME: There's currently no settings for alignment, and some of the settings are shared but all in this file.
 
-import * as Actions from '../../actions/Actions';
 import { SignalsViewMode } from '../../stores/dataStructures/labeling';
-import { LabelingSuggestionLogicType } from '../../suggestion/LabelingSuggestionLogic';
-import { labelingSuggestionGenerator } from '../../suggestion/LabelingSuggestionGenerator';
 import * as stores from '../../stores/stores';
+import { labelingSuggestionGenerator } from '../../suggestion/LabelingSuggestionGenerator';
+import { LabelingSuggestionLogicType } from '../../suggestion/LabelingSuggestionLogic';
 import { ConfidenceSlider } from '../common/ConfidenceSlider';
-import { EventListenerComponent } from '../common/EventListenerComponent';
+import { observer } from 'mobx-react';
 import * as React from 'react';
 
 
 
-export interface LabelingSettingsViewState {
-    suggestionStatus: string;
-    suggestionConfidenceThreshold: number;
-    suggestionConfidenceHistogram: number[];
 
-    suggestionEnabled: boolean;
-    suggestionLogic: LabelingSuggestionLogicType;
-    suggestionLogicDescription: string;
-
-    signalsViewMode: SignalsViewMode;
-}
-
-
-
-export class LabelingSettingsView extends EventListenerComponent<{}, LabelingSettingsViewState> {
+@observer
+export class LabelingSettingsView extends React.Component<{}, {}> {
 
     private setSuggestionLogicThunk: { [logicType: number]: () => void } = {};
     private setViewModeThunk: { [viewMode: number]: () => void } = {};
 
     constructor(props: {}, context: any) {
-        super(props, context, [
-            stores.labelingUiStore.suggestionConfidenceThresholdChanged,
-            stores.labelingUiStore.suggestionProgressChanged,
-            stores.labelingUiStore.suggestionEnabledChanged,
-            stores.labelingUiStore.suggestionLogicChanged,
-            stores.labelingUiStore.signalsViewModeChanged
-        ]);
-        this.state = this.computeState();
+        super(props, context);
 
-        this.updateState = this.updateState.bind(this);
         this.turnOnSuggestions = this.turnOnSuggestions.bind(this);
         this.turnOffSuggestions = this.turnOffSuggestions.bind(this);
         this.setConfidenceThreshold = this.setConfidenceThreshold.bind(this);
@@ -54,22 +33,6 @@ export class LabelingSettingsView extends EventListenerComponent<{}, LabelingSet
             const val = SignalsViewMode[name];
             this.setViewModeThunk[val] = this.setViewMode.bind(this, val);
         });
-    }
-
-    public computeState(): LabelingSettingsViewState {
-        return {
-            suggestionStatus: labelingSuggestionGenerator.modelStatus,
-            suggestionConfidenceThreshold: stores.labelingUiStore.suggestionConfidenceThreshold,
-            suggestionConfidenceHistogram: stores.labelingUiStore.suggestionConfidenceHistogram,
-            suggestionEnabled: stores.labelingUiStore.suggestionEnabled,
-            suggestionLogic: stores.labelingUiStore.suggestionLogic.getType(),
-            suggestionLogicDescription: stores.labelingUiStore.suggestionLogic.getDescription(),
-            signalsViewMode: stores.labelingUiStore.signalsViewMode
-        };
-    }
-
-    protected updateState(): void {
-        this.setState(this.computeState());
     }
 
     private turnOnSuggestions(): void {
@@ -96,10 +59,10 @@ export class LabelingSettingsView extends EventListenerComponent<{}, LabelingSet
 
     public render(): JSX.Element {
         const logicClassName = (log: LabelingSuggestionLogicType) => {
-            return this.state.suggestionLogic === log ? 'tbtn-l1 active' : 'tbtn-l3';
+            return stores.labelingUiStore.suggestionLogic.getType() === log ? 'tbtn-l1 active' : 'tbtn-l3';
         };
         const viewModeClassName = (mode: SignalsViewMode) => {
-            return this.state.signalsViewMode === mode ? 'tbtn-l1 active' : 'tbtn-l3';
+            return stores.labelingUiStore.signalsViewMode === mode ? 'tbtn-l1 active' : 'tbtn-l3';
         };
         return (
             <div className='labeling-options-menu labeling-menu'>
@@ -108,12 +71,12 @@ export class LabelingSettingsView extends EventListenerComponent<{}, LabelingSet
                     <span className='tbtn-group'>
                         <button
                             type='button'
-                            className={`tbtn ${this.state.suggestionEnabled ? 'tbtn-l1 active' : 'tbtn-l3'}`}
+                            className={`tbtn ${stores.labelingUiStore.suggestionEnabled ? 'tbtn-l1 active' : 'tbtn-l3'}`}
                             onClick={this.turnOnSuggestions}
                             >On</button>
                         <button
                             type='button'
-                            className={`tbtn ${!this.state.suggestionEnabled ? 'tbtn-l1 active' : 'tbtn-l3'}`}
+                            className={`tbtn ${!stores.labelingUiStore.suggestionEnabled ? 'tbtn-l1 active' : 'tbtn-l3'}`}
                             onClick={this.turnOffSuggestions}
                             >Off</button>
                     </span>
@@ -126,11 +89,11 @@ export class LabelingSettingsView extends EventListenerComponent<{}, LabelingSet
                             viewHeight={50}
                             min={0}
                             max={1}
-                            value={Math.pow(this.state.suggestionConfidenceThreshold, 0.3)}
-                            histogram={this.state.suggestionConfidenceHistogram}
+                            value={Math.pow(stores.labelingUiStore.suggestionConfidenceThreshold, 0.3)}
+                            histogram={stores.labelingUiStore.suggestionConfidenceHistogram}
                             onChange={this.setConfidenceThreshold}
                             />
-                        <p>Status: {this.state.suggestionStatus}</p>
+                        <p>Status: {labelingSuggestionGenerator.modelStatus}</p>
 
                     </div>
                 ) : null}
@@ -160,7 +123,7 @@ export class LabelingSettingsView extends EventListenerComponent<{}, LabelingSet
                             >Forward / Reject</button>
                     </span>
                 </p>
-                <p>{this.state.suggestionLogicDescription}</p>
+                <p>{stores.labelingUiStore.suggestionLogic.getDescription()}</p>
 
                 <h2>Signals Display</h2>
                 <p>

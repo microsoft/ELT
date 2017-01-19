@@ -1,13 +1,11 @@
 // The toolbar view for labeling.
 
-import * as actions from '../../actions/Actions';
-import { Label } from '../../stores/dataStructures/labeling';
 import * as stores from '../../stores/stores';
-import { EventListenerComponent } from '../common/EventListenerComponent';
-import { InlineClassesListView } from './ClassesListView';
-import * as React from 'react';
-import { observer } from 'mobx-react';
 import { labelingSuggestionGenerator } from '../../suggestion/LabelingSuggestionGenerator';
+import { InlineClassesListView } from './ClassesListView';
+import { observer } from 'mobx-react';
+import * as React from 'react';
+
 
 export interface LabelingToolbarProps {
     top: number;
@@ -16,42 +14,16 @@ export interface LabelingToolbarProps {
     viewHeight: number;
 }
 
-export interface LabelingToolbarState {
-    labels: Label[];
-
-    suggestionEnabled: boolean;
-
-    timeCursor: number;
-}
 
 @observer
-export class LabelingToolbar extends React.Component<LabelingToolbarProps, LabelingToolbarState> {
+export class LabelingToolbar extends React.Component<LabelingToolbarProps, {}> {
     public refs: {
         [name: string]: Element,
         fileSelector: HTMLInputElement
     };
 
-    constructor(props: LabelingToolbarProps, context: any) {
-        super(props, context);
-
-        this.state = {
-            labels: stores.labelingStore.labels,
-            suggestionEnabled: stores.labelingUiStore.suggestionEnabled,
-            timeCursor: stores.alignmentLabelingUiStore.referenceViewTimeCursor
-        };
-
-        this.updateState = this.updateState.bind(this);
-    }
-
-    protected updateState(): void {
-        this.setState({
-            labels: stores.labelingStore.labels,
-            suggestionEnabled: stores.labelingUiStore.suggestionEnabled,
-            timeCursor: stores.alignmentLabelingUiStore.referenceViewTimeCursor
-        });
-    }
-
     public render(): JSX.Element {
+        const timeCursor = stores.alignmentLabelingUiStore.referenceViewTimeCursor;
         return (
             <div className='labeling-toolbar-view' style={{
                 position: 'absolute',
@@ -63,7 +35,7 @@ export class LabelingToolbar extends React.Component<LabelingToolbarProps, Label
                 <button className='tbtn tbtn-l3' title='Zoom in'
                     onClick={() => {
                         stores.alignmentLabelingUiStore.referenceViewPanAndZoom(0, -0.2, 'center');
-                        stores.uiStore.referenceViewPanAndZoom(0, -0.2, 'center')
+                        stores.uiStore.referenceViewPanAndZoom(0, -0.2, 'center');
                     } }>
                     <span className='glyphicon icon-only glyphicon-zoom-in'></span></button>
                 {' '}
@@ -110,7 +82,7 @@ export class LabelingToolbar extends React.Component<LabelingToolbarProps, Label
                 {' '}
                 <span className='sep' />
                 {' '}
-                <span>{this.state.labels.length} labels.</span>
+                <span>{stores.labelingStore.labels.length} labels.</span>
                 {' '}
                 <button className='tbtn tbtn-red' title='Delete all labels'
                     onClick={() => {
@@ -124,7 +96,7 @@ export class LabelingToolbar extends React.Component<LabelingToolbarProps, Label
                 <span className='sep' />
                 {' '}
                 <span style={{ minWidth: '10em', display: 'inline-block' }}>
-                    Cursor: {this.state.timeCursor !== null ? this.state.timeCursor.toFixed(3) : 'null'}
+                    Cursor: {timeCursor !== null ? timeCursor.toFixed(3) : 'null'}
                 </span>
                 {' '}
                 <span className='sep' />
@@ -134,14 +106,14 @@ export class LabelingToolbar extends React.Component<LabelingToolbarProps, Label
                 <span className='tbtn-group'>
                     <button
                         type='button'
-                        className={`tbtn ${this.state.suggestionEnabled ? 'tbtn-l1 active' : 'tbtn-l3'}`}
+                        className={`tbtn ${stores.labelingUiStore.suggestionEnabled ? 'tbtn-l1 active' : 'tbtn-l3'}`}
                         onClick={() => stores.labelingUiStore.setSuggestionEnabled(true)}
                         >On</button>
                     <button
                         type='button'
-                        className={`tbtn ${!this.state.suggestionEnabled ? 'tbtn-l1 active' : 'tbtn-l3'}`}
-                        onClick={() => { stores.labelingUiStore.setSuggestionEnabled(false);
-
+                        className={`tbtn ${!stores.labelingUiStore.suggestionEnabled ? 'tbtn-l1 active' : 'tbtn-l3'}`}
+                        onClick={() => {
+                            stores.labelingUiStore.setSuggestionEnabled(false);
                             stores.labelingStore.removeAllSuggestions();
                             labelingSuggestionGenerator.removeAllSuggestions();
                         } }

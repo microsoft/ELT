@@ -1,8 +1,9 @@
-import * as React from 'react';
 import * as stores from '../../stores/stores';
-import * as path from 'path';
-import { observer } from 'mobx-react';
 import {remote} from 'electron';
+import { observer } from 'mobx-react';
+import * as path from 'path';
+import * as React from 'react';
+
 
 // The 'Home' menu.
 @observer
@@ -112,7 +113,7 @@ export class HomeMenu extends React.Component<{}, {}> {
             // New Project.
             stores.alignmentLabelingStore.newProject();
             // Goto alignment tab.
-            new actions.Actions.SwitchTabAction('alignment').dispatch();
+            stores.uiStore.switchTab('alignment');
         });
     }
 

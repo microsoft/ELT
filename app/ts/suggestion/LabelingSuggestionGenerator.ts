@@ -1,20 +1,18 @@
-import * as Actions from '../actions/Actions';
-import { pelt } from '../suggestion/algorithms/pelt';
-import { Label, LabelConfirmationState } from '../stores/dataStructures/labeling';
-import { ArrayThrottler } from '../stores/utils';
-import { SensorTimeSeries } from '../stores/dataStructures/dataset';
 import { computeDimensionsMipmapLevels } from '../components/common/Mipmap';
-import { globalDispatcher } from '../dispatcher/globalDispatcher';
+import { SensorTimeSeries } from '../stores/dataStructures/dataset';
+import { Label, LabelConfirmationState } from '../stores/dataStructures/labeling';
+import { alignmentLabelingUiStore, labelingStore, labelingUiStore } from '../stores/stores';
+import { ArrayThrottler } from '../stores/utils';
+import { pelt } from '../suggestion/algorithms/pelt';
 import { DtwSuggestionModelBuilder, LabelingSuggestionCallback, LabelingSuggestionEngine, LabelingSuggestionProgress }
     from '../suggestion/suggestion';
-import { alignmentLabelingUiStore, labelingStore, labelingUiStore } from '../stores/stores';
 import { EventEmitter } from 'events';
-import { observer } from 'mobx-react';
-import { action } from 'mobx';
+import { action, autorun } from 'mobx';
+
+
 
 // This object is not exactly a store - it doesn't listen to actions, but listen to store updates and dispatch actions.
-@observer
-export class LabelingSuggestionGenerator extends EventEmitter {
+export class LabelingSuggestionGenerator {
 
     private _engine: LabelingSuggestionEngine;
     private _throttler: ArrayThrottler<Label, number[]>;
@@ -22,13 +20,11 @@ export class LabelingSuggestionGenerator extends EventEmitter {
     private _currentSuggestionCallback: LabelingSuggestionCallback;
 
     constructor() {
-        super();
-
         this._engine = new LabelingSuggestionEngine(new DtwSuggestionModelBuilder());
 
-        this._engine.addStatusUpdateListener((status) => {
-            this.emitStatusUpdate(status.status);
-        });
+        // this._engine.addStatusUpdateListener((status) => {
+        //     this.emitStatusUpdate(status.status);
+        // });
 
         // Controls the speed to add suggestions to the label array.
         this._throttler = new ArrayThrottler<Label, number[]>(100, this.addSuggestions.bind(this));
@@ -39,18 +35,22 @@ export class LabelingSuggestionGenerator extends EventEmitter {
 
         // When should we rerun suggestions.
         // On labels changed.
-        labelingStore.alignedDatasetChanged.on(this.onLabelsChanged);
-        labelingStore.labelsArrayChanged.on(this.onLabelsChanged);
-        labelingStore.labelsChanged.on(this.onLabelsChanged);
+        autorun(() => this.onLabelsChanged());
+        // labelingStore.alignedDatasetChanged.on(this.onLabelsChanged);
+        // labelingStore.labelsArrayChanged.on(this.onLabelsChanged);
+        // labelingStore.labelsChanged.on(this.onLabelsChanged);
         // On view changed.
-        alignmentLabelingUiStore.referenceViewChanged.on(this.runSuggestionsZoomChanged);
+        autorun(() => this.runSuggestionsZoomChanged());
+        // alignmentLabelingUiStore.referenceViewChanged.on(this.runSuggestionsZoomChanged);
         // On parameters changed.
-        labelingUiStore.suggestionConfidenceThresholdChanged.on(this.scheduleRunSuggestions);
-        labelingUiStore.suggestionEnabledChanged.on(this.scheduleRunSuggestions);
-        labelingUiStore.suggestionLogicChanged.on(this.scheduleRunSuggestions);
+        // labelingUiStore.suggestionConfidenceThresholdChanged.on(this.scheduleRunSuggestions);
+        // labelingUiStore.suggestionEnabledChanged.on(this.scheduleRunSuggestions);
+        // labelingUiStore.suggestionLogicChanged.on(this.scheduleRunSuggestions);
+        autorun(() => this.scheduleRunSuggestions());
 
         // Per-label confirmation logic: If a label remains selected for 200 ms, confirm it.
-        labelingUiStore.selectedLabelsChanged.on(() => {
+        //labelingUiStore.selectedLabelsChanged.on(() => {
+        autorun(() => {
             labelingUiStore.selectedLabels.forEach(
                 label => {
                     setTimeout(
@@ -90,18 +90,18 @@ export class LabelingSuggestionGenerator extends EventEmitter {
         this._engine.getDeploymentCode(platform, callback);
     }
 
-    private emitStatusUpdate(status: string): void {
-        this._currentModelStatus = status;
-        this.emit('status-update', status);
-    }
+    // private emitStatusUpdate(status: string): void {
+    //     this._currentModelStatus = status;
+    //     this.emit('status-update', status);
+    // }
 
-    public addStatusUpdateListener(callback: (status: string) => void): void {
-        this.addListener('status-update', callback);
-    }
+    // public addStatusUpdateListener(callback: (status: string) => void): void {
+    //     this.addListener('status-update', callback);
+    // }
 
-    public removeStatusUpdateListener(callback: (status: string) => void): void {
-        this.addListener('status-update', callback);
-    }
+    // public removeStatusUpdateListener(callback: (status: string) => void): void {
+    //     this.addListener('status-update', callback);
+    // }
 
     private onLabelsChanged(): void {
         this._engine.setDataset(labelingStore.alignedDataset);
@@ -196,13 +196,14 @@ export class LabelingChangePointSuggestionGenerator extends EventEmitter {
 
         this.runSuggestions = this.runSuggestions.bind(this);
 
-        labelingStore.alignedDatasetChanged.on(() => {
-            setTimeout(
-                () => {
-                    this.runSuggestions();
-                },
-                100);
-        });
+        autorun(this.runSuggestions);
+        // labelingStore.alignedDatasetChanged.on(() => {
+        //     setTimeout(
+        //         () => {
+        //             this.runSuggestions();
+        //         },
+        //         100);
+        // });
     }
 
     private runSuggestions(): void {

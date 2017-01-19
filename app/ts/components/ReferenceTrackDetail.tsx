@@ -1,15 +1,14 @@
 // The video track in the app.
 
-import * as Actions from '../actions/Actions';
-import { Track, Marker } from '../stores/dataStructures/alignment';
-import { startDragging } from '../stores/utils';
+import { Marker, Track } from '../stores/dataStructures/alignment';
 import * as stores from '../stores/stores';
-import { EventListenerComponent } from './common/EventListenerComponent';
+import { startDragging } from '../stores/utils';
 import { TimeAxis } from './common/TimeAxis';
 import { TrackView } from './common/TrackView';
 import * as d3 from 'd3';
-import * as React from 'react';
 import { observer } from 'mobx-react';
+import * as React from 'react';
+
 
 export interface ReferenceTrackDetailProps {
     mode: string;
@@ -18,46 +17,12 @@ export interface ReferenceTrackDetailProps {
 }
 
 
-interface ReferenceTrackDetailState {
-    referenceTrack: Track;
-    // Time range.
-    referenceTimestampStart: number;
-    referenceTimestampEnd: number;
-    referenceViewStart: number;
-    referenceViewEnd: number;
-    referenceViewPPS: number;
-
-    referenceTimeCursor: number;
-}
-
 @observer
-export class ReferenceTrackDetail extends React.Component<ReferenceTrackDetailProps, ReferenceTrackDetailState> {
+export class ReferenceTrackDetail extends React.Component<ReferenceTrackDetailProps, {}> {
     public refs: {
         [key: string]: Element,
         interactionRect: Element
     };
-
-    constructor(props: ReferenceTrackDetailProps, context: any) {
-        super(props, context);
-        this.state = this.computeState();
-        this.updateState = this.updateState.bind(this);
-    }
-
-    private computeState(): ReferenceTrackDetailState {
-        return {
-            referenceTrack: stores.alignmentLabelingStore.referenceTrack,
-            referenceTimestampStart: stores.alignmentLabelingStore.referenceTimestampStart,
-            referenceTimestampEnd: stores.alignmentLabelingStore.referenceTimestampEnd,
-            referenceViewStart: stores.alignmentLabelingUiStore.referenceViewStart,
-            referenceViewEnd: stores.alignmentLabelingUiStore.referenceViewEnd,
-            referenceViewPPS: stores.alignmentLabelingUiStore.referenceViewPPS,
-            referenceTimeCursor: stores.alignmentLabelingUiStore.referenceViewTimeCursor
-        };
-    }
-
-    protected updateState(): void {
-        this.setState(this.computeState());
-    }
 
     private onMouseWheel(event: React.WheelEvent<Element>): void {
         // Decide the zooming factor.
@@ -73,8 +38,9 @@ export class ReferenceTrackDetail extends React.Component<ReferenceTrackDetailPr
 
     private onMouseMove(event: React.MouseEvent<Element>): void {
         const x = this.getRelativePosition(event)[0];
-        const t = x / this.props.viewWidth * (this.state.referenceViewEnd - this.state.referenceViewStart) +
-            this.state.referenceViewStart;
+        const start = stores.alignmentLabelingUiStore.referenceViewStart;
+        const end = stores.alignmentLabelingUiStore.referenceViewEnd;
+        const t = x / this.props.viewWidth * (end - start) + start;
         stores.alignmentLabelingUiStore.setReferenceViewTimeCursor(t);
         stores.uiStore.setReferenceViewTimeCursor(t);
     }
@@ -82,8 +48,8 @@ export class ReferenceTrackDetail extends React.Component<ReferenceTrackDetailPr
     private onClickTrack(t: number): void {
         if (this.props.mode === 'alignment') {
             const marker: Marker = {
-                    timeSeries: stores.alignmentLabelingStore.referenceTrack.alignedTimeSeries[0],
-                    localTimestamp: t
+                timeSeries: stores.alignmentLabelingStore.referenceTrack.alignedTimeSeries[0],
+                localTimestamp: t
             };
             stores.alignmentStore.addMarker(marker);
         }
@@ -91,11 +57,13 @@ export class ReferenceTrackDetail extends React.Component<ReferenceTrackDetailPr
 
     private onMouseDown(event: React.MouseEvent<Element>): void {
         const [x0, y0] = this.getRelativePosition(event);
+        const start = stores.alignmentLabelingUiStore.referenceViewStart;
+        const end = stores.alignmentLabelingUiStore.referenceViewEnd;
         const scaleXToTime = d3.scaleLinear()
             .domain([0, this.props.viewWidth])
-            .range([this.state.referenceViewStart, this.state.referenceViewEnd]);
-        const start0 = this.state.referenceViewStart;
-        const pps0 = this.state.referenceViewPPS;
+            .range([start, end]);
+        const start0 = start;
+        const pps0 = stores.alignmentLabelingUiStore.referenceViewPPS;
         const t0 = scaleXToTime(x0);
         let moved = false;
         startDragging(
@@ -116,10 +84,12 @@ export class ReferenceTrackDetail extends React.Component<ReferenceTrackDetailPr
     }
 
     public render(): JSX.Element {
-        if (!this.state.referenceTrack) { return (<g></g>); }
+        if (!stores.alignmentLabelingStore.referenceTrack) { return (<g></g>); }
 
+        const start = stores.alignmentLabelingUiStore.referenceViewStart;
+        const end = stores.alignmentLabelingUiStore.referenceViewEnd;
         const scale = d3.scaleLinear()
-            .domain([this.state.referenceViewStart, this.state.referenceViewEnd])
+            .domain([start, end])
             .range([0, this.props.viewWidth]);
 
         return (
@@ -129,12 +99,12 @@ export class ReferenceTrackDetail extends React.Component<ReferenceTrackDetailPr
 
                 <g className='labels'>
                     <TrackView
-                        track={this.state.referenceTrack}
+                        track={stores.alignmentLabelingStore.referenceTrack}
                         viewWidth={this.props.viewWidth}
                         viewHeight={this.props.viewHeight}
                         zoomTransform={ts => ({
-                            rangeStart: this.state.referenceViewStart,
-                            pixelsPerSecond: this.state.referenceViewPPS
+                            rangeStart: start,
+                            pixelsPerSecond: stores.alignmentLabelingUiStore.referenceViewPPS
                         })}
                         getTimeCursor={() => stores.alignmentLabelingUiStore.referenceViewTimeCursor}
                         useMipmap={true}

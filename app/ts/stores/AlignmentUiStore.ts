@@ -1,14 +1,9 @@
 // UI states for alignment.
 
-import * as Actions from '../actions/Actions';
 import { AlignedTimeSeries, AlignmentState, Marker, MarkerCorrespondence, Track } from '../stores/dataStructures/alignment';
 import { LayoutParameters } from '../stores/dataStructures/LayoutParameters';
-import { globalDispatcher } from '../dispatcher/globalDispatcher';
-import { NodeEvent } from './NodeEvent';
 import { alignmentLabelingStore, alignmentLabelingUiStore, alignmentStore } from './stores';
 import * as d3 from 'd3';
-import { EventEmitter } from 'events';
-import { observer } from 'mobx-react';
 import { action, observable } from 'mobx';
 
 

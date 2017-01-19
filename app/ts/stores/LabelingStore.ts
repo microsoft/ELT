@@ -1,20 +1,17 @@
-import * as actions from '../actions/Actions';
 import { AlignedTimeSeries } from '../stores/dataStructures/alignment';
+import { Dataset, SensorTimeSeries } from '../stores/dataStructures/dataset';
 import { Label, LabelConfirmationState, PartialLabel } from '../stores/dataStructures/labeling';
 import { SavedLabelingState } from '../stores/dataStructures/project';
-import { mergeTimeRangeArrays, TimeRangeIndex } from '../stores/dataStructures/timeRangeIndex';
 import { resampleColumn } from '../stores/dataStructures/sampling';
+import { mergeTimeRangeArrays, TimeRangeIndex } from '../stores/dataStructures/timeRangeIndex';
 import { PerItemEventListeners } from '../stores/utils';
-import { Dataset, SensorTimeSeries } from '../stores/dataStructures/dataset';
-import { globalDispatcher } from '../dispatcher/globalDispatcher';
 import { AlignmentStore } from './AlignmentStore';
-import { NodeEvent, NodeItemEvent } from './NodeEvent';
 import { alignmentLabelingStore, alignmentLabelingUiStore, labelingUiStore, uiStore } from './stores';
 import { UiStore } from './UiStore';
 import * as d3 from 'd3';
-import { EventEmitter } from 'events';
-import { observer } from 'mobx-react';
-import { action, observable, computed } from 'mobx';
+import { action, autorun, computed, observable } from 'mobx';
+
+
 
 const colorbrewer6 = [
     '#a6cee3', '#b2df8a', '#fb9a99', '#fdbf6f', '#cab2d6', '#ffff99'
@@ -103,14 +100,14 @@ export class LabelingStore {
 
         this.alignedDataset = null;
         this._shouldUpdateAlignedDatasetOnNextTabChange = false;
-        alignmentStore.alignmentChanged.on(this.updateAlignedDataset.bind(this));
-        uiStore.tabChanged.on(() => {
-            if (this._shouldUpdateAlignedDatasetOnNextTabChange &&
-                uiStore.currentTab === 'labeling') {
-                this.updateAlignedDataset();
-            }
-        });
-
+        autorun(() => this.updateAlignedDataset());
+        // alignmentStore.alignmentChanged.on(this.updateAlignedDataset.bind(this));
+        // uiStore.tabChanged.on(() => {
+        //     if (this._shouldUpdateAlignedDatasetOnNextTabChange &&
+        //         uiStore.currentTab === 'labeling') {
+        //         this.updateAlignedDataset();
+        //     }
+        // });
     }
 
     @action

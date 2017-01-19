@@ -1,33 +1,24 @@
 // The main view for the app.
 
-import * as Actions from '../actions/Actions';
 import { TabID } from '../stores/dataStructures/types';
 import * as stores from '../stores/stores';
-import { EventListenerComponent } from './common/EventListenerComponent';
 import { NavigationColumn, NavigationColumnItem } from './common/NavigationColumn';
 import { DeploymentPanel } from './deployment/DeploymentPanel';
 import { HomeMenu } from './menus/HomeMenu';
 import { OptionsMenu } from './menus/OptionsMenu';
 import { WorkPanel } from './WorkPanel';
 import { remote } from 'electron';
+import { observer } from 'mobx-react';
+import DevTools from 'mobx-react-devtools';
 import * as React from 'react';
-import {observer} from 'mobx-react';
 
-export interface AppState {
-    currentTab: string;
-}
+
 
 // Labeling app has some configuration code, then it calls LabelingView.
 @observer
-export class App extends React.Component<{}, AppState> {
+export class App extends React.Component<{}, {}> {
     constructor(props: {}, context: any) {
         super(props, context);
-
-        this.state = {
-            currentTab: stores.uiStore.currentTab
-        };
-
-        this.updateState = this.updateState.bind(this);
         this.onKeyDown = this.onKeyDown.bind(this);
     }
 
@@ -37,12 +28,6 @@ export class App extends React.Component<{}, AppState> {
 
     public componentWillUnmount(): void {
         window.removeEventListener('keydown', this.onKeyDown);
-    }
-
-    protected updateState(): void {
-        this.setState({
-            currentTab: stores.uiStore.currentTab
-        });
     }
 
     private onKeyDown(event: KeyboardEvent): void {
@@ -82,7 +67,8 @@ export class App extends React.Component<{}, AppState> {
     public render(): JSX.Element {
         return (
             <div className='app-container container-fluid'>
-                <NavigationColumn selected={this.state.currentTab} onSelect={
+                <DevTools />
+                <NavigationColumn selected={stores.uiStore.currentTab} onSelect={
                     tab => {
                         stores.uiStore.switchTab(tab as TabID);
                     }

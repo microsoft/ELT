@@ -2,17 +2,17 @@
 // Stores the information about tracks and handles project load/save and undo/redo state saving.
 
 import { AlignedTimeSeries, Track } from '../stores/dataStructures/alignment';
-import { SavedAlignedTimeSeries, SavedAlignmentSnapshot, SavedLabelingSnapshot, SavedProject, SavedTrack } from '../stores/dataStructures/project';
 import { loadMultipleSensorTimeSeriesFromFile, loadRawSensorTimeSeriesFromFile, loadVideoTimeSeriesFromFile, TimeSeries }
     from '../stores/dataStructures/dataset';
-import { globalDispatcher } from '../dispatcher/globalDispatcher';
+import { SavedAlignedTimeSeries, SavedAlignmentSnapshot, SavedLabelingSnapshot, SavedProject, SavedTrack }
+    from '../stores/dataStructures/project';
 import { HistoryTracker } from './HistoryTracker';
-import { NodeEvent } from './NodeEvent';
 import { alignmentLabelingUiStore, alignmentStore, labelingStore, uiStore } from './stores';
-import { EventEmitter } from 'events';
-import * as fs from 'fs';
-import { action, observable,computed} from 'mobx';
 import * as d3 from 'd3';
+import * as fs from 'fs';
+import { action, computed, observable, runInAction } from 'mobx';
+
+
 
 // Try different names until cb(name) === true.
 function attemptNames(name: string, cb: (name: string) => boolean): string {
@@ -68,14 +68,14 @@ export class AlignmentLabelingStore {
     }
 
     // Keep the time range of the reference track.
-    @computed public get referenceTimestampStart() {
-        return this.referenceTrack.alignedTimeSeries ?
-            d3.min(this.referenceTrack.alignedTimeSeries, (x) => x.referenceStart)
+    @computed public get referenceTimestampStart(): number {
+        return this.referenceTrack && this.referenceTrack.alignedTimeSeries ?
+            d3.min(this.referenceTrack.alignedTimeSeries, x => x.referenceStart)
             : 0;
     }
-    @computed public get referenceTimestampEnd() {
-        return this.referenceTrack.alignedTimeSeries ?
-            d3.max(this.referenceTrack.alignedTimeSeries, (x) => x.referenceEnd)
+    @computed public get referenceTimestampEnd(): number {
+        return this.referenceTrack && this.referenceTrack.alignedTimeSeries ?
+            d3.max(this.referenceTrack.alignedTimeSeries, x => x.referenceEnd)
             : 100;
     }
 
@@ -119,7 +119,7 @@ export class AlignmentLabelingStore {
             });
             this.referenceTrack = track;
             this.reindexTracksAndTimeSeries();
-            
+
         });
     }
 
@@ -200,7 +200,7 @@ export class AlignmentLabelingStore {
         if (!value || value === '') { return []; }
         return JSON.parse(value);
     }
-    
+
     public addToRecentProjects(fileName: string): void {
         let existing = this.recentProjects;
         if (existing.indexOf(fileName) < 0) {
@@ -230,7 +230,7 @@ export class AlignmentLabelingStore {
     }
 
     @action
-    public saveProject(fileName: string) {
+    public saveProject(fileName: string): void {
         const project = this.saveProjectHelper();
         const json = JSON.stringify(project, null, 2);
         fs.writeFileSync(fileName, json, 'utf-8');
@@ -326,7 +326,8 @@ export class AlignmentLabelingStore {
         });
     }
 
-    public loadProjectHelper(project: SavedProject, loadProjectCallback: () => any): void {
+    @action
+    private loadProjectHelper(project: SavedProject, loadProjectCallback: () => any): void {
         const deferred = new DeferredCallbacks();
 
         // Load TimeSeries data from a file.
@@ -377,28 +378,31 @@ export class AlignmentLabelingStore {
         const newTracks = project.tracks.map(loadTrack);
 
         deferred.onComplete(() => {
-            // Set the new tracks once they are loaded successfully.
-            this.referenceTrack = newReferenceTrack;
-            this.tracks = newTracks;
-            this.reindexTracksAndTimeSeries();
+            runInAction(() => {
+                // Set the new tracks once they are loaded successfully.
+                this.referenceTrack = newReferenceTrack;
+                this.tracks = newTracks;
+                this.reindexTracksAndTimeSeries();
 
-            // Load alignment and labeling.
-            alignmentStore.loadState(project.alignment);
-            labelingStore.loadState(project.labeling);
+                // Load alignment and labeling.
+                alignmentStore.loadState(project.alignment);
+                labelingStore.loadState(project.labeling);
 
-            // TODO: Load the reference zooming info here.
-            alignmentLabelingUiStore.setReferenceViewZooming(project.ui.referenceViewStart, project.ui.referenceViewPPS);
-            // TODO: Load the tabs here.
-            if (project.ui.currentTab === 'file') {
-                uiStore.currentTab = 'alignment';
-            } else {
-                uiStore.currentTab = project.ui.currentTab;
-            }
+                // TODO: Load the reference zooming info here.
+                alignmentLabelingUiStore.setReferenceViewZooming(project.ui.referenceViewStart, project.ui.referenceViewPPS);
+                // TODO: Load the tabs here.
+                if (project.ui.currentTab === 'file') {
+                    uiStore.currentTab = 'alignment';
+                } else {
+                    uiStore.currentTab = project.ui.currentTab;
+                }
 
-            if (loadProjectCallback) { loadProjectCallback(); }
+                if (loadProjectCallback) { loadProjectCallback(); }
+            });
         });
     }
 
+    @action
     public newProject(): void {
         this.projectFileLocation = null;
         this.referenceTrack = null;

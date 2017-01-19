@@ -1,16 +1,15 @@
 // The combined view class for Alignment and Labeling.
 
-import * as Actions from '../actions/Actions';
 import {LayoutParameters} from '../stores/dataStructures/LayoutParameters';
 import {KeyCode} from '../stores/dataStructures/types';
-import {AlignmentView} from './alignment/AlignmentView';
+import * as stores from '../stores/stores';
 import {AlignmentToolbar} from './alignment/AlignmentToolbar';
+import {AlignmentView} from './alignment/AlignmentView';
 import {LabelingToolbar} from './labeling/LabelingToolbar';
 import {LabelingView} from './labeling/LabelingView';
 import {ReferenceTrackDetail} from './ReferenceTrackDetail';
 import {ReferenceTrackOverview} from './ReferenceTrackOverview';
 import * as React from 'react';
-import * as stores from '../stores/stores';
 
 
 interface AlignmentLabelingViewProps {
