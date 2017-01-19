@@ -1,10 +1,10 @@
 // Alignment toolbar view.
 // - Toolbar buttons for alignment.
 
+import { alignmentLabelingStore, alignmentLabelingUiStore } from '../../stores/stores';
 import { remote } from 'electron';
-import * as React from 'react';
-import { alignmentLabelingStore, alignmentLabelingUiStore, uiStore } from '../../stores/stores';
 import { observer } from 'mobx-react';
+import * as React from 'react';
 
 
 export interface AlignmentToolbarProps {
@@ -92,7 +92,7 @@ export class AlignmentToolbar extends React.Component<AlignmentToolbarProps, {}>
                 <button className='tbtn tbtn-l3' title='Zoom in'
                     onClick={() => {
                         alignmentLabelingUiStore.referenceViewPanAndZoom(0, -0.2, 'center');
-                        uiStore.referenceViewPanAndZoom(0, -0.2, 'center');
+                        //uiStore.referenceViewPanAndZoom(0, -0.2, 'center');
                     } }>
                     <span className='glyphicon icon-only glyphicon-zoom-in'></span>
                 </button>
@@ -100,7 +100,7 @@ export class AlignmentToolbar extends React.Component<AlignmentToolbarProps, {}>
                 <button className='tbtn tbtn-l3' title='Zoom out'
                     onClick={() => {
                         alignmentLabelingUiStore.referenceViewPanAndZoom(0, +0.2, 'center');
-                        uiStore.referenceViewPanAndZoom(0, +0.2, 'center');
+                        //uiStore.referenceViewPanAndZoom(0, +0.2, 'center');
                     } }>
                     <span className='glyphicon icon-only glyphicon-zoom-out'></span>
                 </button>
@@ -110,7 +110,7 @@ export class AlignmentToolbar extends React.Component<AlignmentToolbarProps, {}>
                 <button className='tbtn tbtn-l3' title='Go to the beginning'
                     onClick={() => {
                         alignmentLabelingUiStore.referenceViewPanAndZoom(-1e10, 0);
-                        uiStore.referenceViewPanAndZoom(-1e10, 0);
+                        //uiStore.referenceViewPanAndZoom(-1e10, 0);
                     } }>
                     <span className='glyphicon icon-only glyphicon-fast-backward'></span>
                 </button>
@@ -118,7 +118,7 @@ export class AlignmentToolbar extends React.Component<AlignmentToolbarProps, {}>
                 <button className='tbtn tbtn-l3' title='Go to the previous page'
                     onClick={() => {
                         alignmentLabelingUiStore.referenceViewPanAndZoom(-0.6, 0);
-                        uiStore.referenceViewPanAndZoom(-0.6, 0);
+                        //uiStore.referenceViewPanAndZoom(-0.6, 0);
                     } }>
                     <span className='glyphicon icon-only glyphicon-backward'></span>
                 </button>
@@ -126,7 +126,7 @@ export class AlignmentToolbar extends React.Component<AlignmentToolbarProps, {}>
                 <button className='tbtn tbtn-l3' title='Go to the next page'
                     onClick={() => {
                         alignmentLabelingUiStore.referenceViewPanAndZoom(+0.6, 0);
-                        uiStore.referenceViewPanAndZoom(+0.6, 0);
+                        //uiStore.referenceViewPanAndZoom(+0.6, 0);
                     } }>
                     <span className='glyphicon icon-only glyphicon-forward'></span>
                 </button>
@@ -134,7 +134,7 @@ export class AlignmentToolbar extends React.Component<AlignmentToolbarProps, {}>
                 <button className='tbtn tbtn-l3' title='Go to the end'
                     onClick={() => {
                         alignmentLabelingUiStore.referenceViewPanAndZoom(+1e10, 0);
-                        uiStore.referenceViewPanAndZoom(+1e10, 0)
+                        //uiStore.referenceViewPanAndZoom(+1e10, 0)
                     } }>
                     <span className='glyphicon icon-only glyphicon-fast-forward'></span>
                 </button>

@@ -1,6 +1,6 @@
 // The video track in the app.
 
-import { Marker, Track } from '../stores/dataStructures/alignment';
+import { Marker } from '../stores/dataStructures/alignment';
 import * as stores from '../stores/stores';
 import { startDragging } from '../stores/utils';
 import { TimeAxis } from './common/TimeAxis';
@@ -27,7 +27,6 @@ export class ReferenceTrackDetail extends React.Component<ReferenceTrackDetailPr
     private onMouseWheel(event: React.WheelEvent<Element>): void {
         // Decide the zooming factor.
         stores.alignmentLabelingUiStore.referenceViewPanAndZoom(0, event.deltaY / 1000, 'cursor');
-        stores.uiStore.referenceViewPanAndZoom(0, event.deltaY / 1000, 'cursor');
     }
 
     private getRelativePosition(event: { clientX: number; clientY: number; }): number[] {
@@ -42,7 +41,6 @@ export class ReferenceTrackDetail extends React.Component<ReferenceTrackDetailPr
         const end = stores.alignmentLabelingUiStore.referenceViewEnd;
         const t = x / this.props.viewWidth * (end - start) + start;
         stores.alignmentLabelingUiStore.setReferenceViewTimeCursor(t);
-        stores.uiStore.setReferenceViewTimeCursor(t);
     }
 
     private onClickTrack(t: number): void {
@@ -88,6 +86,8 @@ export class ReferenceTrackDetail extends React.Component<ReferenceTrackDetailPr
 
         const start = stores.alignmentLabelingUiStore.referenceViewStart;
         const end = stores.alignmentLabelingUiStore.referenceViewEnd;
+        const pps = stores.alignmentLabelingUiStore.referenceViewPPS;
+        const cursor = stores.alignmentLabelingUiStore.referenceViewTimeCursor;
         const scale = d3.scaleLinear()
             .domain([start, end])
             .range([0, this.props.viewWidth]);
@@ -102,11 +102,8 @@ export class ReferenceTrackDetail extends React.Component<ReferenceTrackDetailPr
                         track={stores.alignmentLabelingStore.referenceTrack}
                         viewWidth={this.props.viewWidth}
                         viewHeight={this.props.viewHeight}
-                        zoomTransform={ts => ({
-                            rangeStart: start,
-                            pixelsPerSecond: stores.alignmentLabelingUiStore.referenceViewPPS
-                        })}
-                        getTimeCursor={() => stores.alignmentLabelingUiStore.referenceViewTimeCursor}
+                        zoomTransform={ts => ({ rangeStart: start, pixelsPerSecond: pps })}
+                        getTimeCursor={() => cursor}
                         useMipmap={true}
                         />
                 </g>

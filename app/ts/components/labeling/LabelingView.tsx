@@ -67,7 +67,6 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
         const x = this.getRelativePosition(event)[0];
         const t = this.getTimeFromX(x);
         stores.alignmentLabelingUiStore.setReferenceViewTimeCursor(t);
-        stores.uiStore.setReferenceViewTimeCursor(t);
     }
 
     private getTimeFromX(x: number): number {
@@ -169,7 +168,6 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
     private onMouseWheel(event: React.WheelEvent<Element>): void {
         // Decide the zooming factor.
         stores.alignmentLabelingUiStore.referenceViewPanAndZoom(0, event.deltaY / 1000);
-        stores.uiStore.referenceViewPanAndZoom(0, event.deltaY / 1000);
     }
 
     public render(): JSX.Element {

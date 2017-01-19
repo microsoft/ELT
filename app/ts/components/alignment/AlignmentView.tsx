@@ -74,8 +74,6 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
                 .domain([timeSeries.referenceStart, timeSeries.referenceEnd])
                 .range([timeSeries.timeSeries[0].timestampStart, timeSeries.timeSeries[0].timestampEnd]);
             stores.alignmentLabelingUiStore.setReferenceViewTimeCursor(scale.invert(t));
-            stores.uiStore.setReferenceViewTimeCursor(scale.invert(t));
-
         } else {
             stores.alignmentUiStore.setSeriesTimeCursor(timeSeries, t);
         }
@@ -95,7 +93,7 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
                     moved = true;
                     if (timeSeries.aligned) {
                         const dt = (x1 - x0) / stores.alignmentLabelingUiStore.referenceViewPPS;
-                        stores.alignmentLabelingUiStore.setReferenceViewZoomingAction(referenceRangeStart - dt, null);
+                        stores.alignmentLabelingUiStore.setReferenceViewZooming(referenceRangeStart - dt, null);
                     } else {
                         const dt = (x1 - x0) / pps;
                         stores.alignmentUiStore.setTimeSeriesZooming(timeSeries, rangeStart - dt, null);
@@ -126,7 +124,6 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
         event: React.WheelEvent<Element>, track: Track, timeSeries: AlignedTimeSeries, _: number, pps: number, deltaY: number): void {
         if (track === stores.alignmentLabelingStore.referenceTrack || timeSeries.aligned) {
             stores.alignmentLabelingUiStore.referenceViewPanAndZoom(0, deltaY / 1000, 'cursor');
-            stores.uiStore.referenceViewPanAndZoom(0, deltaY / 1000, 'cursor');
         } else {
             const scale = d3.scaleLinear()
                 .domain([timeSeries.referenceStart, timeSeries.referenceEnd])
@@ -379,7 +376,6 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
                         onMouseEnter={event => {
                             if (marker.timeSeries.track === stores.alignmentLabelingStore.referenceTrack) {
                                 stores.alignmentLabelingUiStore.setReferenceViewTimeCursor(marker.localTimestamp);
-                                stores.uiStore.setReferenceViewTimeCursor(marker.localTimestamp);
                             } else {
                                 stores.alignmentUiStore.setSeriesTimeCursor(marker.timeSeries, marker.localTimestamp);
                             }
@@ -394,7 +390,6 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
                                     isFirstUpdate = false;
                                     if (marker.timeSeries.track === stores.alignmentLabelingStore.referenceTrack) {
                                         stores.alignmentLabelingUiStore.setReferenceViewTimeCursor(newT);
-                                        stores.uiStore.setReferenceViewTimeCursor(newT);
                                     } else {
                                         stores.alignmentUiStore.setSeriesTimeCursor(marker.timeSeries, newT);
                                     }

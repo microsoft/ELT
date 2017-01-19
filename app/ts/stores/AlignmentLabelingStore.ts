@@ -389,7 +389,7 @@ export class AlignmentLabelingStore {
                 labelingStore.loadState(project.labeling);
 
                 // TODO: Load the reference zooming info here.
-                alignmentLabelingUiStore.setReferenceViewZooming(project.ui.referenceViewStart, project.ui.referenceViewPPS);
+                alignmentLabelingUiStore.setProjectReferenceViewZooming(project.ui.referenceViewStart, project.ui.referenceViewPPS);
                 // TODO: Load the tabs here.
                 if (project.ui.currentTab === 'file') {
                     uiStore.currentTab = 'alignment';
@@ -414,7 +414,7 @@ export class AlignmentLabelingStore {
         labelingStore.reset();
 
         // TODO: Load the reference zooming info here.
-        alignmentLabelingUiStore.setReferenceViewZooming(0, 1);
+        alignmentLabelingUiStore.setProjectReferenceViewZooming(0, 1);
         // TODO: Load the tabs here.
         uiStore.currentTab = 'alignment';
     }

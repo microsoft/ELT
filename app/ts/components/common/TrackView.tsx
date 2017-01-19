@@ -117,7 +117,7 @@ export class TrackView extends React.Component<TrackViewProps, {}> {
             };
 
             // Get time cursor x position.
-            let timeCursor = null;
+            let timeCursor: number = null;
             if (this.props.getTimeCursor) {
                 timeCursor = this.props.getTimeCursor(alignedTimeSeries);
             }
