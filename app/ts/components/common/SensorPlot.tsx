@@ -67,7 +67,7 @@ export class SensorPlot extends React.Component<SensorPlotProps, {}> {
                 d3.scaleOrdinal<number, string>(d3.schemeCategory20));
 
         const paths = dimensions.map((dimSeries: number[], dimIndex: number) => {
-            if (this.props.dimensionVisibility !== undefined && this.props.dimensionVisibility !== null) {
+            if (this.props.dimensionVisibility) {
                 if (!this.props.dimensionVisibility[dimIndex]) { return null; }
             }
             const positions: string[] = [];

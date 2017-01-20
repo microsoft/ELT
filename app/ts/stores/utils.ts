@@ -39,7 +39,7 @@ export function getUniqueIDForObject(obj: Object): string {
 
 
 export function isSameArray<T>(arr1?: T[], arr2?: T[]): boolean {
-    return arr1 === arr2 || arr1 !== null && arr2 !== null && arr1.length === arr2.length && arr1.every((d, i) => d === arr2[i]);
+    return arr1 === arr2 || arr1 && arr2 && arr1.length === arr2.length && arr1.every((d, i) => d === arr2[i]);
 }
 
 

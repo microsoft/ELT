@@ -1,14 +1,14 @@
 // AlignmentStore
 // Store alignment markers and correspondences (connections between markers).
 
-import { AlignedTimeSeries, Marker, MarkerCorrespondence } from '../stores/dataStructures/alignment';
+import { AlignedTimeSeries, Marker, MarkerCorrespondence, Track } from '../stores/dataStructures/alignment';
 import { SavedAlignmentState, SavedMarker, SavedMarkerCorrespondence } from '../stores/dataStructures/project';
 import { TransitionController } from '../stores/utils';
 import { AlignmentLabelingStore } from './AlignmentLabelingStore';
 import { AlignmentLabelingUiStore } from './AlignmentLabelingUiStore';
 import { alignmentLabelingStore, alignmentLabelingUiStore, alignmentUiStore } from './stores';
 import * as d3 from 'd3';
-import { action, observable } from 'mobx';
+import { action, autorun, IObservableArray, observable } from 'mobx';
 
 // Take a snapshot from the alignmentStore, isolate all current rendering parametes.
 interface TimeSeriesStateSnapshotInfo {
@@ -17,6 +17,7 @@ interface TimeSeriesStateSnapshotInfo {
     rangeStart: number;
     pixelsPerSecond: number;
 }
+
 
 export class TimeSeriesStateSnapshot {
     private data: Map<string, TimeSeriesStateSnapshotInfo>;
@@ -28,12 +29,12 @@ export class TimeSeriesStateSnapshot {
         // Take the snapshot.
         alignmentLabelingStore.tracks.forEach((track) => {
             track.alignedTimeSeries.forEach((timeSeries) => {
-                const state = alignmentUiStore.getAlignmentState(timeSeries);
+                const state = alignmentUiStore.getAlignmentParameters(timeSeries);
                 this.data.set(timeSeries.id, {
                     referenceStart: timeSeries.referenceStart,
                     referenceEnd: timeSeries.referenceEnd,
-                    rangeStart: state !== null ? state.rangeStart : null,
-                    pixelsPerSecond: state !== null ? state.pixelsPerSecond : null
+                    rangeStart: state ? state.rangeStart : null,
+                    pixelsPerSecond: state ? state.pixelsPerSecond : null
                 });
             });
         });
@@ -54,7 +55,7 @@ export class TimeSeriesStateSnapshot {
             if (!series) { return; }
             series.referenceStart = info.referenceStart;
             series.referenceEnd = info.referenceEnd;
-            const state = alignmentUiStore.getAlignmentState(series);
+            const state = alignmentUiStore.getAlignmentParameters(series);
             if (state) {
                 state.rangeStart = info.rangeStart;
                 state.pixelsPerSecond = info.pixelsPerSecond;
@@ -78,7 +79,7 @@ export class TimeSeriesStateSnapshot {
             const info2 = s2.data.get(seriesID);
             series.referenceStart = mix(info.referenceStart, info2.referenceStart);
             series.referenceEnd = mix(info.referenceEnd, info2.referenceEnd);
-            const state = alignmentUiStore.getAlignmentState(series);
+            const state = alignmentUiStore.getAlignmentParameters(series);
             if (state) {
                 state.rangeStart = mix(info.rangeStart, info2.rangeStart);
                 state.pixelsPerSecond = mixINV(info.pixelsPerSecond, info2.pixelsPerSecond);
@@ -86,6 +87,12 @@ export class TimeSeriesStateSnapshot {
         });
     }
 }
+
+
+
+
+
+
 
 // AlignmentStore
 // Store alignment markers and correspondences (connections between markers).
@@ -102,11 +109,13 @@ export class AlignmentStore {
     private _alignmentTransitionController: TransitionController;
 
     constructor(alignmentLabelingStore: AlignmentLabelingStore, alignmentLabelingUiStore: AlignmentLabelingUiStore) {
-
         this.markers = [];
         this.correspondences = [];
         this._alignmentTransitionController = null;
 
+        (alignmentLabelingStore.tracks as IObservableArray<Track>).observe(() => this.onTracksChanged());
+        autorun(() => this.onTracksChanged());
+        autorun(() => this.rearrangeSeries());
         // alignmentLabelingStore.tracksChanged.on(this.onTracksChanged.bind(this));
         // alignmentLabelingUiStore.referenceViewChanged.on(this.rearrangeSeries.bind(this));
     }
@@ -189,13 +198,13 @@ export class AlignmentStore {
         this.stopAnimation();
 
         this.markers = this.markers.filter((m) => {
-            return alignmentLabelingStore.getTimeSeriesByID(m.timeSeries.id) !== null;
+            return !!alignmentLabelingStore.getTimeSeriesByID(m.timeSeries.id);
         });
         this.correspondences = this.correspondences.filter((c) => {
             return this.markers.indexOf(c.marker1) >= 0 && this.markers.indexOf(c.marker2) >= 0;
         });
 
-        alignmentUiStore.onTracksChanged();
+        // alignmentUiStore.onTracksChanged();
         this.alignAllTimeSeries(true);
     }
 
@@ -238,61 +247,6 @@ export class AlignmentStore {
         return alignmentLabelingStore.referenceTrack.alignedTimeSeries.some((x) => block.has(x));
     }
 
-    // leastSquares([[yi, xi], ... ]) => [ k, b ] such that sum(k xi + b - yi)^2 is minimized.
-    public leastSquares(correspondences: [number, number][]): [number, number] {
-        if (correspondences.length === 0) { return null; }
-        if (correspondences.length === 1) { return [1, correspondences[0][0] - correspondences[0][1]]; }
-        let sumX = 0; let sumY = 0; let sumXX = 0; let sumXY = 0;
-        const n = correspondences.length;
-        for (let i = 0; i < n; i++) {
-            const [y, x] = correspondences[i];
-            sumX += x;
-            sumY += y;
-            sumXY += x * y;
-            sumXX += x * x;
-        }
-        const k = (sumXY - sumX * sumY / n) / (sumXX - sumX * sumX / n);
-        const b = (sumY - k * sumX) / n;
-        return [k, b];
-    }
-
-    // Action functions.
-    public alignTimeSeries(target: AlignedTimeSeries): [number, number] {
-        const tracks = alignmentLabelingStore.tracks;
-        const tTrackIndex = tracks.indexOf(target.track);
-        // Find all correspondences above.
-        const tCorrespondences: [number, number][] = [];
-        this.correspondences.forEach((correspondences) => {
-            let thisMarker: Marker = null; let otherMarker: Marker = null;
-            if (correspondences.marker1.timeSeries === target) {
-                [thisMarker, otherMarker] = [correspondences.marker1, correspondences.marker2];
-            }
-            if (correspondences.marker2.timeSeries === target) {
-                [thisMarker, otherMarker] = [correspondences.marker2, correspondences.marker1];
-            }
-            if (!otherMarker) { return; } // not on this timeseries.
-            if (tTrackIndex - 1 !== tracks.indexOf(otherMarker.timeSeries.track)) { return; } // must be the previous track.
-            const otherScale = d3.scaleLinear()
-                .domain([otherMarker.timeSeries.timeSeries[0].timestampStart, otherMarker.timeSeries.timeSeries[0].timestampEnd])
-                .range([otherMarker.timeSeries.referenceStart, otherMarker.timeSeries.referenceEnd]);
-            tCorrespondences.push([otherScale(otherMarker.localTimestamp), thisMarker.localTimestamp]);
-        });
-
-        // Find the translation and scale for correspondences.
-        const lsqr = this.leastSquares(tCorrespondences);
-        if (lsqr !== null) {
-            const [k, b] = lsqr;
-            return [k * target.timeSeries[0].timestampStart + b, k * target.timeSeries[0].timestampEnd + b];
-        } else {
-            return null;
-        }
-    }
-
-    public solveForKandB(x1: number, y1: number, x2: number, y2: number): [number, number] {
-        const k = (y2 - y1) / (x2 - x1);
-        const b = y1 - k * x1;
-        return [k, b];
-    }
 
     // Terminate current animation.
     public stopAnimation(): void {
@@ -303,14 +257,12 @@ export class AlignmentStore {
     }
 
     public alignAllTimeSeries(animate: boolean = false): void {
+        if (this.correspondences.length === 0) { return; }
         this.stopAnimation();
         const snapshot0 = new TimeSeriesStateSnapshot(this);
-        alignmentLabelingStore.tracks.forEach((track) => {
-            track.alignedTimeSeries.forEach((ts) => {
-                const align = this.alignTimeSeries(ts);
-                if (align !== null) {
-                    [ts.referenceStart, ts.referenceEnd] = align;
-                }
+        alignmentLabelingStore.tracks.forEach(track => {
+            track.alignedTimeSeries.forEach(ts => {
+                [ts.referenceStart, ts.referenceEnd] = ts.align(this.correspondences);
             });
         });
         this.rearrangeSeries();
@@ -333,7 +285,7 @@ export class AlignmentStore {
             if (this.isBlockAligned(block)) {
                 block.forEach((s) => {
                     s.aligned = true;
-                    const info = alignmentUiStore.getAlignmentState(s);
+                    const info = alignmentUiStore.getAlignmentParameters(s);
                     if (info) {
                         info.rangeStart = alignmentLabelingUiStore.referenceViewStart;
                         info.pixelsPerSecond = alignmentLabelingUiStore.referenceViewPPS;
@@ -343,7 +295,7 @@ export class AlignmentStore {
                 const ranges: [number, number][] = [];
                 block.forEach((s) => {
                     s.aligned = false;
-                    const info = alignmentUiStore.getAlignmentState(s);
+                    const info = alignmentUiStore.getAlignmentParameters(s);
                     if (info) {
                         ranges.push([info.rangeStart, info.pixelsPerSecond]);
                     }
@@ -351,7 +303,7 @@ export class AlignmentStore {
                 const averageStart = d3.mean(ranges, (x) => x[0]);
                 const averagePPS = 1 / d3.mean(ranges, (x) => 1 / x[1]);
                 block.forEach((s) => {
-                    const info = alignmentUiStore.getAlignmentState(s);
+                    const info = alignmentUiStore.getAlignmentParameters(s);
                     if (info) {
                         info.rangeStart = averageStart;
                         info.pixelsPerSecond = averagePPS;
@@ -414,10 +366,10 @@ export class AlignmentStore {
         Object.keys(state.timeSeriesStates).forEach(id => {
             const tsState = state.timeSeriesStates[id];
             const ts = alignmentLabelingStore.getTimeSeriesByID(id);
-            alignmentUiStore.setAlignmentState(ts, {
-                rangeStart: tsState.rangeStart,
-                pixelsPerSecond: tsState.pixelsPerSecond
-            });
+            // alignmentUiStore.setAlignmentParameters(ts, {
+            //     rangeStart: tsState.rangeStart,
+            //     pixelsPerSecond: tsState.pixelsPerSecond
+            // });
             ts.referenceStart = tsState.referenceStart;
             ts.referenceEnd = tsState.referenceEnd;
         });
