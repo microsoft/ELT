@@ -14,16 +14,6 @@ import { action, computed, observable, runInAction } from 'mobx';
 
 
 
-// Try different names until cb(name) === true.
-function attemptNames(name: string, cb: (name: string) => boolean): string {
-    let okay = false;
-    let candidate = '';
-    for (let index = 1; !okay; index++) {
-        candidate = name + index.toString();
-        okay = cb(candidate);
-    }
-    return candidate;
-}
 
 // Deep copy an object.
 function deepClone<Type>(obj: Type): Type {
@@ -41,6 +31,10 @@ export class MappedLabel {
     }
 }
 
+
+
+
+
 // AlignmentLabelingStore: Stores the information about tracks and handles project load/save and undo/redo state saving.
 export class AlignmentLabelingStore {
     // Reference track and other tracks.
@@ -50,21 +44,23 @@ export class AlignmentLabelingStore {
     // The location of the saved/opened project.
     @observable public projectFileLocation: string;
 
-    // Track ID to actual track.
-    private _trackIndex: Map<string, Track>;
-    private _timeSeriesIndex: Map<string, AlignedTimeSeries>;
-
     // Stores alignment and labeling history (undo is implemented separately, you can't undo alignment from labeling or vice versa).
     private _alignmentHistory: HistoryTracker<SavedAlignmentSnapshot>;
     private _labelingHistory: HistoryTracker<SavedLabelingSnapshot>;
 
-    // Get timeseries by its ID.
+
     public getTimeSeriesByID(id: string): AlignedTimeSeries {
-        return this._timeSeriesIndex.get(id);
+        // There are so few tracks/timeseries that linear search is fine.
+        this.tracks.concat(this.referenceTrack).forEach(t => {
+            const found = t.alignedTimeSeries.filter(ts => ts.id === id);
+            if (found.length) { return found[0]; }
+        });
+        return undefined;
     }
-    // Get track by its ID.
+
     public getTrackByID(id: string): Track {
-        return this._trackIndex.get(id);
+        // There are so few tracks that linear search is fine.
+        return this.tracks.concat(this.referenceTrack).filter(t => t.id === id)[0];
     }
 
     // Keep the time range of the reference track.
@@ -80,21 +76,12 @@ export class AlignmentLabelingStore {
     }
 
 
-    // Create new non-conflicting IDs.
-    public newTrackID(): string {
-        return attemptNames('track-', id => this.getTrackByID(id) === undefined);
-    }
-    public newTimeSeriesID(): string {
-        return attemptNames('series-', id => this.getTimeSeriesByID(id) === undefined);
-    }
-
     constructor() {
         this._alignmentHistory = new HistoryTracker<SavedAlignmentSnapshot>();
         this._labelingHistory = new HistoryTracker<SavedLabelingSnapshot>();
 
         this.referenceTrack = null;
         this.tracks = [];
-        this.reindexTracksAndTimeSeries();
 
         this.projectFileLocation = null;
     }
@@ -102,47 +89,16 @@ export class AlignmentLabelingStore {
     @action
     public loadReferenceTrack(fileName: string): void {
         this.alignmentHistoryRecord();
-        loadVideoTimeSeriesFromFile(fileName, (video) => {
-            const track: Track = {
-                id: this.newTrackID(),
-                alignedTimeSeries: [],
-                minimized: false
-            };
-            track.alignedTimeSeries.push({
-                id: this.newTimeSeriesID(),
-                track: observable.ref(track),
-                referenceStart: 0,
-                referenceEnd: video.timestampEnd - video.timestampStart,
-                timeSeries: [video],
-                source: fileName,
-                aligned: false
-            });
-            this.referenceTrack = track;
-            this.reindexTracksAndTimeSeries();
-
+        loadVideoTimeSeriesFromFile(fileName, video => {
+            this.referenceTrack = Track.fromFile(fileName, [video]);
         });
     }
 
     @action
     public loadVideoTrack(fileName: string): void {
         this.alignmentHistoryRecord();
-        loadVideoTimeSeriesFromFile(fileName, (video) => {
-            const track: Track = {
-                id: this.newTrackID(),
-                alignedTimeSeries: [],
-                minimized: false
-            };
-            track.alignedTimeSeries.push({
-                id: this.newTimeSeriesID(),
-                track: observable.ref(track),
-                referenceStart: 0,
-                referenceEnd: video.timestampEnd - video.timestampStart,
-                timeSeries: [video],
-                source: fileName,
-                aligned: false
-            });
-            this.tracks.push(track);
-            this.reindexTracksAndTimeSeries();
+        loadVideoTimeSeriesFromFile(fileName, video => {
+            this.tracks.push(Track.fromFile(fileName, [video]));
         });
     }
 
@@ -150,41 +106,7 @@ export class AlignmentLabelingStore {
     public loadSensorTrack(fileName: string): void {
         this.alignmentHistoryRecord();
         const sensors = loadMultipleSensorTimeSeriesFromFile(fileName);
-        const track: Track = {
-            id: this.newTrackID(),
-            alignedTimeSeries: [],
-            minimized: false
-        };
-        track.alignedTimeSeries.push({
-            id: this.newTimeSeriesID(),
-            track: observable.ref(track),
-            referenceStart: 0,
-            referenceEnd: sensors[0].timestampEnd - sensors[0].timestampStart,
-            timeSeries: sensors,
-            source: fileName,
-            aligned: false
-        });
-        this.tracks.push(track);
-        this.reindexTracksAndTimeSeries();
-    }
-
-    // Recreate track index.
-    private reindexTracksAndTimeSeries(): void {
-        this._trackIndex = new Map<string, Track>();
-        this._timeSeriesIndex = new Map<string, AlignedTimeSeries>();
-        if (this.referenceTrack !== null) {
-            const t = this.referenceTrack;
-            this._trackIndex.set(t.id, t);
-            t.alignedTimeSeries.forEach((ts) => {
-                this._timeSeriesIndex.set(ts.id, ts);
-            });
-        }
-        this.tracks.forEach((t) => {
-            this._trackIndex.set(t.id, t);
-            t.alignedTimeSeries.forEach((ts) => {
-                this._timeSeriesIndex.set(ts.id, ts);
-            });
-        });
+        this.tracks.push(Track.fromFile(fileName, sensors));
     }
 
     @action
@@ -192,7 +114,6 @@ export class AlignmentLabelingStore {
         this.alignmentHistoryRecord();
         const index = this.tracks.indexOf(track);
         this.tracks.splice(index, 1);
-        this.reindexTracksAndTimeSeries();
     }
 
     public get recentProjects(): string[] {
@@ -276,6 +197,11 @@ export class AlignmentLabelingStore {
 
     // TODO: might want to move some of this computation elsewhere 
     public exportLabels(fileName: string): void {
+        function solveForKandB(x1: number, y1: number, x2: number, y2: number): [number, number] {
+            const k = (y2 - y1) / (x2 - x1);
+            const b = y1 - k * x1;
+            return [k, b];
+        }
         // for each timeseries, get the source file, and save to a .labels file
         this.tracks.map((track) => {
             track.alignedTimeSeries.map((timeSeries) => {
@@ -291,7 +217,7 @@ export class AlignmentLabelingStore {
                 const referenceEnd = timeSeries.referenceEnd;
                 // use these to recompute k and b
                 // TODO: figure out why we don't just store k and b for each timeSeries?
-                const [k, b] = alignmentStore.solveForKandB(localStart, referenceStart, localEnd, referenceEnd);
+                const [k, b] = solveForKandB(localStart, referenceStart, localEnd, referenceEnd);
                 // get the labels from labelingStore .labels()
                 // map the timestamps of the labels from the reference time to the time of the current time series
                 // (i.e., localTime = (refTime - b)/k)
@@ -345,15 +271,15 @@ export class AlignmentLabelingStore {
 
         // Load the AlignedTimeSeries structure.
         const loadTimeSeries = (track: Track, timeSeries: SavedAlignedTimeSeries): AlignedTimeSeries => {
-            const result = {
-                id: timeSeries.id,
-                track: observable.ref(track),
-                referenceStart: timeSeries.referenceStart,
-                referenceEnd: timeSeries.referenceEnd,
-                source: timeSeries.source,
-                aligned: timeSeries.aligned,
-                timeSeries: []
-            };
+            const result = new AlignedTimeSeries(
+                track,
+                timeSeries.referenceStart,
+                timeSeries.referenceEnd,
+                [],
+                timeSeries.source,
+                timeSeries.aligned,
+            );
+            result.id = timeSeries.id;
             const cb = deferred.callback();
             loadContentFromFile(result.source, ts => {
                 result.timeSeries = ts;
@@ -364,11 +290,7 @@ export class AlignmentLabelingStore {
 
         // Load saved track.
         const loadTrack = (track: SavedTrack): Track => {
-            const result = {
-                id: track.id,
-                minimized: track.minimized,
-                alignedTimeSeries: []
-            };
+            const result = new Track(track.id, track.minimized, []);
             result.alignedTimeSeries = track.timeSeries.map((ts) => loadTimeSeries(result, ts));
             return result;
         };
@@ -382,7 +304,6 @@ export class AlignmentLabelingStore {
                 // Set the new tracks once they are loaded successfully.
                 this.referenceTrack = newReferenceTrack;
                 this.tracks = newTracks;
-                this.reindexTracksAndTimeSeries();
 
                 // Load alignment and labeling.
                 alignmentStore.loadState(project.alignment);
@@ -407,7 +328,6 @@ export class AlignmentLabelingStore {
         this.projectFileLocation = null;
         this.referenceTrack = null;
         this.tracks = [];
-        this.reindexTracksAndTimeSeries();
 
         // Load alignment and labeling.
         alignmentStore.reset();
@@ -420,25 +340,10 @@ export class AlignmentLabelingStore {
     }
 
     public getAlignmentSnapshot(): SavedAlignmentSnapshot {
-        const cloneTimeSeries = (parentTrack: Track, timeSeries: AlignedTimeSeries): AlignedTimeSeries => {
-            return {
-                id: timeSeries.id,
-                track: observable.ref(parentTrack),
-                source: timeSeries.source,
-                timeSeries: timeSeries.timeSeries,
-                referenceStart: timeSeries.referenceStart,
-                referenceEnd: timeSeries.referenceEnd,
-                aligned: timeSeries.aligned
-            };
-        };
         const cloneTrack = (track: Track): Track => {
             if (track === null) { return null; }
-            const result = {
-                id: track.id,
-                alignedTimeSeries: [],
-                minimized: track.minimized
-            };
-            result.alignedTimeSeries = track.alignedTimeSeries.map((x) => cloneTimeSeries(result, x));
+            const result = new Track(track.id, track.minimized, []);
+            result.alignedTimeSeries = track.alignedTimeSeries.map((x) => AlignedTimeSeries.clone(x, result));
             return result;
         };
         return {
@@ -451,7 +356,6 @@ export class AlignmentLabelingStore {
     public loadAlignmentSnapshot(snapshot: SavedAlignmentSnapshot): void {
         this.referenceTrack = snapshot.referenceTrack;
         this.tracks = snapshot.tracks;
-        this.reindexTracksAndTimeSeries();
         alignmentStore.loadState(snapshot.alignment);
     }
 

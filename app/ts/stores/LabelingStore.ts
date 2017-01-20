@@ -182,7 +182,7 @@ export class LabelingStore {
         let labelsChanged = false;
         const selectedLabels = labelingUiStore.selectedLabels;
 
-        if (lastLabelTimestampEnd !== null) {
+        if (lastLabelTimestampEnd) {
             // get labels that are earlier than the current suggestion timestamp.
             const refreshDecision = labelingUiStore.suggestionLogic.refreshSuggestions({
                 suggestionProgress: {

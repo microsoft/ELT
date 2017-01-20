@@ -204,7 +204,7 @@ export class LabelingUiStore {
     public revealSelectedLabel(): void {
         let selectedLabel: Label = null;
         this.selectedLabels.forEach((l) => selectedLabel = l);
-        if (selectedLabel !== null) {
+        if (selectedLabel) {
             if (selectedLabel.timestampStart < alignmentLabelingUiStore.referenceViewStart ||
                 selectedLabel.timestampEnd > alignmentLabelingUiStore.referenceViewEnd) {
                 alignmentLabelingUiStore.setReferenceViewZooming(

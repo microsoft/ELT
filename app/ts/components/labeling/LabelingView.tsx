@@ -88,8 +88,8 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
                     if (p1 === null || p1 > d) { p1 = d; }
                 }
             });
-            if (p0 !== null && p1 !== null && p0 !== p1) {
-                if (stores.labelingUiStore.currentClass !== null) {
+            if (p0 && p1 && p0 !== p1) {
+                if (stores.labelingUiStore.currentClass) {
                     const newLabel = {
                         timestampStart: p0,
                         timestampEnd: p1,
@@ -129,8 +129,8 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
                     hint_t0: null,
                     hint_t1: null
                 });
-                if (t0 !== t1 && t1 !== null) {
-                    if (stores.labelingUiStore.currentClass !== null) {
+                if (t0 !== t1 && t1) {
+                    if (stores.labelingUiStore.currentClass) {
                         const newLabel = {
                             timestampStart: Math.min(t0, t1),
                             timestampEnd: Math.max(t0, t1),
@@ -203,7 +203,7 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
         // Cursor
         let gCursor = null;
         const timeCursor = stores.alignmentLabelingUiStore.referenceViewTimeCursor;
-        if (timeCursor !== null) {
+        if (timeCursor) {
             gCursor = (
                 <g className='time-cursor'>
                     <line
@@ -218,7 +218,7 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
 
         // Hint range.
         let gHint = null;
-        if (this.state.hint_t0 !== null && this.state.hint_t1 !== null) {
+        if (this.state.hint_t0 && this.state.hint_t1) {
             gHint = (
                 <g className='time-hint'>
                     <rect

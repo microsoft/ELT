@@ -78,7 +78,7 @@ export class HomeMenu extends React.Component<{}, {}> {
     // onProceed: the user saved the project, or discarded.
     // onCanceled: the user canceled the action.
     private promptSaveExistingProject(onProceed: () => any = null, onCanceled: () => any = null): void {
-        if (stores.alignmentLabelingStore.referenceTrack !== null) {
+        if (stores.alignmentLabelingStore.referenceTrack) {
             // If there is an existing project, prompt if the user want to save.
             // Currently we don't detect changes, so will always prompt if a project is already opened.
             remote.dialog.showMessageBox(

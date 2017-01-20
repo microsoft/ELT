@@ -118,9 +118,9 @@ export class LabelPlot extends React.Component<LabelPlotProps, LabelPlotState> {
     private getSuggestionConfidenceOrOne(): number {
         const suggestionConfidence =
             this.props.label.suggestionConfidence !== undefined &&
-                this.props.label.suggestionConfidence !== null ?
+                this.props.label.suggestionConfidence ?
                 this.props.label.suggestionConfidence : null;
-        if (suggestionConfidence !== null && this.props.label.state !== LabelConfirmationState.CONFIRMED_BOTH) {
+        if (suggestionConfidence && this.props.label.state !== LabelConfirmationState.CONFIRMED_BOTH) {
             return suggestionConfidence;
         } else {
             return 1;

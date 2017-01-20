@@ -63,8 +63,8 @@ export class AlignmentLabelingUiStore {
 
     // Return updated zooming parameters so that they don't exceed the reference track range.
     private constrainDetailedViewZoomingParameters(referenceViewStart: number, referenceViewPPS: number): [number, number] {
-        if (referenceViewStart === null) { referenceViewStart = this.referenceViewStart; }
-        if (referenceViewPPS === null) { referenceViewPPS = this.referenceViewPPS; }
+        if (!referenceViewStart) { referenceViewStart = this.referenceViewStart; }
+        if (!referenceViewPPS) { referenceViewPPS = this.referenceViewPPS; }
         // Check if we go outside of the view, if yes, tune the parameters.
         if (alignmentLabelingStore) {
             referenceViewPPS = Math.max(
@@ -97,14 +97,15 @@ export class AlignmentLabelingUiStore {
 
     @action
     public setViewWidth(width: number): void {
+        this.viewWidth = width;
         [this.referenceViewStart, this.referenceViewPPS] =
             this.constrainDetailedViewZoomingParameters(this.referenceViewStart, this.referenceViewPPS);
     }
 
     @action
     public setReferenceViewZooming(referenceViewStart: number, referenceViewPPS: number = null, animate: boolean = false): void {
-        if (referenceViewStart === null) { referenceViewStart = this.referenceViewStart; }
-        if (referenceViewPPS === null) { referenceViewPPS = this.referenceViewPPS; }
+        if (!referenceViewStart) { referenceViewStart = this.referenceViewStart; }
+        if (!referenceViewPPS) { referenceViewPPS = this.referenceViewPPS; }
         const [start, pps] =
             this.constrainDetailedViewZoomingParameters(referenceViewStart, referenceViewPPS);
         // Change current class to label's class.

@@ -90,7 +90,7 @@ export class LabelingToolbar extends React.Component<LabelingToolbarProps, {}> {
                 <span className='sep' />
                 {' '}
                 <span style={{ minWidth: '10em', display: 'inline-block' }}>
-                    Cursor: {timeCursor !== null ? timeCursor.toFixed(3) : 'null'}
+                    Cursor: {timeCursor ? timeCursor.toFixed(3) : 'null'}
                 </span>
                 {' '}
                 <span className='sep' />

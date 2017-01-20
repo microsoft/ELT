@@ -117,7 +117,7 @@ function getAverageLabelsPerClass(
             samplesWithMargin.forEach((x) => spring.feed(x));
 
             const [which, , ts, te] = spring.getBestMatch();
-            if (which !== null) {
+            if (which) {
                 const t1 = sampleIndex2Time(ts);
                 const t2 = sampleIndex2Time(te);
                 if (Math.abs(t1 - item.timestampStart) < margin && Math.abs(t2 - item.timestampEnd) < margin) {
@@ -186,7 +186,7 @@ class DtwSuggestionModel extends LabelingSuggestionModel {
         timestampEnd = Math.round(this._sampleRate * timestampEnd) / this._sampleRate;
 
         let labels = this._references;
-        labels = labels.filter((x) => x.variance !== null);
+        labels = labels.filter((x) => x.variance);
         if (labels.length === 0) {
             callback(
                 [],
@@ -252,7 +252,7 @@ class DtwSuggestionModel extends LabelingSuggestionModel {
             // Feed data into the SPRING algorithm.
             for (const s of chunkSamples) {
                 const [minI, minD] = algo.feed(s);
-                if (minD !== null) {
+                if (minD) {
                     const cf = getLikelihood(labels[minI].variance, minD);
                     const histIndex = Math.floor(Math.pow(cf, 0.3) * (confidenceHistogram.length - 1));
                     if (histIndex >= 0 && histIndex < confidenceHistogram.length) {
