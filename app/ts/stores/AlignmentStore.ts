@@ -10,6 +10,8 @@ import { alignmentLabelingStore, alignmentLabelingUiStore, alignmentUiStore } fr
 import * as d3 from 'd3';
 import { action, autorun, IObservableArray, observable } from 'mobx';
 
+
+
 // Take a snapshot from the alignmentStore, isolate all current rendering parametes.
 interface TimeSeriesStateSnapshotInfo {
     referenceStart: number;
@@ -113,7 +115,6 @@ export class AlignmentStore {
         this.correspondences = [];
         this._alignmentTransitionController = null;
 
-        (alignmentLabelingStore.tracks as IObservableArray<Track>).observe(() => this.onTracksChanged());
         autorun(() => this.onTracksChanged());
         autorun(() => this.rearrangeSeries());
         // alignmentLabelingStore.tracksChanged.on(this.onTracksChanged.bind(this));
@@ -204,7 +205,6 @@ export class AlignmentStore {
             return this.markers.indexOf(c.marker1) >= 0 && this.markers.indexOf(c.marker2) >= 0;
         });
 
-        // alignmentUiStore.onTracksChanged();
         this.alignAllTimeSeries(true);
     }
 

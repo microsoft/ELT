@@ -31,7 +31,7 @@ export interface TrackViewProps {
     zoomTransform?: ZoomTrasform;
 
     enableMouseEvents?: boolean;
-    onWheel?: (event: React.WheelEvent<Element>, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number,
+    onWheel?: (event: React.WheelEvent<Element>, trackId: string, timeSeries: AlignedTimeSeries, t: number, pps: number,
         deltaY: number) => any;
     onMouseMove?: (event: React.MouseEvent<Element>, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number) => any;
     onMouseDown?: (event: React.MouseEvent<Element>, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number) => any;
@@ -73,7 +73,7 @@ export class TrackView extends React.Component<TrackViewProps, {}> {
     private emitWheel(
         event: React.WheelEvent<Element>, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number,
         deltaY: number): void {
-        if (this.props.onWheel) { this.props.onWheel(event, track, timeSeries, t, pps, deltaY); }
+        if (this.props.onWheel) { this.props.onWheel(event, track.id, timeSeries, t, pps, deltaY); }
     }
 
     private renderTimeseries(alignedTimeSeries: AlignedTimeSeries): JSX.Element[] {

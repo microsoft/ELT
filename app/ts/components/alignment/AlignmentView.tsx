@@ -51,6 +51,7 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
         this.onTrackMouseLeave = this.onTrackMouseLeave.bind(this);
         this.onTrackWheel = this.onTrackWheel.bind(this);
         this.getZoomTransform = this.getZoomTransform.bind(this);
+        this.state = {};
     }
 
 
@@ -127,8 +128,8 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
 
 
     private onTrackWheel(
-        event: React.WheelEvent<Element>, track: Track, timeSeries: AlignedTimeSeries, _: number, pps: number, deltaY: number): void {
-        if (track === stores.alignmentLabelingStore.referenceTrack || timeSeries.aligned) {
+        event: React.WheelEvent<Element>, trackId: string, timeSeries: AlignedTimeSeries, _: number, pps: number, deltaY: number): void {
+        if (trackId === stores.alignmentLabelingStore.referenceTrack.id || timeSeries.aligned) {
             stores.alignmentLabelingUiStore.referenceViewPanAndZoom(0, deltaY / 1000, 'cursor');
         } else {
             const scale = d3.scaleLinear()
@@ -189,8 +190,11 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
                 // Must link to track above/below.
                 if (candidate) {
                     const trackIndex1 =
-                        stores.alignmentLabelingStore.tracks.indexOf(this.state.markerStart.timeSeries.track);
-                    const trackIndex2 = stores.alignmentLabelingStore.tracks.indexOf(candidate.timeSeries.track);
+                        stores.alignmentLabelingStore.tracks.map(t => t.id)
+                            .indexOf(this.state.markerStart.timeSeries.trackId);
+                    const trackIndex2 =
+                        stores.alignmentLabelingStore.tracks.map(t => t.id)
+                            .indexOf(candidate.timeSeries.trackId);
                     if (!(trackIndex2 === trackIndex1 - 1 || trackIndex2 === trackIndex1 + 1)) { candidate = null; }
                 }
 
@@ -220,7 +224,7 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
     }
 
 
-    private getMarkerLayout(marker: Marker, layoutMap: WeakMap<Track, TrackLayout>): {
+    private getMarkerLayout(marker: Marker, layoutMap: Map<string, TrackLayout>): {
         x: number,
         pps: number,
         xScale: (x: number) => number,
@@ -229,8 +233,7 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
         y1: number
     } {
         const timeSeries = marker.timeSeries;
-        const track = timeSeries.track;
-        const trackLayout = layoutMap.get(track);
+        const trackLayout = layoutMap.get(timeSeries.trackId);
         if (!trackLayout) { return null; }
         const alignmentState = stores.alignmentUiStore.getAlignmentParameters(timeSeries);
         const [rangeStart, pixelsPerSecond] = alignmentState ?
@@ -273,8 +276,8 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
     }
 
 
-    private computeTrackLayout(): WeakMap<Track, TrackLayout> {
-        const map = new WeakMap<Track, TrackLayout>();
+    private computeTrackLayout(): Map<string, TrackLayout> {
+        const map = new Map<string, TrackLayout>();
 
         const smallOffset = 0;
         const axisOffset = 22;
@@ -284,7 +287,7 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
         const trackGap = LayoutParameters.alignmentTrackGap;
         const referenceTrack = stores.alignmentLabelingStore.referenceTrack;
         if (referenceTrack) {
-            map.set(referenceTrack, {
+            map.set(referenceTrack.id, {
                 y0: axisOffset + smallOffset - LayoutParameters.referenceDetailedViewHeightAlignment,
                 y1: axisOffset + smallOffset,
                 height: LayoutParameters.referenceDetailedViewHeightAlignment
@@ -293,7 +296,7 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
         stores.alignmentLabelingStore.tracks.forEach(track => {
             const trackY = trackYCurrent;
             const height = track.minimized ? trackMinimizedHeight : trackHeight;
-            map.set(track, {
+            map.set(track.id, {
                 y0: trackY,
                 y1: trackY + height,
                 height: height
@@ -304,9 +307,9 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
     }
 
 
-    private renderTracks(layoutMap: WeakMap<Track, TrackLayout>): JSX.Element[] {
+    private renderTracks(layoutMap: Map<string, TrackLayout>): JSX.Element[] {
         return stores.alignmentLabelingStore.tracks.map(track => {
-            const trackLayout = layoutMap.get(track);
+            const trackLayout = layoutMap.get(track.id);
             if (!trackLayout) { return null; }
             let timeAxis = null;
             if (!track.alignedTimeSeries[0].aligned) {
@@ -356,7 +359,7 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
     }
 
 
-    private renderCorrespondences(layoutMap: WeakMap<Track, TrackLayout>): JSX.Element[] {
+    private renderCorrespondences(layoutMap: Map<string, TrackLayout>): JSX.Element[] {
         return stores.alignmentStore.correspondences.map((correspondence, index) => {
             const l1 = this.getMarkerLayout(correspondence.marker1, layoutMap);
             const l2 = this.getMarkerLayout(correspondence.marker2, layoutMap);
@@ -381,7 +384,7 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
     }
 
 
-    private renderMarkers(layoutMap: WeakMap<Track, TrackLayout>): JSX.Element[] {
+    private renderMarkers(layoutMap: Map<string, TrackLayout>): JSX.Element[] {
         // Markers:
         const markers: JSX.Element[] = [];
 
@@ -409,10 +412,11 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
                         x1={x} x2={x}
                         y1={y0} y2={y1}
                         onWheel={event => {
-                            this.onTrackWheel(event, marker.timeSeries.track, marker.timeSeries, marker.localTimestamp, pps, event.deltaY);
+                            this.onTrackWheel(
+                                event, marker.timeSeries.trackId, marker.timeSeries, marker.localTimestamp, pps, event.deltaY);
                         } }
                         onMouseEnter={event => {
-                            if (marker.timeSeries.track === stores.alignmentLabelingStore.referenceTrack) {
+                            if (marker.timeSeries.trackId === stores.alignmentLabelingStore.referenceTrack.id) {
                                 stores.alignmentLabelingUiStore.setReferenceViewTimeCursor(marker.localTimestamp);
                             } else {
                                 stores.alignmentUiStore.setSeriesTimeCursor(marker.timeSeries, marker.localTimestamp);
@@ -427,7 +431,7 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
                                         .xScaleInvert(this.getRelativePosition(moveEvent)[0]);
                                     stores.alignmentStore.updateMarker(marker, newT, false, isFirstUpdate);
                                     isFirstUpdate = false;
-                                    if (marker.timeSeries.track === stores.alignmentLabelingStore.referenceTrack) {
+                                    if (marker.timeSeries.trackId === stores.alignmentLabelingStore.referenceTrack.id) {
                                         stores.alignmentLabelingUiStore.setReferenceViewTimeCursor(newT);
                                     } else {
                                         stores.alignmentUiStore.setSeriesTimeCursor(marker.timeSeries, newT);
