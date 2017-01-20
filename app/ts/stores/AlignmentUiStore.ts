@@ -15,19 +15,6 @@ export class AlignmentUiStore {
 
     @observable private _alignmentParameterMap: ObservableMap<AlignmentParameters>;
 
-    // @computed private get _alignmentParameterMap(): ObservableMap<AlignmentParameters> {
-    //     const map = observable.map<AlignmentParameters>();
-    //     for (const track of alignmentLabelingStore.tracks) {
-    //         for (const series of track.alignedTimeSeries) {
-    //             map.set(series.id.toString(), {
-    //                 rangeStart: series.referenceStart,
-    //                 pixelsPerSecond: alignmentLabelingUiStore.viewWidth / (series.referenceEnd - series.referenceStart)
-    //             });
-    //         }
-    //     }
-    //     return map;
-    // }
-
     // Currently selected markers OR correspondence (update one should cause the other to be null).
     @observable public selectedMarker: Marker;
     @observable public selectedCorrespondence: MarkerCorrespondence;
@@ -39,10 +26,6 @@ export class AlignmentUiStore {
         this.selectedCorrespondence = null;
 
         this.getTimeCursor = this.getTimeCursor.bind(this);
-
-        // No addListener for onTracksChanged. 
-        //   alignmentStore is responsible to update the UI store when tracks changed,
-        //   this is to prevent event ordering issues. 
     }
 
     @action
@@ -97,19 +80,6 @@ export class AlignmentUiStore {
     public setTrackMinimized(track: Track, minimized: boolean): void {
         track.minimized = minimized;
     }
-
-    // public onTracksChanged(): void {
-    //     for (const track of alignmentLabelingStore.tracks) {
-    //         for (const series of track.alignedTimeSeries) {
-    //             if (!this._alignmentParameterMap.has(series.id.toString())) {
-    //                 this._alignmentParameterMap.set(series.id.toString(), {
-    //                     rangeStart: series.referenceStart,
-    //                     pixelsPerSecond: alignmentLabelingUiStore.viewWidth / (series.referenceEnd - series.referenceStart)
-    //                 });
-    //             }
-    //         }
-    //     }
-    // }
 
     public getTimeCursor(series: AlignedTimeSeries): number {
         return this._seriesTimeCursor.get(series.id.toString());

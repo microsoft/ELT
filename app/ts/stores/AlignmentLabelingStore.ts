@@ -37,6 +37,7 @@ export class MappedLabel {
 
 // AlignmentLabelingStore: Stores the information about tracks and handles project load/save and undo/redo state saving.
 export class AlignmentLabelingStore {
+
     // Reference track and other tracks.
     @observable public referenceTrack: Track;
     @observable public tracks: Track[];
@@ -47,6 +48,14 @@ export class AlignmentLabelingStore {
     // Stores alignment and labeling history (undo is implemented separately, you can't undo alignment from labeling or vice versa).
     private _alignmentHistory: HistoryTracker<SavedAlignmentSnapshot>;
     private _labelingHistory: HistoryTracker<SavedLabelingSnapshot>;
+
+    constructor() {
+        this._alignmentHistory = new HistoryTracker<SavedAlignmentSnapshot>();
+        this._labelingHistory = new HistoryTracker<SavedLabelingSnapshot>();
+        this.referenceTrack = null;
+        this.tracks = [];
+        this.projectFileLocation = null;
+    }
 
 
     public getTimeSeriesByID(id: string): AlignedTimeSeries {
@@ -69,22 +78,13 @@ export class AlignmentLabelingStore {
             d3.min(this.referenceTrack.alignedTimeSeries, x => x.referenceStart)
             : 0;
     }
+
     @computed public get referenceTimestampEnd(): number {
         return this.referenceTrack && this.referenceTrack.alignedTimeSeries ?
             d3.max(this.referenceTrack.alignedTimeSeries, x => x.referenceEnd)
             : 100;
     }
 
-
-    constructor() {
-        this._alignmentHistory = new HistoryTracker<SavedAlignmentSnapshot>();
-        this._labelingHistory = new HistoryTracker<SavedLabelingSnapshot>();
-
-        this.referenceTrack = null;
-        this.tracks = [];
-
-        this.projectFileLocation = null;
-    }
 
     @action
     public loadReferenceTrack(fileName: string): void {
@@ -159,11 +159,11 @@ export class AlignmentLabelingStore {
         this.addToRecentProjects(fileName);
     }
 
-    public saveProjectHelper(): SavedProject {
+    private saveProjectHelper(): SavedProject {
         const saveTimeSeries = (timeSeries: AlignedTimeSeries): SavedAlignedTimeSeries => {
             return {
                 id: timeSeries.id,
-                trackID: timeSeries.track.id,
+                trackID: timeSeries.trackId,
                 referenceStart: timeSeries.referenceStart,
                 referenceEnd: timeSeries.referenceEnd,
                 source: timeSeries.source,
@@ -272,7 +272,7 @@ export class AlignmentLabelingStore {
         // Load the AlignedTimeSeries structure.
         const loadTimeSeries = (track: Track, timeSeries: SavedAlignedTimeSeries): AlignedTimeSeries => {
             const result = new AlignedTimeSeries(
-                track,
+                track.id,
                 timeSeries.referenceStart,
                 timeSeries.referenceEnd,
                 [],
@@ -339,7 +339,7 @@ export class AlignmentLabelingStore {
         uiStore.currentTab = 'alignment';
     }
 
-    public getAlignmentSnapshot(): SavedAlignmentSnapshot {
+    private getAlignmentSnapshot(): SavedAlignmentSnapshot {
         const cloneTrack = (track: Track): Track => {
             if (track === null) { return null; }
             const result = new Track(track.id, track.minimized, []);
@@ -353,19 +353,17 @@ export class AlignmentLabelingStore {
         };
     }
 
-    public loadAlignmentSnapshot(snapshot: SavedAlignmentSnapshot): void {
+    private loadAlignmentSnapshot(snapshot: SavedAlignmentSnapshot): void {
         this.referenceTrack = snapshot.referenceTrack;
         this.tracks = snapshot.tracks;
         alignmentStore.loadState(snapshot.alignment);
     }
 
-    public getLabelingSnapshot(): SavedLabelingSnapshot {
-        return {
-            labeling: deepClone(labelingStore.saveState())
-        };
+    private getLabelingSnapshot(): SavedLabelingSnapshot {
+        return { labeling: deepClone(labelingStore.saveState()) };
     }
 
-    public loadLabelingSnapshot(snapshot: SavedLabelingSnapshot): void {
+    private loadLabelingSnapshot(snapshot: SavedLabelingSnapshot): void {
         labelingStore.loadState(snapshot.labeling);
     }
 
@@ -373,7 +371,7 @@ export class AlignmentLabelingStore {
         this._alignmentHistory.add(this.getAlignmentSnapshot());
     }
 
-    public alignmentHistoryReset(): void {
+    private alignmentHistoryReset(): void {
         this._alignmentHistory.reset();
     }
 
@@ -381,7 +379,7 @@ export class AlignmentLabelingStore {
         this._labelingHistory.add(this.getLabelingSnapshot());
     }
 
-    public labelingHistoryReset(): void {
+    private labelingHistoryReset(): void {
         this._labelingHistory.reset();
     }
 

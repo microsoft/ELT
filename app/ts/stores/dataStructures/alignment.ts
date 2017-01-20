@@ -34,10 +34,9 @@ export class MarkerCorrespondence {
 
 export class AlignedTimeSeries {
     public id: string;
-    public track: Track;
 
     constructor(
-        track: Track,
+        public trackId: string,
         public referenceStart: number,     // The starting point of the timeseries in reference time.
         public referenceEnd: number,       // The ending point of the timeseries in reference time.
         public timeSeries: TimeSeries[], // should have the same timestampStart and timestampEnd (aka., from the same sensor)
@@ -45,13 +44,12 @@ export class AlignedTimeSeries {
         public aligned: boolean,
     ) {
         this.id = seriesIdFactory();
-        this.track = observable.ref(track); // cut off mbox recursive dependency
     }
 
     // tslint:disable-next-line:function-name
     public static clone(other: AlignedTimeSeries, track: Track): AlignedTimeSeries {
         return new AlignedTimeSeries(
-            track, other.referenceStart, other.referenceEnd, other.timeSeries, other.source, other.aligned);
+            track.id, other.referenceStart, other.referenceEnd, other.timeSeries, other.source, other.aligned);
     }
 
     public get duration(): number { return this.referenceEnd - this.referenceStart; }
@@ -106,7 +104,7 @@ export class Track {
         const track = new Track(trackIdFactory(), false, []);
         track.alignedTimeSeries = [
             new AlignedTimeSeries(
-                track,
+                track.id,
                 0, timeseries[0].timestampEnd - timeseries[0].timestampStart,
                 timeseries,
                 fileName,
