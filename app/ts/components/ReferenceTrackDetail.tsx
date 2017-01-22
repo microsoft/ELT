@@ -45,11 +45,10 @@ export class ReferenceTrackDetail extends React.Component<ReferenceTrackDetailPr
 
     private onClickTrack(t: number): void {
         if (this.props.mode === 'alignment') {
-            const marker: Marker = {
+            stores.alignmentStore.addMarker({
                 timeSeries: stores.alignmentLabelingStore.referenceTrack.alignedTimeSeries[0],
                 localTimestamp: t
-            };
-            stores.alignmentStore.addMarker(marker);
+            });
         }
     }
 

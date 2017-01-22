@@ -4,13 +4,7 @@ import { alignmentLabelingStore } from './stores';
 import { action, autorun, IObservableArray, observable } from 'mobx';
 
 
-export function startTransition(
-    duration: number,
-    easing: string,
-    onProgress?: (t: number, finish?: boolean) => void): TransitionController {
 
-    return new TransitionController(duration, easing, onProgress);
-}
 
 // AlignmentLabelingUiStore: UI States for common part of alignment and labeling: the global zooming level. 
 export class AlignmentLabelingUiStore {
@@ -126,12 +120,12 @@ export class AlignmentLabelingUiStore {
                 const zoom0 = this.referenceViewPPS;
                 const start1 = start;
                 const zoom1 = pps;
-                this._referenceViewTransition = startTransition(100, 'linear', (t: number) => {
+                this._referenceViewTransition = new TransitionController(100, 'linear', action((t: number) => {
                     this.referenceViewStart = start0 + (start1 - start0) * t;
                     if (zoom1) {
                         this.referenceViewPPS = 1 / (1 / zoom0 + (1 / zoom1 - 1 / zoom0) * t);
                     }
-                });
+                }));
             }
         }
     }
@@ -155,7 +149,6 @@ export class AlignmentLabelingUiStore {
             const originalStart = this.referenceViewStart;
             const timeWidth = this.referenceViewDuration;
             this.setReferenceViewZooming(originalStart + timeWidth * percentage, null, true);
-
         }
     }
 

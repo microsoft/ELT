@@ -236,9 +236,7 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
         const trackLayout = layoutMap.get(timeSeries.trackId);
         if (!trackLayout) { return null; }
         const alignmentState = stores.alignmentUiStore.getAlignmentParameters(timeSeries);
-        const [rangeStart, pixelsPerSecond] = alignmentState ?
-            [alignmentState.rangeStart, alignmentState.pixelsPerSecond] :
-            [stores.alignmentLabelingUiStore.referenceViewStart, stores.alignmentLabelingUiStore.referenceViewPPS];
+        const [rangeStart, pixelsPerSecond] = [alignmentState.rangeStart, alignmentState.pixelsPerSecond];
         // scale: Reference -> Pixel.
         const sReferenceToPixel = d3.scaleLinear()
             .domain([rangeStart, rangeStart + this.props.viewWidth / pixelsPerSecond])
@@ -252,8 +250,8 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
         return {
             x: x,
             pps: pps,
-            xScale: (t) => sReferenceToPixel(sSignalToReference(t)),
-            xScaleInvert: (xx) => sSignalToReference.invert(sReferenceToPixel.invert(xx)),
+            xScale: t => sReferenceToPixel(sSignalToReference(t)),
+            xScaleInvert: xx => sSignalToReference.invert(sReferenceToPixel.invert(xx)),
             y0: trackLayout.y0,
             y1: trackLayout.y1
         };

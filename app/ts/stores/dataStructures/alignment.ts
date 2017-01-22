@@ -123,8 +123,8 @@ export class Track {
 
 export class AlignmentParameters {
     // rangeStart and pixelsPerSecond in the timeSeries's time.
-    public rangeStart: number;
-    public pixelsPerSecond: number;
+    public readonly rangeStart: number;
+    public readonly pixelsPerSecond: number;
     // Only used when undo/redo.
     public referenceStart?: number;
     public referenceEnd?: number;
