@@ -1,7 +1,7 @@
 // UI states for alignment.
 
 import { AlignedTimeSeries, AlignmentParameters, Marker, MarkerCorrespondence, Track } from '../stores/dataStructures/alignment';
-import { alignmentLabelingUiStore, alignmentStore } from './stores';
+import { alignmentLabelingStore, alignmentLabelingUiStore, alignmentStore } from './stores';
 import * as d3 from 'd3';
 import { action, observable, ObservableMap } from 'mobx';
 
@@ -54,12 +54,12 @@ export class AlignmentUiStore {
         block.forEach(series => {
             const currentState = this._alignmentParameterMap.get(series.id.toString());
             if (currentState) {
-                if (rangeStart) {
-                    currentState.rangeStart = rangeStart;
-                }
-                if (pixelsPerSecond) {
-                    currentState.pixelsPerSecond = pixelsPerSecond;
-                }
+                this._alignmentParameterMap.set(
+                    series.id.toString(),
+                    {
+                        rangeStart: rangeStart || currentState.rangeStart,
+                        pixelsPerSecond: pixelsPerSecond || currentState.pixelsPerSecond
+                    });
             }
         });
     }
@@ -86,19 +86,26 @@ export class AlignmentUiStore {
     }
 
     public getAlignmentParameters(timeSeries: AlignedTimeSeries): AlignmentParameters {
-        const id = timeSeries.id.toString();
-        if (!this._alignmentParameterMap.has(id)) {
+        if (timeSeries.trackId === alignmentLabelingStore.referenceTrack.id) {
+            return {
+                rangeStart: alignmentLabelingUiStore.referenceViewStart,
+                pixelsPerSecond: alignmentLabelingUiStore.referenceViewPPS
+            };
+        }
+        if (!this._alignmentParameterMap.has(timeSeries.id)) {
             this.setAlignmentParameters(timeSeries, {
                 rangeStart: timeSeries.referenceStart,
                 pixelsPerSecond: alignmentLabelingUiStore.viewWidth / timeSeries.duration
             });
         }
-        return this._alignmentParameterMap.get(timeSeries.id.toString());
+        return this._alignmentParameterMap.get(timeSeries.id);
     }
 
     @action
     public setAlignmentParameters(timeSeries: AlignedTimeSeries, state: AlignmentParameters): void {
-        this._alignmentParameterMap.set(timeSeries.id.toString(), state);
+        if (timeSeries.id !== alignmentLabelingStore.referenceTrack.id) {
+            this._alignmentParameterMap.set(timeSeries.id.toString(), state);
+        }
     }
 
 }

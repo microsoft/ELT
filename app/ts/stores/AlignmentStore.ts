@@ -57,11 +57,10 @@ export class TimeSeriesStateSnapshot {
             if (!series) { return; }
             series.referenceStart = info.referenceStart;
             series.referenceEnd = info.referenceEnd;
-            const state = alignmentUiStore.getAlignmentParameters(series);
-            if (state) {
-                state.rangeStart = info.rangeStart;
-                state.pixelsPerSecond = info.pixelsPerSecond;
-            }
+            alignmentUiStore.setAlignmentParameters(
+                series,
+                { rangeStart: info.rangeStart, pixelsPerSecond: info.pixelsPerSecond }
+            );
         });
     }
 
@@ -81,11 +80,13 @@ export class TimeSeriesStateSnapshot {
             const info2 = s2.data.get(seriesID);
             series.referenceStart = mix(info.referenceStart, info2.referenceStart);
             series.referenceEnd = mix(info.referenceEnd, info2.referenceEnd);
-            const state = alignmentUiStore.getAlignmentParameters(series);
-            if (state) {
-                state.rangeStart = mix(info.rangeStart, info2.rangeStart);
-                state.pixelsPerSecond = mixINV(info.pixelsPerSecond, info2.pixelsPerSecond);
-            }
+            alignmentUiStore.setAlignmentParameters(
+                series,
+                {
+                    rangeStart: mix(info.rangeStart, info2.rangeStart),
+                    pixelsPerSecond: mixINV(info.pixelsPerSecond, info2.pixelsPerSecond)
+                }
+            );
         });
     }
 }
@@ -269,12 +270,12 @@ export class AlignmentStore {
         if (animate) {
             const snapshot1 = new TimeSeriesStateSnapshot(this);
             snapshot0.apply();
-            this._alignmentTransitionController = new TransitionController(100, 'linear', (t, finish) => {
+            this._alignmentTransitionController = new TransitionController(100, 'linear', action((t, finish) => {
                 snapshot0.applyInterpolate(snapshot1, t);
                 if (finish) {
                     snapshot1.apply();
                 }
-            });
+            }));
         }
     }
 
@@ -285,11 +286,12 @@ export class AlignmentStore {
             if (this.isBlockAligned(block)) {
                 block.forEach((s) => {
                     s.aligned = true;
-                    const info = alignmentUiStore.getAlignmentParameters(s);
-                    if (info) {
-                        info.rangeStart = alignmentLabelingUiStore.referenceViewStart;
-                        info.pixelsPerSecond = alignmentLabelingUiStore.referenceViewPPS;
-                    }
+                    alignmentUiStore.setAlignmentParameters(
+                        s, {
+                            rangeStart: alignmentLabelingUiStore.referenceViewStart,
+                            pixelsPerSecond: alignmentLabelingUiStore.referenceViewPPS
+                        }
+                    );
                 });
             } else {
                 const ranges: [number, number][] = [];
@@ -303,11 +305,9 @@ export class AlignmentStore {
                 const averageStart = d3.mean(ranges, (x) => x[0]);
                 const averagePPS = 1 / d3.mean(ranges, (x) => 1 / x[1]);
                 block.forEach((s) => {
-                    const info = alignmentUiStore.getAlignmentParameters(s);
-                    if (info) {
-                        info.rangeStart = averageStart;
-                        info.pixelsPerSecond = averagePPS;
-                    }
+                    alignmentUiStore.setAlignmentParameters(
+                        s, { rangeStart: averageStart, pixelsPerSecond: averagePPS }
+                    );
                 });
             }
         }
