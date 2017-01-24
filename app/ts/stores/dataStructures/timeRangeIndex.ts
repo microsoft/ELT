@@ -1,49 +1,37 @@
 // An index to retrieve labels (or other range objects).
 
-import {TimeRange} from './labeling';
+import { TimeRange } from './labeling';
+import { ObservableSet } from './ObservableSet';
+import { action, computed, observable } from 'mobx';
 
-export function mergeTimeRangeArrays<TimeRangeType extends TimeRange>(arr1: TimeRangeType[], arr2: TimeRangeType[]): TimeRangeType[] {
-    let i1 = 0;
-    let i2 = 0;
-    const result: TimeRangeType[] = [];
-    while (i1 < arr1.length || i2 < arr2.length) {
-        if (i1 >= arr1.length) {
-            result.push(arr2[i2++]);
-        } else if (i2 >= arr2.length) {
-            result.push(arr1[i1++]);
-        } else if (arr1[i1].timestampStart < arr2[i2].timestampStart) {
-            result.push(arr1[i1++]);
-        } else {
-            result.push(arr2[i2++]);
-        }
-    }
-    return result;
-}
+
 
 export class TimeRangeIndex<TimeRangeType extends TimeRange> {
-    private _ranges: Set<TimeRangeType>;
+    @observable private _ranges: ObservableSet<TimeRangeType>;
 
     constructor() {
-        this._ranges = new Set<TimeRangeType>();
+        this._ranges = new ObservableSet<TimeRangeType>(
+            tr => tr.timestampStart + '-' + tr.timestampEnd
+        );
     }
 
-    public add(range: TimeRangeType): void {
+    @action public add(range: TimeRangeType): void {
         this._ranges.add(range);
     }
 
-    public addRanges(ranges: TimeRangeType[]): void {
+    @action public addRanges(ranges: TimeRangeType[]): void {
         ranges.forEach((r) => this._ranges.add(r));
     }
 
-    public remove(range: TimeRangeType): void {
-        this._ranges.delete(range);
+    @action public remove(range: TimeRangeType): void {
+        this._ranges.remove(range);
     }
 
-    public clear(): void {
+    @action public clear(): void {
         this._ranges.clear();
     }
 
-    public size(): number {
+    @computed public get size(): number {
         return this._ranges.size;
     }
 
@@ -56,37 +44,24 @@ export class TimeRangeIndex<TimeRangeType extends TimeRange> {
     }
 
     // Get all ranges in this index, return in arbitary order.
-    public getRanges(): TimeRangeType[] {
-        const ranges: TimeRangeType[] = [];
-        this._ranges.forEach((r) => ranges.push(r));
-        return ranges;
+    @computed public get ranges(): TimeRangeType[] {
+        return this._ranges.items;
     }
 
     // Get all ranges that *overlaps* with [tmin, tmax], return them in order by timestampStart.
     public getRangesInRange(tmin: number, tmax: number): TimeRangeType[] {
-        let ranges: TimeRangeType[] = [];
-        this._ranges.forEach((r) => {
-            if (r.timestampEnd >= tmin && r.timestampStart <= tmax) {
-                ranges.push(r);
-            }
-        });
-        ranges = ranges.sort((a, b) => a.timestampStart - b.timestampStart);
-        return ranges;
-    }
-
-    // = getRangesInRange(tmin, tmax).length.
-    public getNumberOfRangesInRange(tmin: number, tmax: number): number {
-        return this.getRangesInRange(tmin, tmax).length;
+        return this.ranges
+            .filter(r => r.timestampEnd >= tmin && r.timestampStart <= tmax)
+            .sort((a, b) => a.timestampStart - b.timestampStart);
     }
 
     // Get all ranges that *overlaps* with [tmin, tmax], whose overlap length is larger than margin. Return them in order by timestampStart.
     public getRangesWithMargin(tmin: number, tmax: number, margin: number): TimeRangeType[] {
-        let ranges: TimeRangeType[] = this.getRangesInRange(tmin, tmax);
-        ranges = ranges.filter((range) => {
-            const oBegin = Math.max(range.timestampStart, tmin);
-            const oEnd = Math.min(range.timestampEnd, tmax);
-            return oEnd - oBegin > margin;
-        });
-        return ranges;
+        return this.getRangesInRange(tmin, tmax)
+            .filter(range => {
+                const oBegin = Math.max(range.timestampStart, tmin);
+                const oEnd = Math.min(range.timestampEnd, tmax);
+                return oEnd - oBegin > margin;
+            });
     }
 }

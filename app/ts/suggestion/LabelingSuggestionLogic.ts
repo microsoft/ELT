@@ -2,7 +2,7 @@
 
 import { Dataset } from '../stores/dataStructures/dataset';
 import { Label, TimeRange } from '../stores/dataStructures/labeling';
-import { TimeRangeIndex } from '../stores/dataStructures/timeRangeIndex';
+import { TimeRangeIndex } from '../stores/dataStructures/TimeRangeIndex';
 import * as d3 from 'd3';
 
 

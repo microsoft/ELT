@@ -3,11 +3,11 @@
 // Options for labeling and suggestions (move to elsewhere?)
 
 import { Label, PartialLabel, SignalsViewMode } from '../stores/dataStructures/labeling';
-import { PerItemEventListeners } from '../stores/utils';
+import { ObservableSet } from '../stores/dataStructures/ObservableSet';
 import { getLabelingSuggestionLogic, LabelingSuggestionLogic, LabelingSuggestionLogicType } from '../suggestion/LabelingSuggestionLogic';
 import { LabelingStore } from './LabelingStore';
-import { alignmentLabelingUiStore, labelingStore } from './stores';
-import { action, observable } from 'mobx';
+import { labelingStore } from './stores';
+import { action, computed, observable } from 'mobx';
 
 
 // LabelingUIStore
@@ -17,17 +17,13 @@ import { action, observable } from 'mobx';
 export class LabelingUiStore {
     // Label hover and selection.
     @observable public hoveringLabel: Label;
-    @observable public selectedLabels: Set<Label>;
+    @observable public selectedLabels: ObservableSet<Label>;
 
     // Current selected class.
     @observable public currentClass: string;
 
     // Display settings.
     @observable public signalsViewMode: SignalsViewMode;
-
-    // Per-label event listeners.
-    private _labelHoveringListeners: PerItemEventListeners<Label>;
-    private _labelSelectedListeners: PerItemEventListeners<Label>;
 
     // // Playback control.
     // private _isPlaying: boolean;
@@ -54,18 +50,14 @@ export class LabelingUiStore {
         this.signalsViewMode = SignalsViewMode.TIMESERIES;
 
         this.hoveringLabel = null;
-        this.selectedLabels = new Set<Label>();
+        this.selectedLabels = new ObservableSet<Label>(
+            lab => lab.className + ':' + lab.timestampStart + '-' + lab.timestampEnd);
 
         this.suggestionEnabled = true;
         this.suggestionLogic = getLabelingSuggestionLogic(LabelingSuggestionLogicType.CURRENT_VIEW);
         this._changePointsEnabled = true;
         this.suggestionConfidenceThreshold = 0.2;
         this._suggestionConfidenceHistogram = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-
-        // this._isPlaying = false;
-
-        this._labelHoveringListeners = new PerItemEventListeners<Label>();
-        this._labelSelectedListeners = new PerItemEventListeners<Label>();
 
         const nonIgnoreClases = labelingStore.classes.filter((x) => x !== 'IGNORE');
         this.currentClass = nonIgnoreClases.length > 0 ? nonIgnoreClases[0] : null;
@@ -80,33 +72,26 @@ export class LabelingUiStore {
         // // NOTICE THAT THIS STORES PARENT IS A LABELING STORE??
         // labelingStore.classesChanged.on(this.onClassesChanged.bind(this));
         // labelingStore.labelsArrayChanged.on(this.onLabelsArrayChanged.bind(this));
-
     }
 
-    // Exposed properties.
-    // FIXME: computed or public methods?
-    public get suggestionLogicType(): LabelingSuggestionLogicType { return this.suggestionLogic.getType(); }
 
-    public get suggestionProgress(): number[] {
+    @computed public get suggestionProgress(): number[] {
         if (!this._isSuggesting) { return null; }
         return [this._suggestionTimestampStart, this._suggestionTimestampCompleted, this._suggestionTimestampEnd];
     }
 
-    public get suggestionConfidenceHistogram(): number[] {
+    @computed public get suggestionConfidenceHistogram(): number[] {
         return this._suggestionConfidenceHistogram;
     }
 
 
-
-    @action
-    public hoverLabel(label: Label): void {
+    @action public hoverLabel(label: Label): void {
         if (this.hoveringLabel !== label) {
             this.hoveringLabel = label;
         }
     }
 
-    @action
-    public selectLabel(label: Label, ctrlSelect: boolean = false, shiftSelect: boolean = false): void {
+    @action public selectLabel(label: Label, ctrlSelect: boolean = false, shiftSelect: boolean = false): void {
         const previous_selected_labels: Label[] = [];
         this.selectedLabels.forEach(lab => { previous_selected_labels.push(lab); });
         this.selectedLabels.clear();
@@ -115,37 +100,13 @@ export class LabelingUiStore {
         this.currentClass = label.className;
     }
 
-    // FIXME: no one seems to call this?
-    @action
-    public selectNextLabel(advance: number): void {
-        const previousSelectedLabels: Label[] = [];
-        this.selectedLabels.forEach((label) => { previousSelectedLabels.push(label); });
-        if (previousSelectedLabels.length === 1) {
-            const label = previousSelectedLabels[0];
-
-            // Find the next label.
-            const labels = labelingStore.labels.concat(labelingStore.suggestions);
-            labels.sort((a, b) => a.timestampStart - b.timestampStart);
-            const nextLabelIndex = labels.indexOf(label) + advance;
-
-            if (nextLabelIndex >= 0 && nextLabelIndex < labels.length) {
-                this.selectedLabels.clear();
-                this.selectedLabels.add(labels[nextLabelIndex]);
-                // Change current class to label's class.
-                this.currentClass = labels[nextLabelIndex].className;
-            }
-        }
-    }
-
-    @action
-    public clearLabelSelection(): void {
+    @action public clearLabelSelection(): void {
         const previous_selected_labels: Label[] = [];
         this.selectedLabels.forEach((label) => { previous_selected_labels.push(label); });
         this.selectedLabels.clear();
     }
 
-    @action
-    public selectClass(className: string): void {
+    @action public selectClass(className: string): void {
         // Change current class to label's class.
         if (this.currentClass !== className) {
             if (labelingStore.classes.indexOf(className) >= 0) {
@@ -154,8 +115,7 @@ export class LabelingUiStore {
         }
     }
 
-    @action
-    public setSuggestionProgress(
+    @action public setSuggestionProgress(
         suggesting: boolean,
         timestampStart: number,
         timestampCompleted: number,
@@ -171,81 +131,56 @@ export class LabelingUiStore {
         }
     }
 
-    @action
-    public setSuggestionConfidenceThreshold(threshold: number): void {
+    @action public setSuggestionConfidenceThreshold(threshold: number): void {
         if (this.suggestionConfidenceThreshold !== threshold) {
             this.suggestionConfidenceThreshold = threshold;
         }
     }
 
-    @action
-    public setSuggestionEnabled(enabled: boolean): void {
+    @action public setSuggestionEnabled(enabled: boolean): void {
         this.suggestionEnabled = enabled;
     }
 
-    @action
-    public setSuggestionLogic(logic: LabelingSuggestionLogicType): void {
+    @action public setSuggestionLogic(logic: LabelingSuggestionLogicType): void {
         this.suggestionLogic = getLabelingSuggestionLogic(logic);
     }
 
-    // FIXME: no one seems to call this?
-    @action
-    public setChangePointsEnabled(enabled: boolean): void {
-        this._changePointsEnabled = enabled;
-    }
-
-    @action
-    public setSignalsViewMode(mode: SignalsViewMode): void {
+    @action public setSignalsViewMode(mode: SignalsViewMode): void {
         this.signalsViewMode = mode;
     }
 
-    // FIXME: no one seems to call this?
-    @action
-    public revealSelectedLabel(): void {
-        let selectedLabel: Label = null;
-        this.selectedLabels.forEach((l) => selectedLabel = l);
-        if (selectedLabel) {
-            if (selectedLabel.timestampStart < alignmentLabelingUiStore.referenceViewStart ||
-                selectedLabel.timestampEnd > alignmentLabelingUiStore.referenceViewEnd) {
-                alignmentLabelingUiStore.setReferenceViewZooming(
-                    selectedLabel.timestampStart - alignmentLabelingUiStore.referenceViewDuration * 0.2,
-                    null, true);
-            }
-        }
-    }
-
-    public updateLabel(label: Label, newLabel: PartialLabel): void {
+    @action public updateLabel(label: Label, newLabel: PartialLabel): void {
         labelingStore.updateLabel(label, newLabel);
     }
 
-
-    public removeLabel(label: Label): void {
+    @action public removeLabel(label: Label): void {
         labelingStore.removeLabel(label);
     }
 
 
-    private onClassesChanged(): void {
-        if (labelingStore.classes.indexOf(this.currentClass) < 0) {
-            this.currentClass = labelingStore.classes.length > 0 ? labelingStore.classes[0] : null;
-        }
-    }
+    // private onClassesChanged(): void {
+    //     if (labelingStore.classes.indexOf(this.currentClass) < 0) {
+    //         this.currentClass = labelingStore.classes.length > 0 ? labelingStore.classes[0] : null;
+    //     }
+    // }
 
-    private onLabelsArrayChanged(): void {
-        // Remove labels from selection if deleted.
-        let deleted_labels = false;
-        this.selectedLabels.forEach((label) => {
-            if (labelingStore.labels.indexOf(label) < 0) {
-                this.selectedLabels.delete(label);
-                deleted_labels = true;
-            }
-        });
-    }
+    // private onLabelsArrayChanged(): void {
+    //     // Remove labels from selection if deleted.
+    //     let deleted_labels = false;
+    //     this.selectedLabels.forEach((label) => {
+    //         if (labelingStore.labels.indexOf(label) < 0) {
+    //             this.selectedLabels.remove(label);
+    //             deleted_labels = true;
+    //         }
+    //     });
+    // }
 
     public getLabelsInRange(timestampStart: number, timestampEnd: number): Label[] {
+        // FIXME: I think all these filters accomplish nothing.
         const labels = labelingStore.getLabelsInRange(timestampStart, timestampEnd);
-        return labels.filter((l) => l !== this.hoveringLabel && !this.selectedLabels.has(l)).concat(
-            labels.filter((l) => l !== this.hoveringLabel && this.selectedLabels.has(l))).concat(
-            labels.filter((l) => l === this.hoveringLabel));
+        return labels.filter(l => l !== this.hoveringLabel && !this.selectedLabels.has(l)).concat(
+            labels.filter(l => l !== this.hoveringLabel && this.selectedLabels.has(l))).concat(
+            labels.filter(l => l === this.hoveringLabel));
     }
 
     public isLabelHovered(label: Label): boolean {
