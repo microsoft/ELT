@@ -1,10 +1,10 @@
 import { AlignedTimeSeries } from '../stores/dataStructures/alignment';
 import { Dataset, SensorTimeSeries } from '../stores/dataStructures/dataset';
+import { TimeRange } from '../stores/dataStructures/labeling';
 import { Label, LabelConfirmationState, PartialLabel } from '../stores/dataStructures/labeling';
 import { SavedLabelingState } from '../stores/dataStructures/project';
 import { resampleColumn } from '../stores/dataStructures/sampling';
-import { mergeTimeRangeArrays, TimeRangeIndex } from '../stores/dataStructures/timeRangeIndex';
-import { PerItemEventListeners } from '../stores/utils';
+import { TimeRangeIndex } from '../stores/dataStructures/TimeRangeIndex';
 import { AlignmentStore } from './AlignmentStore';
 import { alignmentLabelingStore, alignmentLabelingUiStore, labelingUiStore, uiStore } from './stores';
 import { UiStore } from './UiStore';
@@ -24,14 +24,37 @@ const d3category20 = [
     '#c7c7c7', '#bcbd22', '#dbdb8d', '#17becf', '#9edae5'
 ];
 
-export class LabelingStore {
-    private _labelsIndex: TimeRangeIndex<Label>;
-    private _windowLabelsIndex: TimeRangeIndex<Label>;
-    private _windowAccuracyLabelsIndex: TimeRangeIndex<Label>;
-    private _suggestedLabelsIndex: TimeRangeIndex<Label>;
 
-    private _windowLabelIndexHistory: TimeRangeIndex<Label>[];
-    private _windowLabelsHistory: Label[][];
+export function mergeTimeRangeArrays<TimeRangeType extends TimeRange>(arr1: TimeRangeType[], arr2: TimeRangeType[]): TimeRangeType[] {
+    let i1 = 0;
+    let i2 = 0;
+    const result: TimeRangeType[] = [];
+    while (i1 < arr1.length || i2 < arr2.length) {
+        if (i1 >= arr1.length) {
+            result.push(arr2[i2++]);
+        } else if (i2 >= arr2.length) {
+            result.push(arr1[i1++]);
+        } else if (arr1[i1].timestampStart < arr2[i2].timestampStart) {
+            result.push(arr1[i1++]);
+        } else {
+            result.push(arr2[i2++]);
+        }
+    }
+    return result;
+}
+
+
+
+
+
+export class LabelingStore {
+    @observable private _labelsIndex: TimeRangeIndex<Label>;
+    @observable private _windowLabelsIndex: TimeRangeIndex<Label>;
+    @observable private _windowAccuracyLabelsIndex: TimeRangeIndex<Label>;
+    @observable private _suggestedLabelsIndex: TimeRangeIndex<Label>;
+
+    @observable private _windowLabelIndexHistory: TimeRangeIndex<Label>[];
+    @observable private _windowLabelsHistory: Label[][];
 
     @observable public changePoints: number[];
     @observable public classes: string[];
@@ -39,47 +62,8 @@ export class LabelingStore {
     @observable public classColormap: { [name: string]: string };
     @observable public timestampConfirmed: number;
 
-    private _labelChangedListeners: PerItemEventListeners<Label>;
-
     @observable public alignedDataset: Dataset;
     private _shouldUpdateAlignedDatasetOnNextTabChange: boolean;
- 
-
-    // FIXME: when to use computed vs just a regular function?   
-    @computed public get labels(): Label[] {
-        return this._labelsIndex.getRanges();
-    }
-
-    @computed public get suggestions(): Label[] {
-        return this._suggestedLabelsIndex.getRanges();
-    }
-  
-    // FIXME: possibly make these computed
-    public getLabelsInRange(tmin: number, tmax: number): Label[] {
-        return mergeTimeRangeArrays(
-            this._labelsIndex.getRangesInRange(tmin, tmax),
-            this._suggestedLabelsIndex.getRangesInRange(tmin, tmax));
-    }
-
-    public getLabelsAtTime(time: number): Label[] {
-        return this._labelsIndex.getRangesInRange(time, time);
-    }
-
-    public getWindowLabelsInRange(tmin: number, tmax: number): Label[] {
-        return this._windowLabelsIndex.getRangesInRange(tmin, tmax);
-    }
-
-    public getWindowAccuracyLabelsInRange(tmin: number, tmax: number): Label[] {
-        return this._windowAccuracyLabelsIndex.getRangesInRange(tmin, tmax);
-    }
-
-    public getWindowHistoryLabelsInRange(tmin: number, tmax: number, historyIndex: number): Label[] {
-        return this._windowLabelIndexHistory[historyIndex].getRangesInRange(tmin, tmax);
-    }
-
-    public getActualLabelsInRange(tmin: number, tmax: number): Label[] {
-        return this._labelsIndex.getRangesInRange(tmin, tmax);
-    }
 
     constructor(alignmentStore: AlignmentStore, uiStore: UiStore) {
         this._labelsIndex = new TimeRangeIndex<Label>();
@@ -96,8 +80,6 @@ export class LabelingStore {
 
         this.changePoints = [];
 
-        this._labelChangedListeners = new PerItemEventListeners<Label>();
-
         this.alignedDataset = null;
         this._shouldUpdateAlignedDatasetOnNextTabChange = false;
         autorun(() => this.updateAlignedDataset());
@@ -110,14 +92,27 @@ export class LabelingStore {
         // });
     }
 
-    @action
-    public addLabel(label: Label): void {
-        alignmentLabelingStore.labelingHistoryRecord();
-        this._labelsIndex.add(label);
+    @computed public get labels(): Label[] {
+        return this._labelsIndex.ranges;
     }
 
-    @action
-    public removeLabel(label: Label): void {
+    @computed public get suggestions(): Label[] {
+        return this._suggestedLabelsIndex.ranges;
+    }
+
+    public getLabelsInRange(tmin: number, tmax: number): Label[] {
+        return mergeTimeRangeArrays(
+            this._labelsIndex.getRangesInRange(tmin, tmax),
+            this._suggestedLabelsIndex.getRangesInRange(tmin, tmax));
+    }
+
+
+    @action public addLabel(label: Label): void {
+        this._labelsIndex.add(label);
+        alignmentLabelingStore.labelingHistoryRecord();
+    }
+
+    @action public removeLabel(label: Label): void {
         alignmentLabelingStore.labelingHistoryRecord();
         if (this._labelsIndex.has(label)) {
             this._labelsIndex.remove(label);
@@ -127,8 +122,7 @@ export class LabelingStore {
         }
     }
 
-    @action
-    public updateLabel(label: Label, newLabel: PartialLabel): void {
+    @action public updateLabel(label: Label, newLabel: PartialLabel): void {
         alignmentLabelingStore.labelingHistoryRecord();
         // Update the label info.
         if (newLabel.timestampStart !== undefined) { label.timestampStart = newLabel.timestampStart; }
@@ -154,20 +148,20 @@ export class LabelingStore {
                 });
                 if (decision) {
                     if (decision.confirmLabels) {
-                        decision.confirmLabels.forEach((label) => {
-                            label.state = LabelConfirmationState.CONFIRMED_BOTH;
-                            this._suggestedLabelsIndex.remove(label);
-                            this._labelsIndex.add(label);
+                        decision.confirmLabels.forEach(lab => {
+                            lab.state = LabelConfirmationState.CONFIRMED_BOTH;
+                            this._suggestedLabelsIndex.remove(lab);
+                            this._labelsIndex.add(lab);
                         });
                     }
                     if (decision.deleteLabels) {
-                        decision.deleteLabels.forEach((label) => {
-                            this._suggestedLabelsIndex.remove(label);
+                        decision.deleteLabels.forEach(lab => {
+                            this._suggestedLabelsIndex.remove(lab);
                         });
                     }
                     if (decision.rejectLabels) {
-                        decision.rejectLabels.forEach((label) => {
-                            label.state = LabelConfirmationState.REJECTED;
+                        decision.rejectLabels.forEach(lab => {
+                            lab.state = LabelConfirmationState.REJECTED;
                         });
                     }
                 }
@@ -175,8 +169,13 @@ export class LabelingStore {
         }
     }
 
-    @action
-    public suggestLabels(labels: Label[], timestampStart: number, timestampEnd: number, timestampCompleted: number, generation: number): void {
+    @action public suggestLabels(
+        labels: Label[],
+        timestampStart: number,
+        timestampEnd: number,
+        timestampCompleted: number,
+        generation: number): void {
+
         const lastLabelTimestampEnd = timestampCompleted;
         const thisGeneration = generation;
         let labelsChanged = false;
@@ -212,32 +211,22 @@ export class LabelingStore {
         });
     }
 
-    @action
-    public suggestChangePoints(changePoints: number[]): void {
+    @action public suggestChangePoints(changePoints: number[]): void {
         this.changePoints = changePoints;
     }
 
     // FIXME: removeAllSuggestions also called in LabelingSUggestionGenerator
-    @action
-    public removeAllSuggestions(): void {
-        if (this._suggestedLabelsIndex.size() > 0) {
-            this._suggestedLabelsIndex.clear();
-        }
+    @action public removeAllSuggestions(): void {
+        this._suggestedLabelsIndex.clear();
     }
 
-    @action
-    public removeAllLabels(): void {
+    @action public removeAllLabels(): void {
         alignmentLabelingStore.labelingHistoryRecord();
-        if (this._labelsIndex.size() > 0) {
-            this._labelsIndex.clear();
-        }
-        if (this._suggestedLabelsIndex.size() > 0) {
-            this._suggestedLabelsIndex.clear();
-        }
+        this._labelsIndex.clear();
+        this._suggestedLabelsIndex.clear();
     }
 
-    @action
-    public addClass(className: string): void {
+    @action public addClass(className: string): void {
         alignmentLabelingStore.labelingHistoryRecord();
         if (this.classes.indexOf(className) < 0) {
             this.classes.push(className);
@@ -245,8 +234,7 @@ export class LabelingStore {
         }
     }
 
-    @action
-    public removeClass(className: string): void {
+    @action public removeClass(className: string): void {
         alignmentLabelingStore.labelingHistoryRecord();
         // Remove the labels of that class.
         const toRemove = [];
@@ -267,8 +255,7 @@ export class LabelingStore {
         }
     }
 
-    @action
-    public renameClass(oldClassName: string, newClassName: string): void {
+    @action public renameClass(oldClassName: string, newClassName: string): void {
         alignmentLabelingStore.labelingHistoryRecord();
         if (this.classes.indexOf(newClassName) < 0) {
             let renamed = false;
@@ -284,7 +271,7 @@ export class LabelingStore {
                     renamed = true;
                 }
             });
-            
+
             const index = this.classes.indexOf(oldClassName);
             if (index >= 0) {
                 this.classes[index] = newClassName;
@@ -294,8 +281,7 @@ export class LabelingStore {
         }
     }
 
-    @action
-    public confirmVisibleSuggestions() {
+    @action public confirmVisibleSuggestions(): void {
         alignmentLabelingStore.labelingHistoryRecord();
         // Get visible suggestions.
         let visibleSuggestions = this._suggestedLabelsIndex.getRangesInRange(
@@ -311,7 +297,7 @@ export class LabelingStore {
     }
 
 
-    private updateColors(): void {
+    @action private updateColors(): void {
         // Update class colors, try to keep original colors.
         this.classColors = this.classes.map(() => null);
         const usedColors = [];
@@ -351,7 +337,7 @@ export class LabelingStore {
         }
     }
 
-    private updateAlignedDataset(force: boolean = false): void {
+    @action private updateAlignedDataset(force: boolean = false): void {
         // Update only in labeling mode, if not in labeling mode, schedule an update once the mode is changed to labeling.
         if (!force && uiStore.currentTab !== 'labeling') {
             this._shouldUpdateAlignedDatasetOnNextTabChange = true;
@@ -407,8 +393,7 @@ export class LabelingStore {
         this.alignedDataset = dataset;
     }
 
-    // State saving and loading.
-    public saveState(): SavedLabelingState {
+    @action public saveState(): SavedLabelingState {
         return {
             labels: this.labels,
             classes: this.classes,
@@ -416,7 +401,7 @@ export class LabelingStore {
         };
     }
 
-    public loadState(state: SavedLabelingState): void {
+    @action public loadState(state: SavedLabelingState): void {
         if (state.classes) {
             this.classes = state.classes;
             this.classColormap = state.classColormap;
@@ -428,7 +413,7 @@ export class LabelingStore {
         for (const label of state.labels) {
             this._labelsIndex.add(label);
         }
-        
+
         // Update the current class.
         const nonIgnoreClases = this.classes.filter((x) => x !== 'IGNORE');
         labelingUiStore.currentClass = nonIgnoreClases.length > 0 ? nonIgnoreClases[0] : null;

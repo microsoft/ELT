@@ -46,6 +46,8 @@ export function truncatePPS(pps: number): number {
     return Math.round(pps * scaler) / scaler;
 }
 
+
+
 export class TrackView extends React.Component<TrackViewProps, {}> {
     public refs: {
         [name: string]: Element,

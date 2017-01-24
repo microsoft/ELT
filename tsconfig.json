@@ -8,8 +8,8 @@
         "target": "es5",
         "noImplicitAny": false,
         "sourceMap": true,
-        "experimentalDecorators": true
-        //"forceConsistentCasingInFileNames": true //TODO: check if we need this
+        "experimentalDecorators": true,
+        "forceConsistentCasingInFileNames": true
     },
     "exclude": [
         "typings/main.d.ts",

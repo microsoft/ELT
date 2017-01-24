@@ -71,37 +71,6 @@ export function updateLabelConfirmationState(label: Label, endpoint: string): La
 
 
 
-export class PerItemEventListeners<ItemType> {
-    private _listeners: WeakMap<ItemType, Set<Function>>;
-
-    constructor() {
-        this._listeners = new WeakMap<ItemType, Set<Function>>();
-    }
-
-    public add(item: ItemType, listener: Function): void {
-        let listeners: Set<Function>;
-        if (this._listeners.has(item)) {
-            listeners = this._listeners.get(item);
-        } else {
-            listeners = new Set<Function>();
-            this._listeners.set(item, listeners);
-        }
-        listeners.add(listener);
-    }
-
-    public remove(item: ItemType, listener: Function): void {
-        if (this._listeners.has(item)) {
-            this._listeners.get(item).delete(listener);
-        }
-    }
-
-    public emit(item: ItemType, ...args: any[]): void {
-        if (this._listeners.has(item)) {
-            this._listeners.get(item).forEach((x) => x(...args));
-        }
-    }
-}
-
 export class TransitionController {
     private _timer: number;
     private _onProgress: (t: number, finish?: boolean) => void;

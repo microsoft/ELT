@@ -25,15 +25,17 @@ export class LabelsRangePlot extends React.Component<LabelsRangePlotProps, {}> {
         const props = this.props;
         const labels = stores.labelingUiStore.getLabelsInRange(
             props.rangeStart, props.rangeStart + props.plotWidth / props.pixelsPerSecond);
+
         let threeLeastConfidentSuggestions: Label[] = null;
         if (props.highlightLeastConfidentSuggestions) {
             threeLeastConfidentSuggestions = stores.labelingUiStore.suggestionLogic.calculateHighlightedLabels({
                 suggestionsInView: labels.filter((l) => l.state === LabelConfirmationState.UNCONFIRMED)
             });
         }
+
         return (
             <g transform={`translate(${-this.props.pixelsPerSecond * this.props.rangeStart},0)`}>
-                {labels.map((label, i) =>
+                {labels.map(label =>
                     <LabelPlot
                         key={`label-${getUniqueIDForObject(label)}`}
                         label={label}

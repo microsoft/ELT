@@ -26,25 +26,23 @@ export interface LabelPlotProps {
 }
 
 
-interface LabelPlotState {
-    timestampStart: number;
-    timestampEnd: number;
-    className: string;
-    state: LabelConfirmationState;
-}
-
-
 @observer
-export class LabelPlot extends React.Component<LabelPlotProps, LabelPlotState> {
+export class LabelPlot extends React.Component<LabelPlotProps, {}> {
 
-    private onDragLabel(labelPlot: LabelPlot, event: React.MouseEvent<Element>, mode: string): void {
+    constructor(props: LabelPlotProps, context: any) {
+        super(props, context);
+        this.onMouseEnterLabel = this.onMouseEnterLabel.bind(this);
+        this.onMouseLeaveLabel = this.onMouseLeaveLabel.bind(this);
+    }
+
+    private onDragLabel(event: React.MouseEvent<Element>, mode: string): void {
         if (event.shiftKey || event.button === 2) { return; }
 
         event.stopPropagation();
         const eventTarget = event.target;
-        const label = labelPlot.props.label;
-        const t0 = labelPlot.state.timestampStart;
-        const t1 = labelPlot.state.timestampEnd;
+        const label = this.props.label;
+        const t0 = this.props.label.timestampStart;
+        const t1 = this.props.label.timestampEnd;
         let isSelected = false;
 
         startDragging(
@@ -103,16 +101,17 @@ export class LabelPlot extends React.Component<LabelPlotProps, LabelPlotState> {
         );
     }
 
-    private onMouseEnterLabel(labelPlot: LabelPlot, event: React.MouseEvent<Element>): void {
-        stores.labelingUiStore.hoverLabel(labelPlot.props.label);
+    private onMouseEnterLabel(event: React.MouseEvent<Element>): void {
+        stores.labelingUiStore.hoverLabel(this.props.label);
     }
 
-    private onMouseLeaveLabel(labelPlot: LabelPlot, event: React.MouseEvent<Element>): void {
+    private onMouseLeaveLabel(event: React.MouseEvent<Element>): void {
         stores.labelingUiStore.hoverLabel(null);
     }
 
-    private isLabelConfirmed(state: LabelPlotState): boolean {
-        return state.state === LabelConfirmationState.MANUAL || state.state === LabelConfirmationState.CONFIRMED_BOTH;
+    private isLabelConfirmed(): boolean {
+        return this.props.label.state === LabelConfirmationState.MANUAL ||
+            this.props.label.state === LabelConfirmationState.CONFIRMED_BOTH;
     }
 
     private getSuggestionConfidenceOrOne(): number {
@@ -128,11 +127,11 @@ export class LabelPlot extends React.Component<LabelPlotProps, LabelPlotState> {
     }
 
     private renderLabelOverview(): JSX.Element {
-        const label = this.state;
+        const label = this.props.label;
         const x1 = label.timestampStart * this.props.pixelsPerSecond;
         const x2 = label.timestampEnd * this.props.pixelsPerSecond;
         let topBand = null;
-        if (this.isLabelConfirmed(this.state)) {
+        if (this.isLabelConfirmed()) {
             topBand = (
                 <rect
                     className='top'
@@ -162,7 +161,7 @@ export class LabelPlot extends React.Component<LabelPlotProps, LabelPlotState> {
     }
 
     private renderLabelDetailed(): JSX.Element {
-        const label = this.state;
+        const label = this.props.label;
         const x1 = label.timestampStart * this.props.pixelsPerSecond;
         const x2 = label.timestampEnd * this.props.pixelsPerSecond;
         const additionalClasses = [];
@@ -189,7 +188,7 @@ export class LabelPlot extends React.Component<LabelPlotProps, LabelPlotState> {
         }
 
         let topBand = null;
-        if (this.isLabelConfirmed(this.state)) {
+        if (this.isLabelConfirmed()) {
             topBand = (
                 <rect
                     className='top'
@@ -214,8 +213,8 @@ export class LabelPlot extends React.Component<LabelPlotProps, LabelPlotState> {
 
         return (
             <g className={`label-container ${additionalClasses.join(' ')}`}
-                onMouseEnter={event => this.onMouseEnterLabel(this, event)}
-                onMouseLeave={event => this.onMouseLeaveLabel(this, event)}
+                onMouseEnter={this.onMouseEnterLabel}
+                onMouseLeave={this.onMouseLeaveLabel}
                 >
                 {topBand}
                 <rect
@@ -246,17 +245,17 @@ export class LabelPlot extends React.Component<LabelPlotProps, LabelPlotState> {
                     y={0}
                     width={x2 - x1}
                     height={this.props.height}
-                    onMouseDown={event => this.onDragLabel(this, event, 'both')}
+                    onMouseDown={event => this.onDragLabel(event, 'both')}
                     />
                 <rect
                     className='handler'
                     x={x1 - 3} width={6} y={0} height={this.props.height}
-                    onMouseDown={event => this.onDragLabel(this, event, 'start')}
+                    onMouseDown={event => this.onDragLabel(event, 'start')}
                     />
                 <rect
                     className='handler'
                     x={x2 - 3} width={6} y={0} height={this.props.height}
-                    onMouseDown={event => this.onDragLabel(this, event, 'end')}
+                    onMouseDown={event => this.onDragLabel(event, 'end')}
                     />
                 {uiElements}
             </g>
@@ -265,7 +264,7 @@ export class LabelPlot extends React.Component<LabelPlotProps, LabelPlotState> {
 
 
     public render(): JSX.Element {
-        if (this.state.state === LabelConfirmationState.REJECTED) {
+        if (this.props.label.state === LabelConfirmationState.REJECTED) {
             return <g></g>;
         } else {
             switch (this.props.labelKind) {
