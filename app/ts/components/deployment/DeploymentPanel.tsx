@@ -88,6 +88,7 @@ export class DeploymentPanel extends React.Component<{}, DeploymentPanelState> {
 
     public componentDidMount(): void {
         const prototypes = stores.dtwModelStore.prototypes;
+        if (prototypes.length === 0) { return; }
         const sampleRate = stores.dtwModelStore.prototypeSampleRate;
         const model = generateEllModel(sampleRate, 30, prototypes, confidenceThreshold);
         const ellModelCode = model.GetCodeString();
