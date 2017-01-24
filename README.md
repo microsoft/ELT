@@ -1,2 +1,2 @@
-# ELT
-Embedded Learning Toolkit
+# Embedded Learning Toolkit
+
