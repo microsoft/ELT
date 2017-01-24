@@ -74,6 +74,7 @@ export function generateEllModel(
     arduinoSampleRate: number,
     references: ReferenceLabel[],
     confidenceThreshold: number): ell.ELL_CompiledMap {
+    if (references.length === 0) { throw 'generalEllModel empty references'; }
 
     const prototypes = generateEllPrototypes(sampleRate, arduinoSampleRate, references);
     return ell.GenerateMulticlassDTWClassifier(prototypes, confidenceThreshold);
