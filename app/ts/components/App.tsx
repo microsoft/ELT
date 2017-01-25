@@ -41,14 +41,14 @@ export class App extends React.Component<{}, {}> {
                 },
                 (fileNames: string[]) => {
                     if (fileNames && fileNames.length === 1) {
-                        stores.alignmentLabelingStore.loadProject(fileNames[0]);
+                        stores.projectStore.loadProject(fileNames[0]);
                     }
                 });
         }
         // Ctrl-S: If we already have a project file, write to it; otherwise prompt for a new one.
         if (event.ctrlKey && event.keyCode === 'S'.charCodeAt(0)) {
-            if (stores.alignmentLabelingStore.projectFileLocation) {
-                stores.alignmentLabelingStore.saveProject(stores.alignmentLabelingStore.projectFileLocation);
+            if (stores.projectStore.projectFileLocation) {
+                stores.projectStore.saveProject(stores.projectStore.projectFileLocation);
             } else {
                 remote.dialog.showSaveDialog(
                     remote.BrowserWindow.getFocusedWindow(),
@@ -57,7 +57,7 @@ export class App extends React.Component<{}, {}> {
                     },
                     (fileName: string) => {
                         if (fileName) {
-                            stores.alignmentLabelingStore.saveProject(fileName);
+                            stores.projectStore.saveProject(fileName);
                         }
                     });
             }
@@ -68,9 +68,9 @@ export class App extends React.Component<{}, {}> {
         return (
             <div className='app-container container-fluid'>
                 <DevTools />
-                <NavigationColumn selected={stores.uiStore.currentTab} onSelect={
+                <NavigationColumn selected={stores.projectUiStore.currentTab} onSelect={
                     tab => {
-                        stores.uiStore.switchTab(tab as TabID);
+                        stores.projectUiStore.switchTab(tab as TabID);
                     }
                 }>
                     <NavigationColumnItem title='Home' name='file' iconClass='glyphicon glyphicon-home'>

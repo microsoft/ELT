@@ -26,7 +26,7 @@ export class ReferenceTrackDetail extends React.Component<ReferenceTrackDetailPr
 
     private onMouseWheel(event: React.WheelEvent<Element>): void {
         // Decide the zooming factor.
-        stores.alignmentLabelingUiStore.referenceViewPanAndZoom(0, event.deltaY / 1000, 'cursor');
+        stores.projectUiStore.referenceViewPanAndZoom(0, event.deltaY / 1000, 'cursor');
     }
 
     private getRelativePosition(event: { clientX: number; clientY: number; }): number[] {
@@ -37,16 +37,16 @@ export class ReferenceTrackDetail extends React.Component<ReferenceTrackDetailPr
 
     private onMouseMove(event: React.MouseEvent<Element>): void {
         const x = this.getRelativePosition(event)[0];
-        const start = stores.alignmentLabelingUiStore.referenceViewStart;
-        const end = stores.alignmentLabelingUiStore.referenceViewEnd;
+        const start = stores.projectUiStore.referenceViewStart;
+        const end = stores.projectUiStore.referenceViewEnd;
         const t = x / this.props.viewWidth * (end - start) + start;
-        stores.alignmentLabelingUiStore.setReferenceViewTimeCursor(t);
+        stores.projectUiStore.setReferenceViewTimeCursor(t);
     }
 
     private onClickTrack(t: number): void {
         if (this.props.mode === 'alignment') {
             stores.alignmentStore.addMarker({
-                timeSeries: stores.alignmentLabelingStore.referenceTrack.alignedTimeSeries[0],
+                timeSeries: stores.projectStore.referenceTrack.alignedTimeSeries[0],
                 localTimestamp: t
             });
         }
@@ -54,13 +54,13 @@ export class ReferenceTrackDetail extends React.Component<ReferenceTrackDetailPr
 
     private onMouseDown(event: React.MouseEvent<Element>): void {
         const [x0, y0] = this.getRelativePosition(event);
-        const start = stores.alignmentLabelingUiStore.referenceViewStart;
-        const end = stores.alignmentLabelingUiStore.referenceViewEnd;
+        const start = stores.projectUiStore.referenceViewStart;
+        const end = stores.projectUiStore.referenceViewEnd;
         const scaleXToTime = d3.scaleLinear()
             .domain([0, this.props.viewWidth])
             .range([start, end]);
         const start0 = start;
-        const pps0 = stores.alignmentLabelingUiStore.referenceViewPPS;
+        const pps0 = stores.projectUiStore.referenceViewPPS;
         const t0 = scaleXToTime(x0);
         let moved = false;
         startDragging(
@@ -69,7 +69,7 @@ export class ReferenceTrackDetail extends React.Component<ReferenceTrackDetailPr
                 if (moved || Math.abs(y1 - y0) >= 3 || Math.abs(x1 - x0) >= 3) {
                     const t1 = scaleXToTime(x1);
                     const dt = t1 - t0;
-                    stores.alignmentLabelingUiStore.setReferenceViewZooming(start0 - dt, pps0);
+                    stores.projectUiStore.setReferenceViewZooming(start0 - dt, pps0);
                     moved = true;
                 }
             },
@@ -81,12 +81,12 @@ export class ReferenceTrackDetail extends React.Component<ReferenceTrackDetailPr
     }
 
     public render(): JSX.Element {
-        if (!stores.alignmentLabelingStore.referenceTrack) { return (<g></g>); }
+        if (!stores.projectStore.referenceTrack) { return (<g></g>); }
 
-        const start = stores.alignmentLabelingUiStore.referenceViewStart;
-        const end = stores.alignmentLabelingUiStore.referenceViewEnd;
-        const pps = stores.alignmentLabelingUiStore.referenceViewPPS;
-        const cursor = stores.alignmentLabelingUiStore.referenceViewTimeCursor;
+        const start = stores.projectUiStore.referenceViewStart;
+        const end = stores.projectUiStore.referenceViewEnd;
+        const pps = stores.projectUiStore.referenceViewPPS;
+        const cursor = stores.projectUiStore.referenceViewTimeCursor;
         const scale = d3.scaleLinear()
             .domain([start, end])
             .range([0, this.props.viewWidth]);
@@ -98,7 +98,7 @@ export class ReferenceTrackDetail extends React.Component<ReferenceTrackDetailPr
 
                 <g className='labels'>
                     <TrackView
-                        track={stores.alignmentLabelingStore.referenceTrack}
+                        track={stores.projectStore.referenceTrack}
                         viewWidth={this.props.viewWidth}
                         viewHeight={this.props.viewHeight}
                         zoomTransform={ts => ({ rangeStart: start, pixelsPerSecond: pps })}

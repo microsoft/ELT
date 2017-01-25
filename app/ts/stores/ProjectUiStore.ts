@@ -1,18 +1,20 @@
 import { Track } from '../stores/dataStructures/alignment';
+import { TabID } from '../stores/dataStructures/types';
 import { TransitionController } from '../stores/utils';
-import { alignmentLabelingStore } from './stores';
+import { projectStore } from './stores';
 import { action, autorun, IObservableArray, observable } from 'mobx';
 
 
 
 
 // AlignmentLabelingUiStore: UI States for common part of alignment and labeling: the global zooming level. 
-export class AlignmentLabelingUiStore {
+export class ProjectUiStore {
 
     // Zooming view parameters.
     @observable public viewWidth: number;
     @observable public referenceViewStart: number;
     @observable public referenceViewPPS: number;
+    @observable public currentTab: TabID;
 
     // Global cursor.
     @observable public referenceViewTimeCursor: number;
@@ -27,17 +29,23 @@ export class AlignmentLabelingUiStore {
         this.referenceViewPPS = 0.1;
         this._referenceViewTransition = null;
         this.referenceViewTimeCursor = null;
+        this.currentTab = 'file';
 
-        (alignmentLabelingStore.tracks as IObservableArray<Track>).observe(this.onTracksChanged.bind(this));
+        (projectStore.tracks as IObservableArray<Track>).observe(this.onTracksChanged.bind(this));
 
         // Listen to the track changed event from the alignmentLabelingStore.
         // alignmentLabelingStore.tracksChanged.on(this.onTracksChanged.bind(this));
         autorun(() => this.onTracksChanged());
     }
 
+    @action
+    public switchTab(tab: TabID): void {
+        this.currentTab = tab;
+    }
+
     // On tracks changed, update zooming parameters so that the views don't overflow.
     public onTracksChanged(): void {
-        if (alignmentLabelingStore.referenceTrack) {
+        if (projectStore.referenceTrack) {
             [this.referenceViewStart, this.referenceViewPPS] =
                 this.constrainDetailedViewZoomingParameters(this.referenceViewStart, this.referenceViewPPS);
         }
@@ -48,13 +56,13 @@ export class AlignmentLabelingUiStore {
         if (!referenceViewStart) { referenceViewStart = this.referenceViewStart; }
         if (!referenceViewPPS) { referenceViewPPS = this.referenceViewPPS; }
         // Check if we go outside of the view, if yes, tune the parameters.
-        if (alignmentLabelingStore) {
+        if (projectStore) {
             referenceViewPPS = Math.max(
-                this.viewWidth / (alignmentLabelingStore.referenceTimestampEnd - alignmentLabelingStore.referenceTimestampStart),
+                this.viewWidth / (projectStore.referenceTimestampEnd - projectStore.referenceTimestampStart),
                 referenceViewPPS);
             referenceViewStart = Math.max(
-                alignmentLabelingStore.referenceTimestampStart,
-                Math.min(alignmentLabelingStore.referenceTimestampEnd - this.viewWidth / referenceViewPPS, referenceViewStart));
+                projectStore.referenceTimestampStart,
+                Math.min(projectStore.referenceTimestampEnd - this.viewWidth / referenceViewPPS, referenceViewStart));
         }
         return [referenceViewStart, referenceViewPPS];
     }

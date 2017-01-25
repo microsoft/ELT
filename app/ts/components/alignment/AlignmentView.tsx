@@ -66,10 +66,10 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
             }
         }
         if (event.ctrlKey && event.keyCode === 'Z'.charCodeAt(0)) {
-            stores.alignmentLabelingStore.alignmentUndo();
+            stores.projectStore.alignmentUndo();
         }
         if (event.ctrlKey && event.keyCode === 'Y'.charCodeAt(0)) {
-            stores.alignmentLabelingStore.alignmentRedo();
+            stores.projectStore.alignmentRedo();
         }
     }
 
@@ -80,7 +80,7 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
             const scale = d3.scaleLinear()
                 .domain([timeSeries.referenceStart, timeSeries.referenceEnd])
                 .range([timeSeries.timeSeries[0].timestampStart, timeSeries.timeSeries[0].timestampEnd]);
-            stores.alignmentLabelingUiStore.setReferenceViewTimeCursor(scale.invert(t));
+            stores.projectUiStore.setReferenceViewTimeCursor(scale.invert(t));
         } else {
             stores.alignmentUiStore.setSeriesTimeCursor(timeSeries, t);
         }
@@ -92,15 +92,15 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
         const x0 = event.clientX;
         let moved = false;
         const rangeStart = stores.alignmentUiStore.getAlignmentParameters(timeSeries).rangeStart;
-        const referenceRangeStart = stores.alignmentLabelingUiStore.referenceViewStart;
+        const referenceRangeStart = stores.projectUiStore.referenceViewStart;
         startDragging(
             (mouseEvent: MouseEvent) => {
                 const x1 = mouseEvent.clientX;
                 if (moved || Math.abs(x1 - x0) >= 3) {
                     moved = true;
                     if (timeSeries.aligned) {
-                        const dt = (x1 - x0) / stores.alignmentLabelingUiStore.referenceViewPPS;
-                        stores.alignmentLabelingUiStore.setReferenceViewZooming(referenceRangeStart - dt, null);
+                        const dt = (x1 - x0) / stores.projectUiStore.referenceViewPPS;
+                        stores.projectUiStore.setReferenceViewZooming(referenceRangeStart - dt, null);
                     } else {
                         const dt = (x1 - x0) / pps;
                         stores.alignmentUiStore.setTimeSeriesZooming(timeSeries, rangeStart - dt, null);
@@ -129,8 +129,8 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
 
     private onTrackWheel(
         event: React.WheelEvent<Element>, trackId: string, timeSeries: AlignedTimeSeries, _: number, pps: number, deltaY: number): void {
-        if (trackId === stores.alignmentLabelingStore.referenceTrack.id || timeSeries.aligned) {
-            stores.alignmentLabelingUiStore.referenceViewPanAndZoom(0, deltaY / 1000, 'cursor');
+        if (trackId === stores.projectStore.referenceTrack.id || timeSeries.aligned) {
+            stores.projectUiStore.referenceViewPanAndZoom(0, deltaY / 1000, 'cursor');
         } else {
             const scale = d3.scaleLinear()
                 .domain([timeSeries.referenceStart, timeSeries.referenceEnd])
@@ -190,10 +190,10 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
                 // Must link to track above/below.
                 if (candidate) {
                     const trackIndex1 =
-                        stores.alignmentLabelingStore.tracks.map(t => t.id)
+                        stores.projectStore.tracks.map(t => t.id)
                             .indexOf(this.state.markerStart.timeSeries.trackId);
                     const trackIndex2 =
-                        stores.alignmentLabelingStore.tracks.map(t => t.id)
+                        stores.projectStore.tracks.map(t => t.id)
                             .indexOf(candidate.timeSeries.trackId);
                     if (!(trackIndex2 === trackIndex1 - 1 || trackIndex2 === trackIndex1 + 1)) { candidate = null; }
                 }
@@ -283,7 +283,7 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
         const trackHeight = LayoutParameters.alignmentTrackHeight;
         const trackMinimizedHeight = LayoutParameters.alignmentTrackMinimizedHeight;
         const trackGap = LayoutParameters.alignmentTrackGap;
-        const referenceTrack = stores.alignmentLabelingStore.referenceTrack;
+        const referenceTrack = stores.projectStore.referenceTrack;
         if (referenceTrack) {
             map.set(referenceTrack.id, {
                 y0: axisOffset + smallOffset - LayoutParameters.referenceDetailedViewHeightAlignment,
@@ -291,7 +291,7 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
                 height: LayoutParameters.referenceDetailedViewHeightAlignment
             });
         }
-        stores.alignmentLabelingStore.tracks.forEach(track => {
+        stores.projectStore.tracks.forEach(track => {
             const trackY = trackYCurrent;
             const height = track.minimized ? trackMinimizedHeight : trackHeight;
             map.set(track.id, {
@@ -306,7 +306,7 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
 
 
     private renderTracks(layoutMap: Map<string, TrackLayout>): JSX.Element[] {
-        return stores.alignmentLabelingStore.tracks.map(track => {
+        return stores.projectStore.tracks.map(track => {
             const trackLayout = layoutMap.get(track.id);
             if (!trackLayout) { return null; }
             let timeAxis = null;
@@ -344,7 +344,7 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
 
                     <g transform={`translate(${this.props.viewWidth + 4}, 0)`}>
                         <SVGGlyphiconButton x={0} y={0} width={20} height={20} text='remove'
-                            onClick={event => stores.alignmentLabelingStore.deleteTrack(track)} />
+                            onClick={event => stores.projectStore.deleteTrack(track)} />
                         <SVGGlyphiconButton x={0} y={20}
                             width={20} height={20}
                             text={track.minimized ? 'plus' : 'minus'}
@@ -414,8 +414,8 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
                                 event, marker.timeSeries.trackId, marker.timeSeries, marker.localTimestamp, pps, event.deltaY);
                         } }
                         onMouseEnter={event => {
-                            if (marker.timeSeries.trackId === stores.alignmentLabelingStore.referenceTrack.id) {
-                                stores.alignmentLabelingUiStore.setReferenceViewTimeCursor(marker.localTimestamp);
+                            if (marker.timeSeries.trackId === stores.projectStore.referenceTrack.id) {
+                                stores.projectUiStore.setReferenceViewTimeCursor(marker.localTimestamp);
                             } else {
                                 stores.alignmentUiStore.setSeriesTimeCursor(marker.timeSeries, marker.localTimestamp);
                             }
@@ -429,8 +429,8 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
                                         .xScaleInvert(this.getRelativePosition(moveEvent)[0]);
                                     stores.alignmentStore.updateMarker(marker, newT, false, isFirstUpdate);
                                     isFirstUpdate = false;
-                                    if (marker.timeSeries.trackId === stores.alignmentLabelingStore.referenceTrack.id) {
-                                        stores.alignmentLabelingUiStore.setReferenceViewTimeCursor(newT);
+                                    if (marker.timeSeries.trackId === stores.projectStore.referenceTrack.id) {
+                                        stores.projectUiStore.setReferenceViewTimeCursor(newT);
                                     } else {
                                         stores.alignmentUiStore.setSeriesTimeCursor(marker.timeSeries, newT);
                                     }

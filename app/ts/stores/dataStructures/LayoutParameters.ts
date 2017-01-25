@@ -1,5 +1,4 @@
 // Global layout parameters.
-// TODO: make this as a state of the app, as we might want to allow users to adjust view sizes in the future.
 
 export module LayoutParameters {
     export const svgXPadding1 = 8;

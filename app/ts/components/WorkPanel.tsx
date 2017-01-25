@@ -75,7 +75,7 @@ export class WorkPanel extends React.Component<AlignmentLabelingViewProps, Align
         const layout = this.computeLayoutAttributes(containerWidth, containerHeight, this.props);
         this.setState({ layout: layout });
         setImmediate(() => {
-            stores.alignmentLabelingUiStore.setViewWidth(layout.referenceOverviewViewX1 - layout.referenceOverviewViewX0);
+            stores.projectUiStore.setViewWidth(layout.referenceOverviewViewX1 - layout.referenceOverviewViewX0);
         });
     }
 

@@ -1,14 +1,14 @@
 // AlignmentStore
 // Store alignment markers and correspondences (connections between markers).
 
-import { AlignedTimeSeries, Marker, MarkerCorrespondence, Track } from '../stores/dataStructures/alignment';
+import { AlignedTimeSeries, Marker, MarkerCorrespondence } from '../stores/dataStructures/alignment';
 import { SavedAlignmentState, SavedMarker, SavedMarkerCorrespondence } from '../stores/dataStructures/project';
 import { TransitionController } from '../stores/utils';
-import { AlignmentLabelingStore } from './AlignmentLabelingStore';
-import { AlignmentLabelingUiStore } from './AlignmentLabelingUiStore';
-import { alignmentLabelingStore, alignmentLabelingUiStore, alignmentUiStore } from './stores';
+import { ProjectStore } from './ProjectStore';
+import { ProjectUiStore } from './ProjectUiStore';
+import { projectStore, projectUiStore, alignmentUiStore } from './stores';
 import * as d3 from 'd3';
-import { action, autorun, IObservableArray, observable } from 'mobx';
+import { action, autorun, observable } from 'mobx';
 
 
 
@@ -29,7 +29,7 @@ export class TimeSeriesStateSnapshot {
         this.alignmentStore = alignmentStore;
         this.data = new Map<string, TimeSeriesStateSnapshotInfo>();
         // Take the snapshot.
-        alignmentLabelingStore.tracks.forEach((track) => {
+        projectStore.tracks.forEach((track) => {
             track.alignedTimeSeries.forEach((timeSeries) => {
                 const state = alignmentUiStore.getAlignmentParameters(timeSeries);
                 this.data.set(timeSeries.id, {
@@ -53,7 +53,7 @@ export class TimeSeriesStateSnapshot {
     // Apply the snapshot to the store.
     public apply(): void {
         this.data.forEach((info, seriesID) => {
-            const series = alignmentLabelingStore.getTimeSeriesByID(seriesID);
+            const series = projectStore.getTimeSeriesByID(seriesID);
             if (!series) { return; }
             series.referenceStart = info.referenceStart;
             series.referenceEnd = info.referenceEnd;
@@ -75,7 +75,7 @@ export class TimeSeriesStateSnapshot {
             return 1 / ((1 / a) * (1 - t) + (1 / b) * t);
         };
         this.data.forEach((info, seriesID) => {
-            const series = alignmentLabelingStore.getTimeSeriesByID(seriesID);
+            const series = projectStore.getTimeSeriesByID(seriesID);
             if (!series) { return; }
             const info2 = s2.data.get(seriesID);
             series.referenceStart = mix(info.referenceStart, info2.referenceStart);
@@ -111,7 +111,7 @@ export class AlignmentStore {
     // TODO: move the transition handling to the view, handle transition for track add/remove.
     private _alignmentTransitionController: TransitionController;
 
-    constructor(alignmentLabelingStore: AlignmentLabelingStore, alignmentLabelingUiStore: AlignmentLabelingUiStore) {
+    constructor(alignmentLabelingStore: ProjectStore, alignmentLabelingUiStore: ProjectUiStore) {
         this.markers = [];
         this.correspondences = [];
         this._alignmentTransitionController = null;
@@ -124,7 +124,7 @@ export class AlignmentStore {
 
     @action
     public addMarker(marker: Marker): void {
-        alignmentLabelingStore.alignmentHistoryRecord();
+        projectStore.alignmentHistoryRecord();
         this.markers.push(marker);
         alignmentUiStore.selectedMarker = marker;
     }
@@ -132,7 +132,7 @@ export class AlignmentStore {
     @action
     public updateMarker(marker: Marker, newLocalTimestamp: number, recompute: boolean = true, recordState: boolean = true): void {
         if (recordState) {
-            alignmentLabelingStore.alignmentHistoryRecord();
+            projectStore.alignmentHistoryRecord();
         }
         marker.localTimestamp = newLocalTimestamp;
         if (recompute) {
@@ -142,7 +142,7 @@ export class AlignmentStore {
 
     @action
     public deleteMarker(marker: Marker): void {
-        alignmentLabelingStore.alignmentHistoryRecord();
+        projectStore.alignmentHistoryRecord();
         const index = this.markers.indexOf(marker);
         if (index >= 0) {
             this.markers.splice(index, 1);
@@ -155,7 +155,7 @@ export class AlignmentStore {
 
     @action
     public addMarkerCorrespondence(marker1: Marker, marker2: Marker): void {
-        alignmentLabelingStore.alignmentHistoryRecord();
+        projectStore.alignmentHistoryRecord();
         // Remove all conflicting correspondence.
         this.correspondences = this.correspondences.filter((c) => {
             // Multiple connections.
@@ -187,7 +187,7 @@ export class AlignmentStore {
 
     @action
     public deleteMarkerCorrespondence(correspondence: MarkerCorrespondence): void {
-        alignmentLabelingStore.alignmentHistoryRecord();
+        projectStore.alignmentHistoryRecord();
         const index = this.correspondences.indexOf(correspondence);
         if (index >= 0) {
             this.correspondences.splice(index, 1);
@@ -200,7 +200,7 @@ export class AlignmentStore {
         this.stopAnimation();
 
         this.markers = this.markers.filter((m) => {
-            return !!alignmentLabelingStore.getTimeSeriesByID(m.timeSeries.id);
+            return !!projectStore.getTimeSeriesByID(m.timeSeries.id);
         });
         this.correspondences = this.correspondences.filter((c) => {
             return this.markers.indexOf(c.marker1) >= 0 && this.markers.indexOf(c.marker2) >= 0;
@@ -232,7 +232,7 @@ export class AlignmentStore {
     public getAlignedBlocks(): Set<AlignedTimeSeries>[] {
         const result: Set<AlignedTimeSeries>[] = [];
         const visitedSeries = new Set<AlignedTimeSeries>();
-        for (const track of alignmentLabelingStore.tracks) {
+        for (const track of projectStore.tracks) {
             for (const timeSeries of track.alignedTimeSeries) {
                 if (!visitedSeries.has(timeSeries)) {
                     const block = this.getConnectedSeries(timeSeries);
@@ -245,7 +245,7 @@ export class AlignmentStore {
     }
 
     public isBlockAligned(block: Set<AlignedTimeSeries>): boolean {
-        return alignmentLabelingStore.referenceTrack.alignedTimeSeries.some((x) => block.has(x));
+        return projectStore.referenceTrack.alignedTimeSeries.some((x) => block.has(x));
     }
 
 
@@ -261,7 +261,7 @@ export class AlignmentStore {
         if (this.correspondences.length === 0) { return; }
         this.stopAnimation();
         const snapshot0 = new TimeSeriesStateSnapshot(this);
-        alignmentLabelingStore.tracks.forEach(track => {
+        projectStore.tracks.forEach(track => {
             track.alignedTimeSeries.forEach(ts => {
                 [ts.referenceStart, ts.referenceEnd] = ts.align(this.correspondences);
             });
@@ -288,8 +288,8 @@ export class AlignmentStore {
                     s.aligned = true;
                     alignmentUiStore.setAlignmentParameters(
                         s, {
-                            rangeStart: alignmentLabelingUiStore.referenceViewStart,
-                            pixelsPerSecond: alignmentLabelingUiStore.referenceViewPPS
+                            rangeStart: projectUiStore.referenceViewStart,
+                            pixelsPerSecond: projectUiStore.referenceViewPPS
                         }
                     );
                 });
@@ -351,7 +351,7 @@ export class AlignmentStore {
         const markerID2Marker = new Map<string, Marker>();
         for (const marker of state.markers) {
             const newMarker = {
-                timeSeries: alignmentLabelingStore.getTimeSeriesByID(marker.timeSeriesID),
+                timeSeries: projectStore.getTimeSeriesByID(marker.timeSeriesID),
                 localTimestamp: marker.localTimestamp
             };
             this.markers.push(newMarker);
@@ -365,7 +365,7 @@ export class AlignmentStore {
         }
         Object.keys(state.timeSeriesStates).forEach(id => {
             const tsState = state.timeSeriesStates[id];
-            const ts = alignmentLabelingStore.getTimeSeriesByID(id);
+            const ts = projectStore.getTimeSeriesByID(id);
             // alignmentUiStore.setAlignmentParameters(ts, {
             //     rangeStart: tsState.rangeStart,
             //     pixelsPerSecond: tsState.pixelsPerSecond
@@ -376,7 +376,6 @@ export class AlignmentStore {
         this.alignAllTimeSeries(false);
     }
 
-    // Reset the alignment stuff.
     public reset(): void {
         this.stopAnimation();
 
