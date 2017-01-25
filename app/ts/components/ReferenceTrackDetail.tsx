@@ -1,6 +1,5 @@
 // The video track in the app.
 
-import { Marker } from '../stores/dataStructures/alignment';
 import * as stores from '../stores/stores';
 import { startDragging } from '../stores/utils';
 import { TimeAxis } from './common/TimeAxis';

@@ -1,12 +1,12 @@
 // AlignmentLabelingStore
 // Stores the information about tracks and handles project load/save and undo/redo state saving.
 
-import { AlignedTimeSeries, Track } from '../stores/dataStructures/alignment';
+import { AlignedTimeSeries, Track } from './dataStructures/alignment';
 import { loadMultipleSensorTimeSeriesFromFile, loadRawSensorTimeSeriesFromFile, loadVideoTimeSeriesFromFile, TimeSeries }
-    from '../stores/dataStructures/dataset';
+    from './dataStructures/dataset';
+import { HistoryTracker } from './dataStructures/HistoryTracker';
 import { SavedAlignedTimeSeries, SavedAlignmentSnapshot, SavedLabelingSnapshot, SavedProject, SavedTrack }
-    from '../stores/dataStructures/project';
-import { HistoryTracker } from './HistoryTracker';
+    from './dataStructures/project';
 import { alignmentStore, labelingStore, projectUiStore } from './stores';
 import * as d3 from 'd3';
 import * as fs from 'fs';
