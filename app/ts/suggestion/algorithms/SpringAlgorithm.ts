@@ -259,14 +259,14 @@ export class MultipleSpringAlgorithm<InputType, SampleType> {
                 }
             }
         }
-        if (minI && minD <= 1 && minD < this._dmin) {
+        if (minI !== null && minD <= 1 && minD < this._dmin) {
             this._dmin = minD;
             this._whichMin = minI;
             this._ts = minS;
             this._te = t;
         }
 
-        if (minI) {
+        if (minI !== null) {
             return [minI, minD * this._thresholdScales[minI]];
         } else {
             return [null, null];
@@ -317,7 +317,7 @@ export class MultipleSpringAlgorithmBestMatch<InputType, SampleType> {
                 minS = s;
             }
         }
-        if (minD && (this._dmin === null || minD < this._dmin)) {
+        if (minD !== null && (this._dmin === null || minD < this._dmin)) {
             this._dmin = minD;
             this._whichMin = minI;
             this._ts = minS;

@@ -3,7 +3,8 @@
 
 import { Dataset } from '../stores/dataStructures/dataset';
 import { Label } from '../stores/dataStructures/labeling';
-import { LabelingSuggestionCallback, LabelingSuggestionModel, LabelingSuggestionModelBuilder } from './LabelingSuggestionEngine';
+import { LabelingSuggestionModelBuilder } from './LabelingSuggestionEngine';
+import { LabelingSuggestionCallback, LabelingSuggestionModel } from './LabelingSuggestionModel';
 import { ModelSpecificMessage, SuggestionWorkerMessage } from './worker/SuggestionWorkerMessage';
 import { EventEmitter } from 'events';
 
@@ -158,7 +159,7 @@ export class DtwSuggestionModelBuilder extends LabelingSuggestionModelBuilder {
                 dataset: dataset.serialize()
             });
             this._currentDataset = dataset;
-        }   
+        }
     }
 
 

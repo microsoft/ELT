@@ -1,14 +1,22 @@
 import { computeDimensionsMipmapLevels } from '../components/common/Mipmap';
+import { AlignmentLabelingUiStore } from '../stores/AlignmentLabelingUiStore';
 import { SensorTimeSeries } from '../stores/dataStructures/dataset';
 import { Label, LabelConfirmationState } from '../stores/dataStructures/labeling';
+import { LabelingStore } from '../stores/LabelingStore';
+import { LabelingUiStore } from '../stores/LabelingUiStore';
 import { alignmentLabelingUiStore, labelingStore, labelingUiStore } from '../stores/stores';
 import { ArrayThrottler } from '../stores/utils';
 import { pelt } from '../suggestion/algorithms/pelt';
-import { DtwSuggestionModelBuilder, LabelingSuggestionCallback, LabelingSuggestionEngine, LabelingSuggestionProgress }
-    from '../suggestion/suggestion';
+import { DtwSuggestionModelBuilder } from '../suggestion/DtwSuggestionModelBuilder';
+import { LabelingSuggestionEngine } from '../suggestion/LabelingSuggestionEngine';
+import { LabelingSuggestionCallback, LabelingSuggestionProgress } from '../suggestion/LabelingSuggestionModel';
 import { EventEmitter } from 'events';
-import { action, autorun } from 'mobx';
+import { action, autorun, observable, reaction, runInAction } from 'mobx';
 
+
+function delayAction(millisec: number, fun: () => void): NodeJS.Timer {
+    return setTimeout(() => runInAction(fun), millisec);
+}
 
 
 // This object is not exactly a store - it doesn't listen to actions, but listen to store updates and dispatch actions.
@@ -19,7 +27,7 @@ export class LabelingSuggestionGenerator {
     private _generation: number;
     private _currentSuggestionCallback: LabelingSuggestionCallback;
 
-    constructor() {
+    constructor(labelingStore: LabelingStore, labelingUiStore: LabelingUiStore, alignmentLabelingUiStore: AlignmentLabelingUiStore) {
         this._engine = new LabelingSuggestionEngine(new DtwSuggestionModelBuilder());
 
         // this._engine.addStatusUpdateListener((status) => {
@@ -29,54 +37,45 @@ export class LabelingSuggestionGenerator {
         // Controls the speed to add suggestions to the label array.
         this._throttler = new ArrayThrottler<Label, number[]>(100, this.addSuggestions.bind(this));
 
-        this.scheduleRunSuggestions = this.scheduleRunSuggestions.bind(this);
-        this.runSuggestionsZoomChanged = this.runSuggestionsZoomChanged.bind(this);
-        this.onLabelsChanged = this.onLabelsChanged.bind(this);
-
-        // When should we rerun suggestions.
-        // On labels changed.
-        autorun(() => this.onLabelsChanged());
-        // labelingStore.alignedDatasetChanged.on(this.onLabelsChanged);
-        // labelingStore.labelsArrayChanged.on(this.onLabelsChanged);
-        // labelingStore.labelsChanged.on(this.onLabelsChanged);
-        // On view changed.
-        autorun(() => this.runSuggestionsZoomChanged());
-        // alignmentLabelingUiStore.referenceViewChanged.on(this.runSuggestionsZoomChanged);
-        // On parameters changed.
-        // labelingUiStore.suggestionConfidenceThresholdChanged.on(this.scheduleRunSuggestions);
-        // labelingUiStore.suggestionEnabledChanged.on(this.scheduleRunSuggestions);
-        // labelingUiStore.suggestionLogicChanged.on(this.scheduleRunSuggestions);
-        autorun(() => this.scheduleRunSuggestions());
+        reaction(
+            () => observable([labelingStore.alignedDataset, labelingStore.labels]),
+            () => this.onLabelsChanged());
+        reaction(
+            () => observable([
+                alignmentLabelingUiStore.referenceViewStart,
+                alignmentLabelingUiStore.referenceViewPPS]),
+            () => this.runSuggestionsZoomChanged());
+        reaction(
+            () => observable([
+                labelingUiStore.suggestionConfidenceThreshold,
+                labelingUiStore.suggestionEnabled,
+                labelingUiStore.suggestionLogic
+            ]),
+            () => this.scheduleRunSuggestions());
 
         // Per-label confirmation logic: If a label remains selected for 200 ms, confirm it.
-        //labelingUiStore.selectedLabelsChanged.on(() => {
         autorun(() => {
             labelingUiStore.selectedLabels.forEach(
-                label => {
-                    setTimeout(
-                        () => {
-                            if (labelingUiStore.selectedLabels.has(label)) {
-                                if (label.state === LabelConfirmationState.UNCONFIRMED ||
-                                    label.state === LabelConfirmationState.CONFIRMED_START ||
-                                    label.state === LabelConfirmationState.CONFIRMED_END) {
-                                    labelingStore.updateLabel(label, { state: LabelConfirmationState.CONFIRMED_BOTH });
-                                }
-                            }
-                        },
-                        200); // time to confirm = 200ms.
-                });
+                label => delayAction(200, () => {
+                    if (labelingUiStore.selectedLabels.has(label)) {
+                        if (label.state === LabelConfirmationState.UNCONFIRMED ||
+                            label.state === LabelConfirmationState.CONFIRMED_START ||
+                            label.state === LabelConfirmationState.CONFIRMED_END) {
+                            labelingStore.updateLabel(label, { state: LabelConfirmationState.CONFIRMED_BOTH });
+                        }
+                    }
+                }),
+            );
         });
 
     }
 
     @action
     public removeAllSuggestions(): void {
-         setTimeout(
-                    () => {
-                        this._engine.cancelSuggestion(this._currentSuggestionCallback);
-                        labelingUiStore.setSuggestionProgress(false, null, null, null);
-                    },
-                    1);
+        delayAction(1, () => {
+            this._engine.cancelSuggestion(this._currentSuggestionCallback);
+            labelingUiStore.setSuggestionProgress(false, null, null, null);
+        });
     }
 
     private _currentModelStatus: string = 'IDLE';
@@ -90,20 +89,7 @@ export class LabelingSuggestionGenerator {
         this._engine.getDeploymentCode(platform, callback);
     }
 
-    // private emitStatusUpdate(status: string): void {
-    //     this._currentModelStatus = status;
-    //     this.emit('status-update', status);
-    // }
-
-    // public addStatusUpdateListener(callback: (status: string) => void): void {
-    //     this.addListener('status-update', callback);
-    // }
-
-    // public removeStatusUpdateListener(callback: (status: string) => void): void {
-    //     this.addListener('status-update', callback);
-    // }
-
-    private onLabelsChanged(): void {
+    @action private onLabelsChanged(): void {
         this._engine.setDataset(labelingStore.alignedDataset);
         this._engine.setLabels(labelingStore.labels);
         this.scheduleRunSuggestions();
@@ -111,24 +97,22 @@ export class LabelingSuggestionGenerator {
 
     private _runSuggestionsTimeout: NodeJS.Timer;
 
-    private scheduleRunSuggestions(): void {
-        setImmediate(() => {
+    @action private scheduleRunSuggestions(): void {
+        setImmediate(() => runInAction(() => {
             // Cancel current suggestion if running.
             this._engine.cancelSuggestion(this._currentSuggestionCallback);
             labelingUiStore.setSuggestionProgress(false, null, null, null);
             if (this._runSuggestionsTimeout) { clearTimeout(this._runSuggestionsTimeout); }
 
             if (labelingUiStore.suggestionEnabled) {
-                this._runSuggestionsTimeout = setTimeout(
-                    () => {
-                        this.doRunSuggestions();
-                    },
-                    100);
+                this._runSuggestionsTimeout = delayAction(100, () => {
+                    this.doRunSuggestions();
+                });
             }
-        });
+        }));
     }
 
-    private runSuggestionsZoomChanged(): void {
+    @action private runSuggestionsZoomChanged(): void {
         if (labelingUiStore.suggestionLogic.shouldTriggerSuggestionUpdate({ didViewportChange: true })) {
             this.scheduleRunSuggestions();
         }
@@ -170,22 +154,26 @@ export class LabelingSuggestionGenerator {
     }
 
     private onSuggestion(labels: Label[], progress: LabelingSuggestionProgress, completed: boolean): void {
-        // Throttle suggestions so we don't update the view too often.
-        this._throttler.setStationary([progress.timestampStart, progress.timestampEnd, progress.timestampCompleted, this._generation]);
-        this._throttler.addItems(labels);
-        labelingUiStore.setSuggestionProgress(
-            !completed, progress.timestampStart, progress.timestampCompleted, progress.timestampEnd, progress.confidenceHistogram);
+        runInAction(() => {
+            // Throttle suggestions so we don't update the view too often.
+            this._throttler.setStationary([progress.timestampStart, progress.timestampEnd, progress.timestampCompleted, this._generation]);
+            this._throttler.addItems(labels);
+            if (labels.length) {
+                // tslint:disable-next-line:no-debugger
+                debugger;
+            }
+            labelingUiStore.setSuggestionProgress(
+                !completed, progress.timestampStart, progress.timestampCompleted, progress.timestampEnd, progress.confidenceHistogram);
+        });
     }
 
     private addSuggestions(labels: Label[], stat: [number, number, number, number]): void {
         // On add suggestions.
-        labelingStore.suggestLabels(labels, stat[0], stat[1], stat[2], stat[3]);
+        runInAction(() => labelingStore.suggestLabels(labels, stat[0], stat[1], stat[2], stat[3]));
     }
 }
 
 
-
-export const labelingSuggestionGenerator = new LabelingSuggestionGenerator();
 
 
 
@@ -196,17 +184,10 @@ export class LabelingChangePointSuggestionGenerator extends EventEmitter {
 
         this.runSuggestions = this.runSuggestions.bind(this);
 
-        autorun(this.runSuggestions);
-        // labelingStore.alignedDatasetChanged.on(() => {
-        //     setTimeout(
-        //         () => {
-        //             this.runSuggestions();
-        //         },
-        //         100);
-        // });
+        autorun(() => this.runSuggestions());
     }
 
-    private runSuggestions(): void {
+    @action private runSuggestions(): void {
         const dataset = labelingStore.alignedDataset; // labelingStore.dataset;
         if (!dataset) { return; }
 

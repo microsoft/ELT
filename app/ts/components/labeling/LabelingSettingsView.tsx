@@ -3,7 +3,7 @@
 
 import { SignalsViewMode } from '../../stores/dataStructures/labeling';
 import * as stores from '../../stores/stores';
-import { labelingSuggestionGenerator } from '../../suggestion/LabelingSuggestionGenerator';
+import { labelingSuggestionGenerator } from '../../stores/stores';
 import { LabelingSuggestionLogicType } from '../../suggestion/LabelingSuggestionLogic';
 import { ConfidenceSlider } from '../common/ConfidenceSlider';
 import { observer } from 'mobx-react';

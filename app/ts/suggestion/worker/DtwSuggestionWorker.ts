@@ -2,7 +2,9 @@
 
 import { Dataset } from '../../stores/dataStructures/dataset';
 import { Label } from '../../stores/dataStructures/labeling';
-import { DtwAlgorithm, LabelingSuggestionCallback, LabelingSuggestionModel, LabelingSuggestionProgress} from '../suggestion';
+import { LabelingSuggestionCallback, LabelingSuggestionModel, LabelingSuggestionProgress }
+    from '../../suggestion/LabelingSuggestionModel';
+import { DtwAlgorithm } from '../../suggestion/worker/DtwAlgorithm';
 import { ModelBuildMessage, ModelMessage, SetDatasetMessage } from './SuggestionWorkerMessage';
 import { EventEmitter } from 'events';
 
@@ -24,7 +26,7 @@ export class DtwSuggestionWorker extends EventEmitter {
         this.addListener('model.build', (data: ModelBuildMessage) => {
             const labels = data.labels;
             const buildCallbackID = data.callbackID;
- 
+
             const model = DtwAlgorithm.createModel(this._dataset, labels);
 
             const modelID = 'model-' + this._currentModelID.toString();

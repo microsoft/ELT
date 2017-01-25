@@ -14,18 +14,6 @@ export class AlignmentLabelingUiStore {
     @observable public referenceViewStart: number;
     @observable public referenceViewPPS: number;
 
-    // // Keep the time range of the reference track.
-    // @computed private get _referenceTimestampStart() {
-    //     return alignmentLabelingStore.referenceTrack.alignedTimeSeries ?
-    //         d3.min(alignmentLabelingStore.referenceTrack.alignedTimeSeries, (x) => x.referenceStart)
-    //         : 0;
-    // }
-    // @computed private get _referenceTimestampEnd() {
-    //     return alignmentLabelingStore.referenceTrack.alignedTimeSeries ?
-    //         d3.max(alignmentLabelingStore.referenceTrack.alignedTimeSeries, (x) => x.referenceEnd)
-    //         : 100;
-    // }
-
     // Global cursor.
     @observable public referenceViewTimeCursor: number;
 
@@ -44,7 +32,7 @@ export class AlignmentLabelingUiStore {
 
         // Listen to the track changed event from the alignmentLabelingStore.
         // alignmentLabelingStore.tracksChanged.on(this.onTracksChanged.bind(this));
-        autorun(this.onTracksChanged.bind(this));
+        autorun(() => this.onTracksChanged());
     }
 
     // On tracks changed, update zooming parameters so that the views don't overflow.

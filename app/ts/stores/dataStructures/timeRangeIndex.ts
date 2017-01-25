@@ -6,51 +6,19 @@ import { action, computed, observable } from 'mobx';
 
 
 
-export class TimeRangeIndex<TimeRangeType extends TimeRange> {
-    @observable private _ranges: ObservableSet<TimeRangeType>;
+export class TimeRangeIndex<TimeRangeType extends TimeRange> extends ObservableSet<TimeRangeType> {
 
     constructor() {
-        this._ranges = new ObservableSet<TimeRangeType>(
-            tr => tr.timestampStart + '-' + tr.timestampEnd
-        );
-    }
-
-    @action public add(range: TimeRangeType): void {
-        this._ranges.add(range);
+        super(tr => tr.timestampStart + '-' + tr.timestampEnd);
     }
 
     @action public addRanges(ranges: TimeRangeType[]): void {
-        ranges.forEach((r) => this._ranges.add(r));
-    }
-
-    @action public remove(range: TimeRangeType): void {
-        this._ranges.remove(range);
-    }
-
-    @action public clear(): void {
-        this._ranges.clear();
-    }
-
-    @computed public get size(): number {
-        return this._ranges.size;
-    }
-
-    public has(range: TimeRangeType): boolean {
-        return this._ranges.has(range);
-    }
-
-    public forEach(callback: (range: TimeRangeType) => void): void {
-        this._ranges.forEach(callback);
-    }
-
-    // Get all ranges in this index, return in arbitary order.
-    @computed public get ranges(): TimeRangeType[] {
-        return this._ranges.items;
+        ranges.forEach((r) => this.add(r));
     }
 
     // Get all ranges that *overlaps* with [tmin, tmax], return them in order by timestampStart.
     public getRangesInRange(tmin: number, tmax: number): TimeRangeType[] {
-        return this.ranges
+        return this.items
             .filter(r => r.timestampEnd >= tmin && r.timestampStart <= tmax)
             .sort((a, b) => a.timestampStart - b.timestampStart);
     }
