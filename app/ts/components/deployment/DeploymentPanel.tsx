@@ -1,7 +1,7 @@
 import { LayoutParameters } from '../../stores/dataStructures/LayoutParameters';
 import * as stores from '../../stores/stores';
+import { labelingSuggestionGenerator } from '../../stores/stores';
 import { generateEllModel } from '../../suggestion/ELLDtwModelGeneration';
-import { labelingSuggestionGenerator } from '../../suggestion/LabelingSuggestionGenerator';
 import { DeploymentToolbar } from './DeploymentToolbar';
 import { ScriptEditor } from './ScriptEditor';
 import { ToolOutputPanel } from './ToolOutputPanel';

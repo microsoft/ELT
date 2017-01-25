@@ -1,3 +1,4 @@
+import {LabelingSuggestionGenerator} from '../suggestion/LabelingSuggestionGenerator';
 import {AlignmentLabelingStore} from './AlignmentLabelingStore';
 import {AlignmentLabelingUiStore} from './AlignmentLabelingUiStore';
 import {AlignmentStore} from './AlignmentStore';
@@ -15,3 +16,5 @@ export const alignmentStore = new AlignmentStore(alignmentLabelingStore, alignme
 export const labelingStore = new LabelingStore(alignmentStore, uiStore);
 export const labelingUiStore = new LabelingUiStore(labelingStore);
 export const dtwModelStore = new DtwModelStore();
+
+export const labelingSuggestionGenerator = new LabelingSuggestionGenerator(labelingStore, labelingUiStore, alignmentLabelingUiStore);

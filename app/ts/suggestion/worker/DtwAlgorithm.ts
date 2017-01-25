@@ -1,12 +1,12 @@
 // Do suggestions with the Spring DTW algorithm.
 
+import { Dataset } from '../../stores/dataStructures/dataset';
+import { Label, LabelConfirmationState } from '../../stores/dataStructures/labeling';
+import { resampleDatasetRowMajor } from '../../stores/dataStructures/sampling';
 import { DBA } from '../algorithms/DBA';
 import { MultipleSpringAlgorithm, MultipleSpringAlgorithmBestMatch } from '../algorithms/SpringAlgorithm';
-import { resampleDatasetRowMajor } from '../../stores/dataStructures/sampling';
-import { Label, LabelConfirmationState } from '../../stores/dataStructures/labeling';
-import { Dataset } from '../../stores/dataStructures/dataset';
 import { generateArduinoCodeForDtwModel, generateMicrobitCodeForDtwModel } from '../DtwDeployment';
-import { LabelingSuggestionCallback, LabelingSuggestionModel } from '../LabelingSuggestionEngine';
+import { LabelingSuggestionCallback, LabelingSuggestionModel } from '../LabelingSuggestionModel';
 
 
 interface ReferenceLabel {
@@ -117,7 +117,7 @@ function getAverageLabelsPerClass(
             samplesWithMargin.forEach((x) => spring.feed(x));
 
             const [which, , ts, te] = spring.getBestMatch();
-            if (which) {
+            if (which !== null) {
                 const t1 = sampleIndex2Time(ts);
                 const t2 = sampleIndex2Time(te);
                 if (Math.abs(t1 - item.timestampStart) < margin && Math.abs(t2 - item.timestampEnd) < margin) {
@@ -186,7 +186,7 @@ class DtwSuggestionModel extends LabelingSuggestionModel {
         timestampEnd = Math.round(this._sampleRate * timestampEnd) / this._sampleRate;
 
         let labels = this._references;
-        labels = labels.filter((x) => x.variance);
+        labels = labels.filter((x) => x.variance !== null);
         if (labels.length === 0) {
             callback(
                 [],
@@ -252,7 +252,7 @@ class DtwSuggestionModel extends LabelingSuggestionModel {
             // Feed data into the SPRING algorithm.
             for (const s of chunkSamples) {
                 const [minI, minD] = algo.feed(s);
-                if (minD) {
+                if (minD !== null) {
                     const cf = getLikelihood(labels[minI].variance, minD);
                     const histIndex = Math.floor(Math.pow(cf, 0.3) * (confidenceHistogram.length - 1));
                     if (histIndex >= 0 && histIndex < confidenceHistogram.length) {

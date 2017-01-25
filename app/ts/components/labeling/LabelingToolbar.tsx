@@ -1,7 +1,7 @@
 // The toolbar view for labeling.
 
 import * as stores from '../../stores/stores';
-import { labelingSuggestionGenerator } from '../../suggestion/LabelingSuggestionGenerator';
+import { labelingSuggestionGenerator } from '../../stores/stores';
 import { InlineClassesListView } from './ClassesListView';
 import { observer } from 'mobx-react';
 import * as React from 'react';

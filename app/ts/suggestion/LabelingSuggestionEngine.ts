@@ -3,44 +3,11 @@
 import { Dataset } from '../stores/dataStructures/dataset';
 import { Label } from '../stores/dataStructures/labeling';
 import * as stores from '../stores/stores';
-import { DtwAlgorithm } from './suggestion';
+import { LabelingSuggestionCallback, LabelingSuggestionModel, LabelingSuggestionProgress } from './LabelingSuggestionModel';
+import { DtwAlgorithm } from './worker/DtwAlgorithm';
 import { EventEmitter } from 'events';
 
 
-
-export interface LabelingSuggestionProgress {
-    timestampStart: number;
-    timestampCompleted: number;
-    timestampEnd: number;
-    generation: number;
-    confidenceHistogram?: number[];
-}
-
-export interface LabelingSuggestionEngineStatus {
-    status: 'BUILDING_MODEL' | 'MODEL_READY';
-}
-
-export type LabelingSuggestionCallback = (labels: Label[], progress: LabelingSuggestionProgress, completed: boolean) => void;
-
-export abstract class LabelingSuggestionModel {
-    // Compute suggestions in the background.
-    // Calling computeSuggestion should cancel the one currently running.
-    // Callback will be called multiple times, the last one should have completed set to true OR error not null.
-    public abstract computeSuggestion(
-        dataset: Dataset,
-        timestampStart: number,
-        timestampEnd: number,
-        confidenceThreshold: number,
-        generation: number,
-        callback: LabelingSuggestionCallback): void;
-
-    public abstract cancelSuggestion(callback: LabelingSuggestionCallback): void;
-
-    //TODO: should model implement this?
-    public abstract getDeploymentCode(platform: string, callback: (code: string) => any): void;
-
-    public abstract dispose(): void;
-}
 
 
 
@@ -124,21 +91,17 @@ export class LabelingSuggestionEngine extends EventEmitter {
         stores.dtwModelStore.prototypeSampleRate = sampleRate;
     }
 
-    public rebuildModel(): void {
+    private rebuildModel(): void {
         if (this._shouldRebuildModel && this._dataset && !this._isRebuildingModel) {
             this._isRebuildingModel = true;
             this._shouldRebuildModel = false;
 
             this.storeModel(this._dataset, this._labels);
 
-            this.emitStatusUpdate({ status: 'BUILDING_MODEL' });
-
             this._modelBuilder.buildModelAsync(
                 this._dataset, this._labels,
                 (model, progress, error) => {
                     if (model) {
-                        this.emitStatusUpdate({ status: 'MODEL_READY' });
-
                         const restartInfos: LabelingSuggestionCallbackInfo[] = [];
                         if (this._currentModel && this._currentModel !== model) {
                             this._computingInstances.forEach((info, callback) => {
@@ -167,18 +130,6 @@ export class LabelingSuggestionEngine extends EventEmitter {
                     }
                 });
         }
-    }
-
-    private emitStatusUpdate(status: LabelingSuggestionEngineStatus): void {
-        this.emit('status-update', status);
-    }
-
-    public addStatusUpdateListener(callback: (status: LabelingSuggestionEngineStatus) => void): void {
-        this.addListener('status-update', callback);
-    }
-
-    public removeStatusUpdateListener(callback: (status: LabelingSuggestionEngineStatus) => void): void {
-        this.removeListener('status-update', callback);
     }
 
     // Compute suggestions in the background.

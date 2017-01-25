@@ -1,7 +1,6 @@
-import { AlignedTimeSeries } from '../stores/dataStructures/alignment';
+import { AlignedTimeSeries, Track } from '../stores/dataStructures/alignment';
 import { Dataset, SensorTimeSeries } from '../stores/dataStructures/dataset';
-import { TimeRange } from '../stores/dataStructures/labeling';
-import { Label, LabelConfirmationState, PartialLabel } from '../stores/dataStructures/labeling';
+import { Label, LabelConfirmationState, PartialLabel, TimeRange } from '../stores/dataStructures/labeling';
 import { SavedLabelingState } from '../stores/dataStructures/project';
 import { resampleColumn } from '../stores/dataStructures/sampling';
 import { TimeRangeIndex } from '../stores/dataStructures/TimeRangeIndex';
@@ -9,7 +8,7 @@ import { AlignmentStore } from './AlignmentStore';
 import { alignmentLabelingStore, alignmentLabelingUiStore, labelingUiStore, uiStore } from './stores';
 import { UiStore } from './UiStore';
 import * as d3 from 'd3';
-import { action, autorun, computed, observable } from 'mobx';
+import { action, computed, observable } from 'mobx';
 
 
 
@@ -62,9 +61,6 @@ export class LabelingStore {
     @observable public classColormap: { [name: string]: string };
     @observable public timestampConfirmed: number;
 
-    @observable public alignedDataset: Dataset;
-    private _shouldUpdateAlignedDatasetOnNextTabChange: boolean;
-
     constructor(alignmentStore: AlignmentStore, uiStore: UiStore) {
         this._labelsIndex = new TimeRangeIndex<Label>();
         this._windowLabelsIndex = new TimeRangeIndex<Label>();
@@ -79,25 +75,14 @@ export class LabelingStore {
         this.timestampConfirmed = null;
 
         this.changePoints = [];
-
-        this.alignedDataset = null;
-        this._shouldUpdateAlignedDatasetOnNextTabChange = false;
-        autorun(() => this.updateAlignedDataset());
-        // alignmentStore.alignmentChanged.on(this.updateAlignedDataset.bind(this));
-        // uiStore.tabChanged.on(() => {
-        //     if (this._shouldUpdateAlignedDatasetOnNextTabChange &&
-        //         uiStore.currentTab === 'labeling') {
-        //         this.updateAlignedDataset();
-        //     }
-        // });
     }
 
     @computed public get labels(): Label[] {
-        return this._labelsIndex.ranges;
+        return this._labelsIndex.items;
     }
 
     @computed public get suggestions(): Label[] {
-        return this._suggestedLabelsIndex.ranges;
+        return this._suggestedLabelsIndex.items;
     }
 
     public getLabelsInRange(tmin: number, tmax: number): Label[] {
@@ -129,12 +114,8 @@ export class LabelingStore {
         if (newLabel.timestampEnd !== undefined) { label.timestampEnd = newLabel.timestampEnd; }
         if (newLabel.className !== undefined) { label.className = newLabel.className; }
         if (newLabel.state !== undefined) { label.state = newLabel.state; }
-        if (newLabel.suggestionConfidence !== undefined) {
-            label.suggestionConfidence = newLabel.suggestionConfidence;
-        }
-        if (newLabel.suggestionGeneration !== undefined) {
-            label.suggestionGeneration = newLabel.suggestionGeneration;
-        }
+        if (newLabel.suggestionConfidence !== undefined) { label.suggestionConfidence = newLabel.suggestionConfidence; }
+        if (newLabel.suggestionGeneration !== undefined) { label.suggestionGeneration = newLabel.suggestionGeneration; }
 
         // Turn a suggestion into a label, criteria: BOTH ends confirmed.
         if (this._suggestedLabelsIndex.has(label)) {
@@ -337,15 +318,10 @@ export class LabelingStore {
         }
     }
 
-    @action private updateAlignedDataset(force: boolean = false): void {
-        // Update only in labeling mode, if not in labeling mode, schedule an update once the mode is changed to labeling.
-        if (!force && uiStore.currentTab !== 'labeling') {
-            this._shouldUpdateAlignedDatasetOnNextTabChange = true;
-            return;
-        }
-        this._shouldUpdateAlignedDatasetOnNextTabChange = false;
+    private _alignedDataset: Dataset = null;
+
+    public makeNewAlignedDataset(tracks: Track[]): Dataset {
         // Update the aligned dataset.
-        const tracks = alignmentLabelingStore.tracks;
         const dataset = new Dataset();
         // Here we generate a dataset with ONE timeSeries of uniform sample rate (the maximum of all series).
         // This makes it easier to process.
@@ -389,8 +365,18 @@ export class LabelingStore {
 
         dataset.timestampStart = tMin;
         dataset.timestampEnd = tMax;
+        return dataset;
+    }
 
-        this.alignedDataset = dataset;
+    @computed public get alignedDataset(): Dataset {
+        const tab = uiStore.currentTab;
+        const tracks = alignmentLabelingStore.tracks;
+        // Update only in labeling mode, if not in labeling mode, schedule an update once the mode is changed to labeling.
+        if (tab !== 'labeling') {
+            return this._alignedDataset;
+        }
+        this._alignedDataset = this.makeNewAlignedDataset(tracks);
+        return this._alignedDataset;
     }
 
     @action public saveState(): SavedLabelingState {
@@ -413,6 +399,7 @@ export class LabelingStore {
         for (const label of state.labels) {
             this._labelsIndex.add(label);
         }
+        // this.updateAlignedDataset(true);
 
         // Update the current class.
         const nonIgnoreClases = this.classes.filter((x) => x !== 'IGNORE');
