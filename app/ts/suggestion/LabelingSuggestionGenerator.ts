@@ -1,10 +1,10 @@
 import { computeDimensionsMipmapLevels } from '../components/common/Mipmap';
-import { ProjectUiStore } from '../stores/ProjectUiStore';
 import { SensorTimeSeries } from '../stores/dataStructures/dataset';
 import { Label, LabelConfirmationState } from '../stores/dataStructures/labeling';
 import { LabelingStore } from '../stores/LabelingStore';
 import { LabelingUiStore } from '../stores/LabelingUiStore';
-import { projectUiStore, labelingStore, labelingUiStore } from '../stores/stores';
+import { ProjectUiStore } from '../stores/ProjectUiStore';
+import { labelingStore, labelingUiStore, projectUiStore } from '../stores/stores';
 import { ArrayThrottler } from '../stores/utils';
 import { pelt } from '../suggestion/algorithms/pelt';
 import { DtwSuggestionModelBuilder } from '../suggestion/DtwSuggestionModelBuilder';

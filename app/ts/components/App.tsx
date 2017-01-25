@@ -9,6 +9,7 @@ import { OptionsMenu } from './menus/OptionsMenu';
 import { WorkPanel } from './WorkPanel';
 import { remote } from 'electron';
 import { observer } from 'mobx-react';
+// tslint:disable-next-line:import-name
 import DevTools from 'mobx-react-devtools';
 import * as React from 'react';
 

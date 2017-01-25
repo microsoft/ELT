@@ -1,7 +1,7 @@
 // UI states for alignment.
 
 import { AlignedTimeSeries, AlignmentParameters, Marker, MarkerCorrespondence, Track } from '../stores/dataStructures/alignment';
-import { projectStore, projectUiStore, alignmentStore } from './stores';
+import { alignmentStore, projectStore, projectUiStore } from './stores';
 import * as d3 from 'd3';
 import { action, observable, ObservableMap } from 'mobx';
 

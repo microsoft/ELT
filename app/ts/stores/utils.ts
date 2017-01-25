@@ -2,9 +2,12 @@ import * as d3 from 'd3';
 import * as fs from 'fs';
 import * as path_module from 'path';
 
-import {autocorrelogram} from '../suggestion/algorithms/Autocorrelation';
-import {Dataset, loadSensorTimeSeriesFromFile, loadVideoTimeSeriesFromFile, SensorTimeSeries, TimeSeriesKind} from './dataStructures/dataset';
-import {Label, LabelConfirmationState} from './dataStructures/labeling';
+import { autocorrelogram } from '../suggestion/algorithms/Autocorrelation';
+import { Dataset, loadSensorTimeSeriesFromFile, loadVideoTimeSeriesFromFile, SensorTimeSeries, TimeSeriesKind }
+    from './dataStructures/dataset';
+import { Label, LabelConfirmationState } from './dataStructures/labeling';
+
+
 
 export function startDragging(
     move?: (e: MouseEvent) => void,
@@ -24,6 +27,8 @@ export function startDragging(
     window.addEventListener('mousemove', handler_move, useCapture);
     window.addEventListener('mouseup', handler_up, useCapture);
 }
+
+
 
 const unique_id_state = new WeakMap<Object, string>();
 let unique_id_counter: number = 1;
@@ -46,6 +51,7 @@ export function isSameArray<T>(arr1?: T[], arr2?: T[]): boolean {
 export function makePathDFromPoints(points: number[][]): string {
     return 'M' + points.map(([x, y]) => x + ',' + y).join('L');
 }
+
 
 export function updateLabelConfirmationState(label: Label, endpoint: string): LabelConfirmationState {
     let newState = label.state;
