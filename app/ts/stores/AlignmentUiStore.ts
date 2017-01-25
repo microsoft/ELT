@@ -1,7 +1,7 @@
 // UI states for alignment.
 
 import { AlignedTimeSeries, AlignmentParameters, Marker, MarkerCorrespondence, Track } from '../stores/dataStructures/alignment';
-import { alignmentLabelingStore, alignmentLabelingUiStore, alignmentStore } from './stores';
+import { projectStore, projectUiStore, alignmentStore } from './stores';
 import * as d3 from 'd3';
 import { action, observable, ObservableMap } from 'mobx';
 
@@ -86,16 +86,16 @@ export class AlignmentUiStore {
     }
 
     public getAlignmentParameters(timeSeries: AlignedTimeSeries): AlignmentParameters {
-        if (timeSeries.trackId === alignmentLabelingStore.referenceTrack.id) {
+        if (timeSeries.trackId === projectStore.referenceTrack.id) {
             return {
-                rangeStart: alignmentLabelingUiStore.referenceViewStart,
-                pixelsPerSecond: alignmentLabelingUiStore.referenceViewPPS
+                rangeStart: projectUiStore.referenceViewStart,
+                pixelsPerSecond: projectUiStore.referenceViewPPS
             };
         }
         if (!this._alignmentParameterMap.has(timeSeries.id)) {
             this.setAlignmentParameters(timeSeries, {
                 rangeStart: timeSeries.referenceStart,
-                pixelsPerSecond: alignmentLabelingUiStore.viewWidth / timeSeries.duration
+                pixelsPerSecond: projectUiStore.viewWidth / timeSeries.duration
             });
         }
         return this._alignmentParameterMap.get(timeSeries.id);
@@ -103,7 +103,7 @@ export class AlignmentUiStore {
 
     @action
     public setAlignmentParameters(timeSeries: AlignedTimeSeries, state: AlignmentParameters): void {
-        if (timeSeries.id !== alignmentLabelingStore.referenceTrack.id) {
+        if (timeSeries.id !== projectStore.referenceTrack.id) {
             this._alignmentParameterMap.set(timeSeries.id.toString(), state);
         }
     }

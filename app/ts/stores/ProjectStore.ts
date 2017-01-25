@@ -7,7 +7,7 @@ import { loadMultipleSensorTimeSeriesFromFile, loadRawSensorTimeSeriesFromFile, 
 import { SavedAlignedTimeSeries, SavedAlignmentSnapshot, SavedLabelingSnapshot, SavedProject, SavedTrack }
     from '../stores/dataStructures/project';
 import { HistoryTracker } from './HistoryTracker';
-import { alignmentLabelingUiStore, alignmentStore, labelingStore, uiStore } from './stores';
+import { alignmentStore, labelingStore, projectUiStore } from './stores';
 import * as d3 from 'd3';
 import * as fs from 'fs';
 import { action, computed, observable, runInAction } from 'mobx';
@@ -20,7 +20,7 @@ function deepClone<Type>(obj: Type): Type {
     return JSON.parse(JSON.stringify(obj)); // Is there a better way?
 }
 
-export class MappedLabel {
+class MappedLabel {
     public className: string;
     public timestampStart: number;
     public timestampEnd: number;
@@ -36,7 +36,7 @@ export class MappedLabel {
 
 
 // AlignmentLabelingStore: Stores the information about tracks and handles project load/save and undo/redo state saving.
-export class AlignmentLabelingStore {
+export class ProjectStore {
 
     // Reference track and other tracks.
     @observable public referenceTrack: Track;
@@ -188,9 +188,9 @@ export class AlignmentLabelingStore {
             alignment: alignmentStore.saveState(),
             labeling: labelingStore.saveState(),
             ui: {
-                currentTab: uiStore.currentTab,
-                referenceViewStart: alignmentLabelingUiStore.referenceViewStart,
-                referenceViewPPS: alignmentLabelingUiStore.referenceViewPPS
+                currentTab: projectUiStore.currentTab,
+                referenceViewStart: projectUiStore.referenceViewStart,
+                referenceViewPPS: projectUiStore.referenceViewPPS
             }
         };
     }
@@ -310,12 +310,12 @@ export class AlignmentLabelingStore {
                 labelingStore.loadState(project.labeling);
 
                 // TODO: Load the reference zooming info here.
-                alignmentLabelingUiStore.setProjectReferenceViewZooming(project.ui.referenceViewStart, project.ui.referenceViewPPS);
+                projectUiStore.setProjectReferenceViewZooming(project.ui.referenceViewStart, project.ui.referenceViewPPS);
                 // TODO: Load the tabs here.
                 if (project.ui.currentTab === 'file') {
-                    uiStore.currentTab = 'alignment';
+                    projectUiStore.currentTab = 'alignment';
                 } else {
-                    uiStore.currentTab = project.ui.currentTab;
+                    projectUiStore.currentTab = project.ui.currentTab;
                 }
 
                 if (loadProjectCallback) { loadProjectCallback(); }
@@ -334,9 +334,9 @@ export class AlignmentLabelingStore {
         labelingStore.reset();
 
         // TODO: Load the reference zooming info here.
-        alignmentLabelingUiStore.setProjectReferenceViewZooming(0, 1);
+        projectUiStore.setProjectReferenceViewZooming(0, 1);
         // TODO: Load the tabs here.
-        uiStore.currentTab = 'alignment';
+        projectUiStore.currentTab = 'alignment';
     }
 
     private getAlignmentSnapshot(): SavedAlignmentSnapshot {
@@ -411,37 +411,4 @@ export class AlignmentLabelingStore {
         }
     }
 
-}
-
-
-class DeferredCallbacks {
-    private _waitingCount: number;
-    private _onComplete: () => void;
-
-    constructor() {
-        this._waitingCount = 0;
-        this._onComplete = null;
-    }
-
-    public callback(): () => void {
-        this._waitingCount += 1;
-        return () => {
-            this._waitingCount -= 1;
-            this.triggerIfZero();
-        };
-    }
-
-    private triggerIfZero(): void {
-        if (this._waitingCount === 0) {
-            if (this._onComplete) {
-                this._onComplete();
-                this._onComplete = null;
-            }
-        }
-    }
-
-    public onComplete(callback: () => void): void {
-        this._onComplete = callback;
-        this.triggerIfZero();
-    }
 }

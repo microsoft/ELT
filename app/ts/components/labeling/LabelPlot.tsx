@@ -47,7 +47,7 @@ export class LabelPlot extends React.Component<LabelPlotProps, {}> {
 
         startDragging(
             moveEvent => {
-                const tNew = stores.alignmentLabelingUiStore.referenceViewTimeCursor;
+                const tNew = stores.projectUiStore.referenceViewTimeCursor;
                 if (mode === 'start') {
                     if (!isSelected) {
                         stores.labelingUiStore.selectLabel(label);

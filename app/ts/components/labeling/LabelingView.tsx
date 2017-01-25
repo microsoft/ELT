@@ -50,10 +50,10 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
             }
         }
         if (event.ctrlKey && event.keyCode === 'Z'.charCodeAt(0)) { // Ctrl-Z
-            stores.alignmentLabelingStore.labelingUndo();
+            stores.projectStore.labelingUndo();
         }
         if (event.ctrlKey && event.keyCode === 'Y'.charCodeAt(0)) { // Ctrl-Y
-            stores.alignmentLabelingStore.labelingRedo();
+            stores.projectStore.labelingRedo();
         }
     }
 
@@ -66,11 +66,11 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
     private onMouseMove(event: React.MouseEvent<Element>): void {
         const x = this.getRelativePosition(event)[0];
         const t = this.getTimeFromX(x);
-        stores.alignmentLabelingUiStore.setReferenceViewTimeCursor(t);
+        stores.projectUiStore.setReferenceViewTimeCursor(t);
     }
 
     private getTimeFromX(x: number): number {
-        return x / stores.alignmentLabelingUiStore.referenceViewPPS + stores.alignmentLabelingUiStore.referenceViewStart;
+        return x / stores.projectUiStore.referenceViewPPS + stores.projectUiStore.referenceViewStart;
     }
 
     private onDoubleClickChangePointDetection(event: React.MouseEvent<Element>): void {
@@ -143,7 +143,7 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
                 } else {
                     if (isInteractionRect && (upEvent as MouseEvent).shiftKey) {
                         const labels = stores.labelingStore.getLabelsInRange(
-                            stores.alignmentLabelingUiStore.referenceViewStart, t0);
+                            stores.projectUiStore.referenceViewStart, t0);
                         if (labels.length > 0) {
                             // Get the one with largest timestampEnd.
                             labels.sort((a, b) => a.timestampEnd - b.timestampEnd);
@@ -167,7 +167,7 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
 
     private onMouseWheel(event: React.WheelEvent<Element>): void {
         // Decide the zooming factor.
-        stores.alignmentLabelingUiStore.referenceViewPanAndZoom(0, event.deltaY / 1000);
+        stores.projectUiStore.referenceViewPanAndZoom(0, event.deltaY / 1000);
     }
 
     public render(): JSX.Element {
@@ -193,8 +193,8 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
         const timeCursorY0 = timeAxisY1;
         const timeCursorY1 = labelAreaY1;
 
-        const start = stores.alignmentLabelingUiStore.referenceViewStart;
-        const pps = stores.alignmentLabelingUiStore.referenceViewPPS;
+        const start = stores.projectUiStore.referenceViewStart;
+        const pps = stores.projectUiStore.referenceViewPPS;
         // The time scale.
         const scale = d3.scaleLinear()
             .domain([start, start + this.props.viewWidth / pps])
@@ -202,7 +202,7 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
 
         // Cursor
         let gCursor = null;
-        const timeCursor = stores.alignmentLabelingUiStore.referenceViewTimeCursor;
+        const timeCursor = stores.projectUiStore.referenceViewTimeCursor;
         if (timeCursor) {
             gCursor = (
                 <g className='time-cursor'>
@@ -252,8 +252,8 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
         const tracksViewHeight = sensorAreaY1 - sensorAreaY0;
         let trackViewTrackHeight = tracksViewHeight;
         let tracksViewTrackSpacing = 0;
-        if (stores.alignmentLabelingStore.tracks.length > 1) {
-            const n = stores.alignmentLabelingStore.tracks.length;
+        if (stores.projectStore.tracks.length > 1) {
+            const n = stores.projectStore.tracks.length;
             trackViewTrackHeight = tracksViewHeight / (n - n * maxOverlapFactor + maxOverlapFactor);
             tracksViewTrackSpacing = trackViewTrackHeight * (1 - maxOverlapFactor);
         }
@@ -273,7 +273,7 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
                         />
 
                     {
-                        stores.alignmentLabelingStore.tracks.map((track, index) => (
+                        stores.projectStore.tracks.map((track, index) => (
                             <g key={track.id}
                                 transform={`translate(0, ${sensorAreaY0 + tracksViewTrackSpacing * index})`}>
                                 <TrackView

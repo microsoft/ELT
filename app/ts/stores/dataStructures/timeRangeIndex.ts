@@ -2,7 +2,7 @@
 
 import { TimeRange } from './labeling';
 import { ObservableSet } from './ObservableSet';
-import { action, computed, observable } from 'mobx';
+import { action } from 'mobx';
 
 
 
@@ -24,7 +24,7 @@ export class TimeRangeIndex<TimeRangeType extends TimeRange> extends ObservableS
     }
 
     // Get all ranges that *overlaps* with [tmin, tmax], whose overlap length is larger than margin. Return them in order by timestampStart.
-    public getRangesWithMargin(tmin: number, tmax: number, margin: number): TimeRangeType[] {
+    public getRangesWithinMargin(tmin: number, tmax: number, margin: number): TimeRangeType[] {
         return this.getRangesInRange(tmin, tmax)
             .filter(range => {
                 const oBegin = Math.max(range.timestampStart, tmin);
@@ -32,4 +32,24 @@ export class TimeRangeIndex<TimeRangeType extends TimeRange> extends ObservableS
                 return oEnd - oBegin > margin;
             });
     }
+}
+
+
+
+export function mergeTimeRangeArrays<TimeRangeType extends TimeRange>(arr1: TimeRangeType[], arr2: TimeRangeType[]): TimeRangeType[] {
+    let i1 = 0;
+    let i2 = 0;
+    const result: TimeRangeType[] = [];
+    while (i1 < arr1.length || i2 < arr2.length) {
+        if (i1 >= arr1.length) {
+            result.push(arr2[i2++]);
+        } else if (i2 >= arr2.length) {
+            result.push(arr1[i1++]);
+        } else if (arr1[i1].timestampStart < arr2[i2].timestampStart) {
+            result.push(arr1[i1++]);
+        } else {
+            result.push(arr2[i2++]);
+        }
+    }
+    return result;
 }

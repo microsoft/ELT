@@ -1,10 +1,10 @@
 import { computeDimensionsMipmapLevels } from '../components/common/Mipmap';
-import { AlignmentLabelingUiStore } from '../stores/AlignmentLabelingUiStore';
+import { ProjectUiStore } from '../stores/ProjectUiStore';
 import { SensorTimeSeries } from '../stores/dataStructures/dataset';
 import { Label, LabelConfirmationState } from '../stores/dataStructures/labeling';
 import { LabelingStore } from '../stores/LabelingStore';
 import { LabelingUiStore } from '../stores/LabelingUiStore';
-import { alignmentLabelingUiStore, labelingStore, labelingUiStore } from '../stores/stores';
+import { projectUiStore, labelingStore, labelingUiStore } from '../stores/stores';
 import { ArrayThrottler } from '../stores/utils';
 import { pelt } from '../suggestion/algorithms/pelt';
 import { DtwSuggestionModelBuilder } from '../suggestion/DtwSuggestionModelBuilder';
@@ -27,7 +27,7 @@ export class LabelingSuggestionGenerator {
     private _generation: number;
     private _currentSuggestionCallback: LabelingSuggestionCallback;
 
-    constructor(labelingStore: LabelingStore, labelingUiStore: LabelingUiStore, alignmentLabelingUiStore: AlignmentLabelingUiStore) {
+    constructor(labelingStore: LabelingStore, labelingUiStore: LabelingUiStore, alignmentLabelingUiStore: ProjectUiStore) {
         this._engine = new LabelingSuggestionEngine(new DtwSuggestionModelBuilder());
 
         // this._engine.addStatusUpdateListener((status) => {
@@ -138,8 +138,8 @@ export class LabelingSuggestionGenerator {
             dataset: null /* TODO */,
             labels: labelingStore.labels,
             detailedViewRange: {
-                timestampStart: alignmentLabelingUiStore.referenceViewStart,
-                timestampEnd: alignmentLabelingUiStore.referenceViewEnd
+                timestampStart: projectUiStore.referenceViewStart,
+                timestampEnd: projectUiStore.referenceViewEnd
             }
         });
 

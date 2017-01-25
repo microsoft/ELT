@@ -1,12 +1,11 @@
 import { AlignedTimeSeries, Track } from '../stores/dataStructures/alignment';
 import { Dataset, SensorTimeSeries } from '../stores/dataStructures/dataset';
-import { Label, LabelConfirmationState, PartialLabel, TimeRange } from '../stores/dataStructures/labeling';
+import { Label, LabelConfirmationState, PartialLabel } from '../stores/dataStructures/labeling';
 import { SavedLabelingState } from '../stores/dataStructures/project';
 import { resampleColumn } from '../stores/dataStructures/sampling';
-import { TimeRangeIndex } from '../stores/dataStructures/TimeRangeIndex';
+import { mergeTimeRangeArrays, TimeRangeIndex } from '../stores/dataStructures/TimeRangeIndex';
 import { AlignmentStore } from './AlignmentStore';
-import { alignmentLabelingStore, alignmentLabelingUiStore, labelingUiStore, uiStore } from './stores';
-import { UiStore } from './UiStore';
+import { labelingUiStore, projectStore, projectUiStore } from './stores';
 import * as d3 from 'd3';
 import { action, computed, observable } from 'mobx';
 
@@ -22,25 +21,6 @@ const d3category20 = [
     '#8c564b', '#c49c94', '#e377c2', '#f7b6d2', '#7f7f7f',
     '#c7c7c7', '#bcbd22', '#dbdb8d', '#17becf', '#9edae5'
 ];
-
-
-export function mergeTimeRangeArrays<TimeRangeType extends TimeRange>(arr1: TimeRangeType[], arr2: TimeRangeType[]): TimeRangeType[] {
-    let i1 = 0;
-    let i2 = 0;
-    const result: TimeRangeType[] = [];
-    while (i1 < arr1.length || i2 < arr2.length) {
-        if (i1 >= arr1.length) {
-            result.push(arr2[i2++]);
-        } else if (i2 >= arr2.length) {
-            result.push(arr1[i1++]);
-        } else if (arr1[i1].timestampStart < arr2[i2].timestampStart) {
-            result.push(arr1[i1++]);
-        } else {
-            result.push(arr2[i2++]);
-        }
-    }
-    return result;
-}
 
 
 
@@ -61,7 +41,7 @@ export class LabelingStore {
     @observable public classColormap: { [name: string]: string };
     @observable public timestampConfirmed: number;
 
-    constructor(alignmentStore: AlignmentStore, uiStore: UiStore) {
+    constructor(alignmentStore: AlignmentStore) {
         this._labelsIndex = new TimeRangeIndex<Label>();
         this._windowLabelsIndex = new TimeRangeIndex<Label>();
         this._suggestedLabelsIndex = new TimeRangeIndex<Label>();
@@ -94,11 +74,11 @@ export class LabelingStore {
 
     @action public addLabel(label: Label): void {
         this._labelsIndex.add(label);
-        alignmentLabelingStore.labelingHistoryRecord();
+        projectStore.labelingHistoryRecord();
     }
 
     @action public removeLabel(label: Label): void {
-        alignmentLabelingStore.labelingHistoryRecord();
+        projectStore.labelingHistoryRecord();
         if (this._labelsIndex.has(label)) {
             this._labelsIndex.remove(label);
         }
@@ -108,7 +88,7 @@ export class LabelingStore {
     }
 
     @action public updateLabel(label: Label, newLabel: PartialLabel): void {
-        alignmentLabelingStore.labelingHistoryRecord();
+        projectStore.labelingHistoryRecord();
         // Update the label info.
         if (newLabel.timestampStart !== undefined) { label.timestampStart = newLabel.timestampStart; }
         if (newLabel.timestampEnd !== undefined) { label.timestampEnd = newLabel.timestampEnd; }
@@ -184,8 +164,8 @@ export class LabelingStore {
         }
         labels.forEach((label) => {
             const margin = (label.timestampEnd - label.timestampStart) * 0.15;
-            if (this._labelsIndex.getRangesWithMargin(label.timestampStart, label.timestampEnd, margin).length === 0 &&
-                this._suggestedLabelsIndex.getRangesWithMargin(label.timestampStart, label.timestampEnd, margin).length === 0) {
+            if (this._labelsIndex.getRangesWithinMargin(label.timestampStart, label.timestampEnd, margin).length === 0 &&
+                this._suggestedLabelsIndex.getRangesWithinMargin(label.timestampStart, label.timestampEnd, margin).length === 0) {
                 this._suggestedLabelsIndex.add(label);
                 labelsChanged = labelsChanged || true;
             }
@@ -202,13 +182,13 @@ export class LabelingStore {
     }
 
     @action public removeAllLabels(): void {
-        alignmentLabelingStore.labelingHistoryRecord();
+        projectStore.labelingHistoryRecord();
         this._labelsIndex.clear();
         this._suggestedLabelsIndex.clear();
     }
 
     @action public addClass(className: string): void {
-        alignmentLabelingStore.labelingHistoryRecord();
+        projectStore.labelingHistoryRecord();
         if (this.classes.indexOf(className) < 0) {
             this.classes.push(className);
             this.updateColors();
@@ -216,7 +196,7 @@ export class LabelingStore {
     }
 
     @action public removeClass(className: string): void {
-        alignmentLabelingStore.labelingHistoryRecord();
+        projectStore.labelingHistoryRecord();
         // Remove the labels of that class.
         const toRemove = [];
         this._labelsIndex.forEach((label) => {
@@ -237,7 +217,7 @@ export class LabelingStore {
     }
 
     @action public renameClass(oldClassName: string, newClassName: string): void {
-        alignmentLabelingStore.labelingHistoryRecord();
+        projectStore.labelingHistoryRecord();
         if (this.classes.indexOf(newClassName) < 0) {
             let renamed = false;
             this._labelsIndex.forEach((label) => {
@@ -263,11 +243,11 @@ export class LabelingStore {
     }
 
     @action public confirmVisibleSuggestions(): void {
-        alignmentLabelingStore.labelingHistoryRecord();
+        projectStore.labelingHistoryRecord();
         // Get visible suggestions.
         let visibleSuggestions = this._suggestedLabelsIndex.getRangesInRange(
-            alignmentLabelingUiStore.referenceViewStart,
-            alignmentLabelingUiStore.referenceViewEnd);
+            projectUiStore.referenceViewStart,
+            projectUiStore.referenceViewEnd);
         // Filter out rejected suggestions.
         visibleSuggestions = visibleSuggestions.filter((x) => x.state !== LabelConfirmationState.REJECTED);
         visibleSuggestions.forEach((label) => {
@@ -369,8 +349,8 @@ export class LabelingStore {
     }
 
     @computed public get alignedDataset(): Dataset {
-        const tab = uiStore.currentTab;
-        const tracks = alignmentLabelingStore.tracks;
+        const tab = projectUiStore.currentTab;
+        const tracks = projectStore.tracks;
         // Update only in labeling mode, if not in labeling mode, schedule an update once the mode is changed to labeling.
         if (tab !== 'labeling') {
             return this._alignedDataset;

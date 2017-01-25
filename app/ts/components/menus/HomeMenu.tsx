@@ -32,7 +32,7 @@ export class HomeMenu extends React.Component<{}, {}> {
             },
             (fileName: string) => {
                 if (fileName) {
-                    stores.alignmentLabelingStore.exportLabels(fileName);
+                    stores.projectStore.exportLabels(fileName);
                     if (onSaved) { onSaved(); }
                 } else {
                     if (onCanceled) { onCanceled(); }
@@ -50,7 +50,7 @@ export class HomeMenu extends React.Component<{}, {}> {
             },
             (fileName: string) => {
                 if (fileName) {
-                    stores.alignmentLabelingStore.saveProject(fileName);
+                    stores.projectStore.saveProject(fileName);
                     if (onSaved) { onSaved(); }
                 } else {
                     if (onCanceled) { onCanceled(); }
@@ -65,9 +65,9 @@ export class HomeMenu extends React.Component<{}, {}> {
 
     // Save the current project. Show a dialog if there is not project file on record.
     private saveCurrentProject(onSaved: () => any = null, onCanceled: () => any = null): void {
-        if (stores.alignmentLabelingStore.projectFileLocation) {
+        if (stores.projectStore.projectFileLocation) {
             // FIXME
-            stores.alignmentLabelingStore.saveProject(stores.alignmentLabelingStore.projectFileLocation);
+            stores.projectStore.saveProject(stores.projectStore.projectFileLocation);
             setImmediate(onSaved);
         } else {
             this.showSaveProjectDialog(onSaved, onCanceled);
@@ -78,7 +78,7 @@ export class HomeMenu extends React.Component<{}, {}> {
     // onProceed: the user saved the project, or discarded.
     // onCanceled: the user canceled the action.
     private promptSaveExistingProject(onProceed: () => any = null, onCanceled: () => any = null): void {
-        if (stores.alignmentLabelingStore.referenceTrack) {
+        if (stores.projectStore.referenceTrack) {
             // If there is an existing project, prompt if the user want to save.
             // Currently we don't detect changes, so will always prompt if a project is already opened.
             remote.dialog.showMessageBox(
@@ -110,9 +110,9 @@ export class HomeMenu extends React.Component<{}, {}> {
     public newProject(): void {
         this.promptSaveExistingProject(() => {
             // New Project.
-            stores.alignmentLabelingStore.newProject();
+            stores.projectStore.newProject();
             // Goto alignment tab.
-            stores.uiStore.switchTab('alignment');
+            stores.projectUiStore.switchTab('alignment');
         });
     }
 
@@ -128,7 +128,7 @@ export class HomeMenu extends React.Component<{}, {}> {
                 },
                 (fileNames: string[]) => {
                     if (fileNames && fileNames.length === 1) {
-                        stores.alignmentLabelingStore.loadProject(fileNames[0]);
+                        stores.projectStore.loadProject(fileNames[0]);
                     }
                 });
         });
@@ -137,7 +137,7 @@ export class HomeMenu extends React.Component<{}, {}> {
     // Open a project from a given fileName instead of asking for a fileName.
     public openProjectFromFile(fileName: string): void {
         this.promptSaveExistingProject(() => {
-            stores.alignmentLabelingStore.loadProject(fileName);
+            stores.projectStore.loadProject(fileName);
         });
     }
 
@@ -173,7 +173,7 @@ export class HomeMenu extends React.Component<{}, {}> {
                         <h2>Recent Projects</h2>
                         <div className='recent-projects'>
                             {
-                                stores.alignmentLabelingStore.recentProjects.map(fileName =>
+                                stores.projectStore.recentProjects.map(fileName =>
                                     <div className='project-item'
                                         key={fileName} role='button'
                                         onClick={event => this.openProjectFromFile(fileName)}>
