@@ -85,7 +85,9 @@ export class ReferenceTrackDetail extends React.Component<ReferenceTrackDetailPr
         const start = stores.projectUiStore.referenceViewStart;
         const end = stores.projectUiStore.referenceViewEnd;
         const pps = stores.projectUiStore.referenceViewPPS;
-        const cursor = stores.projectUiStore.referenceViewTimeCursor;
+        const cursorMap = {};
+        stores.projectStore.referenceTrack.alignedTimeSeries
+            .forEach(s => cursorMap[s.id] = stores.projectUiStore.referenceViewTimeCursor);
         const scale = d3.scaleLinear()
             .domain([start, end])
             .range([0, this.props.viewWidth]);
@@ -101,7 +103,7 @@ export class ReferenceTrackDetail extends React.Component<ReferenceTrackDetailPr
                         viewWidth={this.props.viewWidth}
                         viewHeight={this.props.viewHeight}
                         zoomTransform={ts => ({ rangeStart: start, pixelsPerSecond: pps })}
-                        getTimeCursor={() => cursor}
+                        timeCursorMap={cursorMap}
                         useMipmap={true}
                         />
                 </g>

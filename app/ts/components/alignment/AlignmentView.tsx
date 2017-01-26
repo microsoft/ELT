@@ -335,7 +335,7 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
                         track={track}
                         viewWidth={this.props.viewWidth}
                         viewHeight={trackLayout.height}
-                        getTimeCursor={stores.alignmentUiStore.getTimeCursor}
+                        timeCursorMap={stores.alignmentUiStore.getTimeCursorMap()}
                         enableMouseEvents={true}
                         onMouseMove={this.onTrackMouseMove}
                         onMouseDown={this.onTrackMouseDown}

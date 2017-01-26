@@ -44,8 +44,18 @@ export class AlignmentUiStore {
     }
 
     @action
-    public setSeriesTimeCursor(series: AlignedTimeSeries, timeCursor: number): void {
+    public setTimeCursor(series: AlignedTimeSeries, timeCursor: number): void {
         this._seriesTimeCursor.set(series.id.toString(), timeCursor);
+    }
+
+    public getTimeCursor(series: AlignedTimeSeries): number {
+        return this._seriesTimeCursor.get(series.id.toString());
+    }
+
+    public getTimeCursorMap(): { [seriesId: string]: number } {
+        const map = {};
+        this._seriesTimeCursor.entries().forEach(v => map[v[0]] = v[1]);
+        return map;
     }
 
     @action
@@ -79,10 +89,6 @@ export class AlignmentUiStore {
     @action
     public setTrackMinimized(track: Track, minimized: boolean): void {
         track.minimized = minimized;
-    }
-
-    public getTimeCursor(series: AlignedTimeSeries): number {
-        return this._seriesTimeCursor.get(series.id.toString());
     }
 
     public getAlignmentParameters(timeSeries: AlignedTimeSeries): AlignmentParameters {

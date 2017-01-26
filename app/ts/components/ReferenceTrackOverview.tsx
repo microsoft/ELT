@@ -182,7 +182,7 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
                                         pixelsPerSecond: this.props.viewWidth / (end - start)
                                     })}
                                     useMipmap={true}
-                                    filterTimeSeries={(series) => series.aligned}
+                                    filterTimeSeries={series => series.aligned}
                                     colorScale={this.props.mode === 'labeling' ?
                                         LayoutParameters.seriesColorScale : null}
                                     />

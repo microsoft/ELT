@@ -155,7 +155,6 @@ export class DeploymentPanel extends React.Component<{}, DeploymentPanelState> {
                     'model.asm'
                 ];
                 const cmdOutput = execFileSync('llc', llcArgs, { cwd: tmpdir });
-                console.log('llvm compile output: ' + cmdOutput);
             } else {
                 fs.writeFileSync(tmpdir + path.sep + tab.label, tab.text);
             }

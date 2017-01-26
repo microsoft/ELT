@@ -27,7 +27,7 @@ export interface TrackViewProps {
     useMipmap?: boolean;
 
     filterTimeSeries?: (timeSeries: AlignedTimeSeries) => boolean;
-    getTimeCursor?: (timeSeries: AlignedTimeSeries) => number;
+    timeCursorMap?: { [seriesId: string]: number };
     zoomTransform?: ZoomTrasform;
 
     enableMouseEvents?: boolean;
@@ -120,10 +120,9 @@ export class TrackView extends React.Component<TrackViewProps, {}> {
 
             // Get time cursor x position.
             let timeCursor: number = null;
-            if (this.props.getTimeCursor) {
-                timeCursor = this.props.getTimeCursor(alignedTimeSeries);
+            if (this.props.timeCursorMap) {
+                timeCursor = this.props.timeCursorMap[alignedTimeSeries.id];
             }
-            console.log("cursor", alignedTimeSeries.id, timeCursor);
             // Don't display timeCursor if it's outside.
             if (timeCursor < timeSeries.timestampStart || timeCursor > timeSeries.timestampEnd) {
                 timeCursor = null;
