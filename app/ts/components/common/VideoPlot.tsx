@@ -115,7 +115,7 @@ export class VideoPlayer extends React.Component<VideoPlayerProps, {}> {
 
     public componentDidMount(): void {
         const time = this.seriesTimeToVideoTime(this.props.timeCursor);
-        if (time) {
+        if (time != null && !isNaN(time)) {
             this.refs.video.currentTime = time;
         }
         if (this.props.play) { this.refs.video.play(); }
@@ -128,7 +128,7 @@ export class VideoPlayer extends React.Component<VideoPlayerProps, {}> {
             if (this.props.play) { this.refs.video.pause(); }
 
             const time = this.seriesTimeToVideoTime(newProps.timeCursor);
-            if (time) {
+            if (time != null && !isNaN(time)) {
                 this.refs.video.currentTime = time;
             } else {
                 // this.refs.video.currentTime = 0;
@@ -136,7 +136,7 @@ export class VideoPlayer extends React.Component<VideoPlayerProps, {}> {
         } else {
             if (!this.props.play) {
                 const time = this.seriesTimeToVideoTime(newProps.timeCursor);
-                if (time) {
+                if (time != null && !isNaN(time)) {
                     this.refs.video.currentTime = time;
                 }
                 this.refs.video.play();
@@ -383,7 +383,7 @@ export class VideoFrame extends React.Component<VideoFrameImageProps, {}> {
         if (!this.refs.video) { return; }
         const time = (newProps.timeCursor - this.props.timeSeries.timestampStart) /
             (this.props.timeSeries.timestampEnd - this.props.timeSeries.timestampStart) * this.refs.video.duration;
-        if (time) {
+        if (time != null && !isNaN(time)) {
             this.refs.video.currentTime = time;
         }
     }
