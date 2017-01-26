@@ -1,4 +1,4 @@
-class DeferredCallbacks {
+export class DeferredCallbacks {
     private _waitingCount: number;
     private _onComplete: () => void;
 

@@ -4,6 +4,7 @@
 import { AlignedTimeSeries, Track } from './dataStructures/alignment';
 import { loadMultipleSensorTimeSeriesFromFile, loadRawSensorTimeSeriesFromFile, loadVideoTimeSeriesFromFile, TimeSeries }
     from './dataStructures/dataset';
+import { DeferredCallbacks } from './dataStructures/DeferredCallbacks';
 import { HistoryTracker } from './dataStructures/HistoryTracker';
 import { SavedAlignedTimeSeries, SavedAlignmentSnapshot, SavedLabelingSnapshot, SavedProject, SavedTrack }
     from './dataStructures/project';
@@ -58,18 +59,18 @@ export class ProjectStore {
     }
 
 
-    public getTimeSeriesByID(id: string): AlignedTimeSeries {
+    public getTimeSeriesByID(seriesId: string): AlignedTimeSeries {
         // There are so few tracks/timeseries that linear search is fine.
-        this.tracks.concat(this.referenceTrack).forEach(t => {
-            const found = t.alignedTimeSeries.filter(ts => ts.id === id);
-            if (found.length) { return found[0]; }
-        });
-        return undefined;
+        const allSeries = this.tracks.concat(this.referenceTrack)
+            .map(ts => ts.alignedTimeSeries);
+        const flattened : AlignedTimeSeries[] = [].concat(...allSeries);
+        const found = flattened.filter(s => s.id === seriesId);
+        return (found.length > 0) ? found[0] : undefined;
     }
 
-    public getTrackByID(id: string): Track {
+    public getTrackByID(trackId: string): Track {
         // There are so few tracks that linear search is fine.
-        return this.tracks.concat(this.referenceTrack).filter(t => t.id === id)[0];
+        return this.tracks.concat(this.referenceTrack).filter(t => t.id === trackId)[0];
     }
 
     // Keep the time range of the reference track.
@@ -195,7 +196,6 @@ export class ProjectStore {
         };
     }
 
-    // TODO: might want to move some of this computation elsewhere 
     public exportLabels(fileName: string): void {
         function solveForKandB(x1: number, y1: number, x2: number, y2: number): [number, number] {
             const k = (y2 - y1) / (x2 - x1);
@@ -216,7 +216,6 @@ export class ProjectStore {
                 const referenceStart = timeSeries.referenceStart;
                 const referenceEnd = timeSeries.referenceEnd;
                 // use these to recompute k and b
-                // TODO: figure out why we don't just store k and b for each timeSeries?
                 const [k, b] = solveForKandB(localStart, referenceStart, localEnd, referenceEnd);
                 // get the labels from labelingStore .labels()
                 // map the timestamps of the labels from the reference time to the time of the current time series
