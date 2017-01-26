@@ -30,10 +30,6 @@ export class LabelingSuggestionGenerator {
     constructor(labelingStore: LabelingStore, labelingUiStore: LabelingUiStore, alignmentLabelingUiStore: ProjectUiStore) {
         this._engine = new LabelingSuggestionEngine(new DtwSuggestionModelBuilder());
 
-        // this._engine.addStatusUpdateListener((status) => {
-        //     this.emitStatusUpdate(status.status);
-        // });
-
         // Controls the speed to add suggestions to the label array.
         this._throttler = new ArrayThrottler<Label, number[]>(100, this.addSuggestions.bind(this));
 

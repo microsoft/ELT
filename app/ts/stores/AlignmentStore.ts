@@ -8,7 +8,7 @@ import { ProjectStore } from './ProjectStore';
 import { ProjectUiStore } from './ProjectUiStore';
 import { projectStore, projectUiStore, alignmentUiStore } from './stores';
 import * as d3 from 'd3';
-import { action, autorun, observable } from 'mobx';
+import { action, autorun, observable, reaction } from 'mobx';
 
 
 
@@ -116,10 +116,8 @@ export class AlignmentStore {
         this.correspondences = [];
         this._alignmentTransitionController = null;
 
-        autorun(() => this.onTracksChanged());
+        reaction(() => projectStore.tracks, () => this.onTracksChanged());
         autorun(() => this.rearrangeSeries());
-        // alignmentLabelingStore.tracksChanged.on(this.onTracksChanged.bind(this));
-        // alignmentLabelingUiStore.referenceViewChanged.on(this.rearrangeSeries.bind(this));
     }
 
     @action

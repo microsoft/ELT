@@ -327,14 +327,9 @@ export class ProjectStore {
         this.projectFileLocation = null;
         this.referenceTrack = null;
         this.tracks = [];
-
-        // Load alignment and labeling.
         alignmentStore.reset();
         labelingStore.reset();
-
-        // TODO: Load the reference zooming info here.
         projectUiStore.setProjectReferenceViewZooming(0, 1);
-        // TODO: Load the tabs here.
         projectUiStore.currentTab = 'alignment';
     }
 
