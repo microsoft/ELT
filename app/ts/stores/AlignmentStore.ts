@@ -200,7 +200,7 @@ export class AlignmentStore {
         this.stopAnimation();
 
         this.markers = this.markers.filter((m) => {
-            return !!projectStore.getTimeSeriesByID(m.timeSeries.id);
+            return projectStore.getTimeSeriesByID(m.timeSeries.id) !== null;
         });
         this.correspondences = this.correspondences.filter((c) => {
             return this.markers.indexOf(c.marker1) >= 0 && this.markers.indexOf(c.marker2) >= 0;

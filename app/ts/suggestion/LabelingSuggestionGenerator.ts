@@ -158,10 +158,6 @@ export class LabelingSuggestionGenerator {
             // Throttle suggestions so we don't update the view too often.
             this._throttler.setStationary([progress.timestampStart, progress.timestampEnd, progress.timestampCompleted, this._generation]);
             this._throttler.addItems(labels);
-            if (labels.length) {
-                // tslint:disable-next-line:no-debugger
-                debugger;
-            }
             labelingUiStore.setSuggestionProgress(
                 !completed, progress.timestampStart, progress.timestampCompleted, progress.timestampEnd, progress.confidenceHistogram);
         });

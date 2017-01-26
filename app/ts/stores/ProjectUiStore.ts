@@ -70,13 +70,8 @@ export class ProjectUiStore {
 
     // Exposed properties.
     // Detailed view zooming and translation.
-    // FIXME: should these be computed?
     public get referenceViewDuration(): number { return this.viewWidth / this.referenceViewPPS; }
     public get referenceViewEnd(): number { return this.referenceViewStart + this.viewWidth / this.referenceViewPPS; }
-
-    // // FIXME: can't computed just be public??
-    // public get referenceTimestampStart(): number { return this._referenceTimestampStart; }
-    // public get referenceTimestampEnd(): number { return this._referenceTimestampEnd; }
 
     // Set the zooming parameters when a project is loaded.
     public setProjectReferenceViewZooming(referenceViewStart: number, referenceViewPPS: number): void {

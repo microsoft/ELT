@@ -66,7 +66,6 @@ export class HomeMenu extends React.Component<{}, {}> {
     // Save the current project. Show a dialog if there is not project file on record.
     private saveCurrentProject(onSaved: () => any = null, onCanceled: () => any = null): void {
         if (stores.projectStore.projectFileLocation) {
-            // FIXME
             stores.projectStore.saveProject(stores.projectStore.projectFileLocation);
             setImmediate(onSaved);
         } else {
