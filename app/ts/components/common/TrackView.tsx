@@ -60,19 +60,19 @@ export class TrackView extends React.Component<TrackViewProps, {}> {
         return [x, y];
     }
 
-    private emitMouseDown(event: React.MouseEvent<Element>, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number): void {
+    private onMouseDown(event: React.MouseEvent<Element>, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number): void {
         if (this.props.onMouseDown) { this.props.onMouseDown(event, track, timeSeries, t, pps); }
     }
-    private emitMouseMove(event: React.MouseEvent<Element>, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number): void {
+    private onMouseMove(event: React.MouseEvent<Element>, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number): void {
         if (this.props.onMouseMove) { this.props.onMouseMove(event, track, timeSeries, t, pps); }
     }
-    private emitMouseEnter(event: React.MouseEvent<Element>, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number): void {
+    private onMouseEnter(event: React.MouseEvent<Element>, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number): void {
         if (this.props.onMouseEnter) { this.props.onMouseEnter(event, track, timeSeries, t, pps); }
     }
-    private emitMouseLeave(event: React.MouseEvent<Element>, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number): void {
+    private onMouseLeave(event: React.MouseEvent<Element>, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number): void {
         if (this.props.onMouseLeave) { this.props.onMouseLeave(event, track, timeSeries, t, pps); }
     }
-    private emitWheel(
+    private onWheel(
         event: React.WheelEvent<Element>, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number,
         deltaY: number): void {
         if (this.props.onWheel) { this.props.onWheel(event, track.id, timeSeries, t, pps, deltaY); }
@@ -123,11 +123,12 @@ export class TrackView extends React.Component<TrackViewProps, {}> {
             if (this.props.getTimeCursor) {
                 timeCursor = this.props.getTimeCursor(alignedTimeSeries);
             }
+            console.log("cursor", alignedTimeSeries.id, timeCursor);
             // Don't display timeCursor if it's outside.
             if (timeCursor < timeSeries.timestampStart || timeCursor > timeSeries.timestampEnd) {
                 timeCursor = null;
             }
-            const timeCursorX = timeCursor ? sReferenceToPixel(sSignalToReference(timeCursor)) : null;
+            const timeCursorX = timeCursor != null ? sReferenceToPixel(sSignalToReference(timeCursor)) : null;
 
             const chunkHeight = this.props.viewHeight / alignedTimeSeries.timeSeries.length;
             const ySeries = chunkHeight * t;
@@ -142,14 +143,14 @@ export class TrackView extends React.Component<TrackViewProps, {}> {
                             y={0}
                             width={xEnd - xStart}
                             height={chunkHeight}
-                            onMouseDown={event => { this.emitMouseDown(event, track, alignedTimeSeries, getTime(event), pps); } }
-                            onMouseMove={event => { this.emitMouseMove(event, track, alignedTimeSeries, getTime(event), pps); } }
-                            onMouseEnter={event => { this.emitMouseEnter(event, track, alignedTimeSeries, getTime(event), pps); } }
-                            onMouseLeave={event => { this.emitMouseLeave(event, track, alignedTimeSeries, getTime(event), pps); } }
-                            onWheel={event => { this.emitWheel(event, track, alignedTimeSeries, getTime(event), pps, event.deltaY); } }
+                            onMouseDown={event => { this.onMouseDown(event, track, alignedTimeSeries, getTime(event), pps); } }
+                            onMouseMove={event => { this.onMouseMove(event, track, alignedTimeSeries, getTime(event), pps); } }
+                            onMouseEnter={event => { this.onMouseEnter(event, track, alignedTimeSeries, getTime(event), pps); } }
+                            onMouseLeave={event => { this.onMouseLeave(event, track, alignedTimeSeries, getTime(event), pps); } }
+                            onWheel={event => { this.onWheel(event, track, alignedTimeSeries, getTime(event), pps, event.deltaY); } }
                             />
                         {
-                            timeCursor ? (
+                            timeCursor != null ? (
                                 <line
                                     x1={timeCursorX - xStart}
                                     x2={timeCursorX - xStart}
@@ -166,7 +167,7 @@ export class TrackView extends React.Component<TrackViewProps, {}> {
             if (timeSeries.kind === TimeSeriesKind.VIDEO) {
                 const video = timeSeries as VideoTimeSeries;
                 const scaledVideoWidth = this.props.viewHeight * video.width / video.height;
-                if (timeCursor) {
+                if (timeCursor != null) {
                     return (
                         <g transform={`translate(${xStart}, 0)`} key={`ts-${alignedTimeSeries.id}-${t}`}>
                             <VideoFrame

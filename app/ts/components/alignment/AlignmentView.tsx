@@ -55,6 +55,15 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
     }
 
 
+    public componentDidMount(): void {
+        window.addEventListener('keydown', this.onKeyDown);
+    }
+
+    public componentWillUnmount(): void {
+        window.removeEventListener('keydown', this.onKeyDown);
+    }
+
+
     private onKeyDown(event: KeyboardEvent): void {
         if (event.srcElement === document.body) {
             if (event.keyCode === KeyCode.BACKSPACE || event.keyCode === KeyCode.DELETE) {
@@ -82,7 +91,7 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
                 .range([timeSeries.timeSeries[0].timestampStart, timeSeries.timeSeries[0].timestampEnd]);
             stores.projectUiStore.setReferenceViewTimeCursor(scale.invert(t));
         } else {
-            stores.alignmentUiStore.setSeriesTimeCursor(timeSeries, t);
+            stores.alignmentUiStore.setTimeCursor(timeSeries, t);
         }
     }
 
@@ -119,11 +128,11 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
     }
 
     private onTrackMouseLeave(event: React.MouseEvent<Element>, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number): void {
-        stores.alignmentUiStore.setSeriesTimeCursor(timeSeries, null);
+        stores.alignmentUiStore.setTimeCursor(timeSeries, null);
     }
 
     private onTrackMouseEnter(event: React.MouseEvent<Element>, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number): void {
-        stores.alignmentUiStore.setSeriesTimeCursor(timeSeries, t);
+        stores.alignmentUiStore.setTimeCursor(timeSeries, t);
     }
 
 
@@ -217,7 +226,7 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
                     markerTarget: null
                 });
 
-                if (lastCandidate && lastCandidate !== marker) {
+                if (lastCandidate !== marker && lastCandidate !== null) {
                     stores.alignmentStore.addMarkerCorrespondence(marker, lastCandidate);
                 }
             });
@@ -417,7 +426,7 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
                             if (marker.timeSeries.trackId === stores.projectStore.referenceTrack.id) {
                                 stores.projectUiStore.setReferenceViewTimeCursor(marker.localTimestamp);
                             } else {
-                                stores.alignmentUiStore.setSeriesTimeCursor(marker.timeSeries, marker.localTimestamp);
+                                stores.alignmentUiStore.setTimeCursor(marker.timeSeries, marker.localTimestamp);
                             }
                         } }
                         onMouseDown={event => {
@@ -432,7 +441,7 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
                                     if (marker.timeSeries.trackId === stores.projectStore.referenceTrack.id) {
                                         stores.projectUiStore.setReferenceViewTimeCursor(newT);
                                     } else {
-                                        stores.alignmentUiStore.setSeriesTimeCursor(marker.timeSeries, newT);
+                                        stores.alignmentUiStore.setTimeCursor(marker.timeSeries, newT);
                                     }
                                 },
                                 () => { stores.alignmentStore.updateMarker(marker, marker.localTimestamp, true, false); }
