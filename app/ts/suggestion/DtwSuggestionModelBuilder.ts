@@ -65,7 +65,6 @@ class WorkerModel extends LabelingSuggestionModel {
         generation: number,
         callback: LabelingSuggestionCallback): void {
 
-        // console.log('WebWorker.computeSuggestion', this._modelID, generation);
         this._parent.setDataset(dataset);
 
         const callbackID = 'cb' + this._currentCallbackID.toString();
@@ -86,7 +85,6 @@ class WorkerModel extends LabelingSuggestionModel {
 
 
     public cancelSuggestion(callback: LabelingSuggestionCallback): void {
-        // console.log('WebWorker.cancelSuggestion', this._modelID);
         if (this._callback2ID.has(callback)) {
             this._parent.postModelMessage(this._modelID, {
                 kind: 'compute.cancel',

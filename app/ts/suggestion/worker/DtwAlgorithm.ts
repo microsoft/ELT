@@ -130,8 +130,6 @@ function getAverageLabelsPerClass(
         const off1 = errors1.length > 0 ? errors1.reduce((a, b) => a + b, 0) / errors1.length : 0;
         const off2 = errors2.length > 0 ? errors2.reduce((a, b) => a + b, 0) / errors2.length : 0;
 
-        // console.log(off1, off2);
-
         for (const { mean, variance } of means) {
             result.push({
                 className: group,
@@ -227,7 +225,6 @@ class DtwSuggestionModel extends LabelingSuggestionModel {
                 t1 -= labels[which].adjustmentsBegin;
                 t2 -= labels[which].adjustmentsEnd;
                 const likelihood = getLikelihood(label.variance, dist);
-                // console.log(likelihood, dist, thresholds[which], label.variance);
                 labelCache.push({
                     timestampStart: t1,
                     timestampEnd: t2,
