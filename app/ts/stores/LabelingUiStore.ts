@@ -2,9 +2,8 @@
 // Labeling selection and hovering states.
 // Options for labeling and suggestions (move to elsewhere?)
 
-import { Label, PartialLabel, SignalsViewMode } from '../stores/dataStructures/labeling';
+import { Label, PartialLabel } from '../stores/dataStructures/labeling';
 import { ObservableSet } from '../stores/dataStructures/ObservableSet';
-import { getLabelingSuggestionLogic, LabelingSuggestionLogic, LabelingSuggestionLogicType } from '../suggestion/LabelingSuggestionLogic';
 import { LabelingStore } from './LabelingStore';
 import { labelingStore } from './stores';
 import { action, computed, observable } from 'mobx';
@@ -22,13 +21,6 @@ export class LabelingUiStore {
     // Current selected class.
     @observable public currentClass: string;
 
-    // Display settings.
-    @observable public signalsViewMode: SignalsViewMode;
-
-    // // Playback control.
-    // private _isPlaying: boolean;
-    // private _playingTimer: NodeJS.Timer;
-
     // Suggestion status.
     private _isSuggesting: boolean;
     private _suggestionTimestampStart: number;
@@ -41,20 +33,14 @@ export class LabelingUiStore {
     @observable public suggestionConfidenceThreshold: number;
     private _changePointsEnabled: boolean;
 
-    @observable public suggestionLogic: LabelingSuggestionLogic;
-
     private _microAdjusterType: string;
 
     constructor(labelingStore: LabelingStore) {
-
-        this.signalsViewMode = SignalsViewMode.TIMESERIES;
-
         this.hoveringLabel = null;
         this.selectedLabels = new ObservableSet<Label>(
             lab => lab.className + ':' + lab.timestampStart + '-' + lab.timestampEnd);
 
         this.suggestionEnabled = true;
-        this.suggestionLogic = getLabelingSuggestionLogic(LabelingSuggestionLogicType.CURRENT_VIEW);
         this._changePointsEnabled = true;
         this.suggestionConfidenceThreshold = 0.2;
         this._suggestionConfidenceHistogram = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
@@ -141,14 +127,6 @@ export class LabelingUiStore {
         this.suggestionEnabled = enabled;
     }
 
-    @action public setSuggestionLogic(logic: LabelingSuggestionLogicType): void {
-        this.suggestionLogic = getLabelingSuggestionLogic(logic);
-    }
-
-    @action public setSignalsViewMode(mode: SignalsViewMode): void {
-        this.signalsViewMode = mode;
-    }
-
     @action public updateLabel(label: Label, newLabel: PartialLabel): void {
         labelingStore.updateLabel(label, newLabel);
     }
@@ -176,7 +154,6 @@ export class LabelingUiStore {
     // }
 
     public getLabelsInRange(timestampStart: number, timestampEnd: number): Label[] {
-        // FIXME: I think all these filters accomplish nothing.
         const labels = labelingStore.getLabelsInRange(timestampStart, timestampEnd);
         return labels.filter(l => l !== this.hoveringLabel && !this.selectedLabels.has(l)).concat(
             labels.filter(l => l !== this.hoveringLabel && this.selectedLabels.has(l))).concat(

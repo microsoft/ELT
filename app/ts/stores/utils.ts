@@ -2,10 +2,8 @@ import * as d3 from 'd3';
 import * as fs from 'fs';
 import * as path_module from 'path';
 
-import { autocorrelogram } from '../suggestion/algorithms/Autocorrelation';
-import { Dataset, loadSensorTimeSeriesFromFile, loadVideoTimeSeriesFromFile, SensorTimeSeries, TimeSeriesKind }
+import { Dataset, loadSensorTimeSeriesFromFile, loadVideoTimeSeriesFromFile }
     from './dataStructures/dataset';
-import { Label, LabelConfirmationState } from './dataStructures/labeling';
 
 
 
@@ -50,29 +48,6 @@ export function isSameArray<T>(arr1?: T[], arr2?: T[]): boolean {
 
 export function makePathDFromPoints(points: number[][]): string {
     return 'M' + points.map(([x, y]) => x + ',' + y).join('L');
-}
-
-
-export function updateLabelConfirmationState(label: Label, endpoint: string): LabelConfirmationState {
-    let newState = label.state;
-    if (endpoint === 'start') {
-        if (label.state === LabelConfirmationState.UNCONFIRMED) {
-            newState = LabelConfirmationState.CONFIRMED_START;
-        } else if (label.state === LabelConfirmationState.CONFIRMED_END) {
-            newState = LabelConfirmationState.CONFIRMED_BOTH;
-        }
-    }
-    if (endpoint === 'end') {
-        if (label.state === LabelConfirmationState.UNCONFIRMED) {
-            newState = LabelConfirmationState.CONFIRMED_END;
-        } else if (label.state === LabelConfirmationState.CONFIRMED_START) {
-            newState = LabelConfirmationState.CONFIRMED_BOTH;
-        }
-    }
-    if (endpoint === 'both') {
-        newState = LabelConfirmationState.CONFIRMED_BOTH;
-    }
-    return newState;
 }
 
 
@@ -245,65 +220,4 @@ export function loadDataFromMetadata(metadataPath: string, callback: (dataset: D
     });
 
     checkCallback();
-}
-
-const autocorrelogramCache = new WeakMap<SensorTimeSeries, SensorTimeSeries>();
-
-export function computeSensorTimeSeriesAutocorrelogram(timeSeries: SensorTimeSeries): SensorTimeSeries {
-    if (autocorrelogramCache.has(timeSeries)) { return autocorrelogramCache.get(timeSeries); }
-
-    const sampleRate = (timeSeries.dimensions[0].length - 1) / (timeSeries.timestampEnd - timeSeries.timestampStart);
-    const windowSize = Math.ceil(sampleRate * 4);
-    const sliceSize = Math.ceil(windowSize / 4);
-    const dimension = new Float32Array(timeSeries.dimensions[0].length);
-    for (let i = 0; i < timeSeries.dimensions[0].length; i++) {
-        dimension[i] = 0;
-        for (let j = 0; j < timeSeries.dimensions.length; j++) {
-            if (timeSeries.dimensions[j][i] === timeSeries.dimensions[j][i]) {
-                dimension[i] += timeSeries.dimensions[j][i];
-            }
-        }
-    }
-    const result = autocorrelogram(dimension, windowSize, sliceSize);
-    const sliceCount = result.length / windowSize;
-    const dimensions: Float32Array[] = [];
-    const samplesScale = d3.scaleLinear() // sample index <> sample timestamp
-        .domain([0, dimension.length - 1])
-        .range([timeSeries.timestampStart, timeSeries.timestampEnd]);
-    const sliceScale = d3.scaleLinear() // slice index <> slice timestamp
-        .domain([0, sliceCount - 1])
-        .range([samplesScale(0 + windowSize / 2), samplesScale(sliceSize * (sliceCount - 1) + windowSize / 2)]);
-    for (let i = 0; i < windowSize; i++) {
-        const t = dimensions[i] = new Float32Array(sliceCount);
-        for (let j = 0; j < sliceCount; j++) {
-            t[j] = result[j * windowSize + i];
-            if (t[j] !== t[j]) { t[j] = 0; }
-        }
-    }
-    const r = {
-        name: timeSeries.name + '.autocorrelogram',
-        kind: timeSeries.kind,
-        timestampStart: sliceScale.range()[0],
-        timestampEnd: sliceScale.range()[1],
-        dimensions: dimensions,
-        sampleRate: (sliceScale.range()[1] - sliceScale.range()[0]) / (dimension.length - 1),
-        scales: [[-1, 1]]
-    };
-    autocorrelogramCache.set(timeSeries, r);
-    return r;
-}
-
-export function computeDatasetAutocorrelogram(dataset: Dataset): Dataset {
-    const datasetOut = new Dataset();
-    datasetOut.name = dataset.name;
-    datasetOut.timestampStart = dataset.timestampStart;
-    datasetOut.timestampEnd = dataset.timestampEnd;
-    for (const series of dataset.timeSeries) {
-        if (series.kind === TimeSeriesKind.VIDEO) {
-            datasetOut.timeSeries.push(series);
-        } else {
-            datasetOut.timeSeries.push(computeSensorTimeSeriesAutocorrelogram(series as SensorTimeSeries));
-        }
-    }
-    return datasetOut;
 }

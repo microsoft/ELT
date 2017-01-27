@@ -2,8 +2,6 @@
 
 import { Track } from '../../stores/dataStructures/alignment';
 import { SensorTimeSeries, TimeSeriesKind, VideoTimeSeries } from '../../stores/dataStructures/dataset';
-import { SignalsViewMode } from '../../stores/dataStructures/labeling';
-import { AutocorrelogramPlot } from '../common/AutocorrelogramPlot';
 import { SensorRangePlot } from '../common/SensorPlot';
 import { VideoFrame, VideoRangePlot } from '../common/VideoPlot';
 import * as d3 from 'd3';
@@ -16,7 +14,6 @@ export interface TrackViewProps {
     viewWidth: number;
     viewHeight: number;
     zoomTransform: { rangeStart: number, pixelsPerSecond: number };
-    signalsViewMode?: SignalsViewMode;
     colorScale?: any;
     useMipmap?: boolean;
     timeCursor?: number;
@@ -195,60 +192,20 @@ export class TrackView extends React.Component<TrackViewProps, {}> {
                                 );
                             }
                         } else {
-                            switch (this.props.signalsViewMode) {
-                                case SignalsViewMode.AUTOCORRELOGRAM:
-                                    return (
-                                        <g transform={`translate(${xStart}, ${ySeries})`} key={`ts-${track.id}-${t}`}>
-
-                                            <AutocorrelogramPlot
-                                                timeSeries={timeSeries as SensorTimeSeries}
-                                                rangeStart={tStart}
-                                                pixelsPerSecond={pps}
-                                                plotWidth={xEnd - xStart}
-                                                plotHeight={chunkHeight}
-                                                />
-                                            {interactionRect}
-                                        </g>
-                                    );
-                                case SignalsViewMode.COMBINED:
-                                    return (
-                                        <g transform={`translate(${xStart}, ${ySeries})`} key={`ts-${track.id}-${t}`}>
-                                            <AutocorrelogramPlot
-                                                timeSeries={timeSeries as SensorTimeSeries}
-                                                rangeStart={tStart}
-                                                pixelsPerSecond={pps}
-                                                plotWidth={xEnd - xStart}
-                                                plotHeight={chunkHeight}
-                                                />
-                                            <SensorRangePlot
-                                                timeSeries={timeSeries as SensorTimeSeries}
-                                                rangeStart={tStart}
-                                                pixelsPerSecond={pps}
-                                                plotWidth={xEnd - xStart}
-                                                plotHeight={chunkHeight}
-                                                useMipmap={this.props.useMipmap}
-                                                colorScale={this.props.colorScale}
-                                                />
-                                            {interactionRect}
-                                        </g>
-                                    );
-                                case SignalsViewMode.TIMESERIES:
-                                default:
-                                    return (
-                                        <g transform={`translate(${xStart}, ${ySeries})`} key={`ts-${track.id}-${t}`}>
-                                            <SensorRangePlot
-                                                timeSeries={timeSeries as SensorTimeSeries}
-                                                rangeStart={tStart}
-                                                pixelsPerSecond={pps}
-                                                plotWidth={xEnd - xStart}
-                                                plotHeight={chunkHeight}
-                                                useMipmap={this.props.useMipmap}
-                                                colorScale={this.props.colorScale}
-                                                />
-                                            {interactionRect}
-                                        </g>
-                                    );
-                            }
+                            return (
+                                <g transform={`translate(${xStart}, ${ySeries})`} key={`ts-${track.id}-${t}`}>
+                                    <SensorRangePlot
+                                        timeSeries={timeSeries as SensorTimeSeries}
+                                        rangeStart={tStart}
+                                        pixelsPerSecond={pps}
+                                        plotWidth={xEnd - xStart}
+                                        plotHeight={chunkHeight}
+                                        useMipmap={this.props.useMipmap}
+                                        colorScale={this.props.colorScale}
+                                        />
+                                    {interactionRect}
+                                </g>
+                            );
                         }
                     })
                 }

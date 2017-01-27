@@ -198,7 +198,6 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
                                 plotWidth={this.props.viewWidth}
                                 plotHeight={labelsY1 - labelsY0}
                                 labelKind={LabelKind.Overview}
-                                highlightLeastConfidentSuggestions={false}
                                 />
                         ) : null
                     }

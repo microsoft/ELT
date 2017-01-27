@@ -1,4 +1,4 @@
-import { Label, LabelConfirmationState } from '../../stores/dataStructures/labeling';
+import { Label } from '../../stores/dataStructures/labeling';
 import * as stores from '../../stores/stores';
 import { startDragging } from '../../stores/utils';
 import { SVGGlyphiconButton } from '../svgcontrols/buttons';
@@ -20,7 +20,6 @@ export interface LabelPlotProps {
     pixelsPerSecond: number;
     // Height of the rendered label.
     height: number;
-    isLeastConfidentSuggestion: boolean;
     classColormap: { [name: string]: string };
     labelKind: LabelKind;
 }
@@ -55,16 +54,9 @@ export class LabelPlot extends React.Component<LabelPlotProps, {}> {
                     }
                     const newTimestampStart = Math.min(t1, tNew);
                     const newTimestampEnd = Math.max(t1, tNew);
-                    let newState = label.state;
-                    if (label.state === LabelConfirmationState.UNCONFIRMED) {
-                        newState = LabelConfirmationState.CONFIRMED_START;
-                    } else if (label.state === LabelConfirmationState.CONFIRMED_END) {
-                        newState = LabelConfirmationState.CONFIRMED_BOTH;
-                    }
                     stores.labelingUiStore.updateLabel(label, {
                         timestampStart: newTimestampStart,
-                        timestampEnd: newTimestampEnd,
-                        state: newState
+                        timestampEnd: newTimestampEnd
                     });
                 }
                 if (mode === 'end') {
@@ -74,16 +66,9 @@ export class LabelPlot extends React.Component<LabelPlotProps, {}> {
                     }
                     const newTimestampStart = Math.min(t0, tNew);
                     const newTimestampEnd = Math.max(t0, tNew);
-                    let newState = label.state;
-                    if (label.state === LabelConfirmationState.UNCONFIRMED) {
-                        newState = LabelConfirmationState.CONFIRMED_END;
-                    } else if (label.state === LabelConfirmationState.CONFIRMED_START) {
-                        newState = LabelConfirmationState.CONFIRMED_BOTH;
-                    }
                     stores.labelingUiStore.updateLabel(label, {
                         timestampStart: newTimestampStart,
-                        timestampEnd: newTimestampEnd,
-                        state: newState
+                        timestampEnd: newTimestampEnd
                     });
                 }
                 if (mode === 'both') {
@@ -109,37 +94,20 @@ export class LabelPlot extends React.Component<LabelPlotProps, {}> {
         stores.labelingUiStore.hoverLabel(null);
     }
 
-    private isLabelConfirmed(): boolean {
-        return this.props.label.state === LabelConfirmationState.MANUAL ||
-            this.props.label.state === LabelConfirmationState.CONFIRMED_BOTH;
-    }
-
-    private getSuggestionConfidenceOrOne(): number {
-        const suggestionConfidence = this.props.label.suggestionConfidence;
-        if (suggestionConfidence && this.props.label.state !== LabelConfirmationState.CONFIRMED_BOTH) {
-            return suggestionConfidence;
-        } else {
-            return 1;
-        }
-    }
-
     private renderLabelOverview(): JSX.Element {
         const label = this.props.label;
         const x1 = label.timestampStart * this.props.pixelsPerSecond;
         const x2 = label.timestampEnd * this.props.pixelsPerSecond;
-        let topBand = null;
-        if (this.isLabelConfirmed()) {
-            topBand = (
-                <rect
-                    className='top'
-                    x={x1}
-                    y={0}
-                    width={x2 - x1}
-                    height={5}
-                    style={{ fill: this.props.classColormap[label.className] }}
-                    />
-            );
-        }
+        const topBand = (
+            <rect
+                className='top'
+                x={x1}
+                y={0}
+                width={x2 - x1}
+                height={5}
+                style={{ fill: this.props.classColormap[label.className] }}
+                />
+        );
         return (
             <g>
                 {topBand}
@@ -150,7 +118,7 @@ export class LabelPlot extends React.Component<LabelPlotProps, {}> {
                     height={this.props.height - 5}
                     style={{
                         fill: this.props.classColormap[label.className],
-                        opacity: 0.1 + this.getSuggestionConfidenceOrOne() * 0.3
+                        opacity: 0.4
                     }}
                     />
             </g>
@@ -184,29 +152,21 @@ export class LabelPlot extends React.Component<LabelPlotProps, {}> {
             );
         }
 
-        let topBand = null;
-        if (this.isLabelConfirmed()) {
-            topBand = (
-                <rect
-                    className='top'
-                    x={x1}
-                    y={-20}
-                    width={x2 - x1}
-                    height={20}
-                    style={{ fill: this.props.classColormap[label.className] }}
-                    />
-            );
-        }
+        const topBand = (
+            <rect
+                className='top'
+                x={x1}
+                y={-20}
+                width={x2 - x1}
+                height={20}
+                style={{ fill: this.props.classColormap[label.className] }}
+                />
+        );
 
         const borderColor = hovered || selected ?
             d3.rgb(this.props.classColormap[label.className]).darker(1) :
             this.props.classColormap[label.className];
         const lineY0 = topBand ? -20 : 0;
-
-        let highlightMarker = null;
-        if (this.props.isLeastConfidentSuggestion) {
-            highlightMarker = (<text x={x1 + 3} y={14} style={{ fill: 'black', fontSize: 12 }}>?</text>);
-        }
 
         return (
             <g className={`label-container ${additionalClasses.join(' ')}`}
@@ -222,7 +182,7 @@ export class LabelPlot extends React.Component<LabelPlotProps, {}> {
                     height={this.props.height}
                     style={{
                         fill: this.props.classColormap[label.className],
-                        opacity: 0.1 + this.getSuggestionConfidenceOrOne() * 0.3
+                        opacity: 0.4
                     }}
                     />
                 <line
@@ -235,7 +195,6 @@ export class LabelPlot extends React.Component<LabelPlotProps, {}> {
                     x1={x2} x2={x2} y1={lineY0} y2={this.props.height}
                     style={{ stroke: borderColor }}
                     />
-                {highlightMarker}
                 <rect
                     className='middle-handler'
                     x={x1}
@@ -261,14 +220,10 @@ export class LabelPlot extends React.Component<LabelPlotProps, {}> {
 
 
     public render(): JSX.Element {
-        if (this.props.label.state === LabelConfirmationState.REJECTED) {
-            return <g></g>;
-        } else {
-            switch (this.props.labelKind) {
-                case LabelKind.Detailed: return this.renderLabelDetailed();
-                case LabelKind.Overview: return this.renderLabelOverview();
-                default: throw 'missing case';
-            }
+        switch (this.props.labelKind) {
+            case LabelKind.Detailed: return this.renderLabelDetailed();
+            case LabelKind.Overview: return this.renderLabelOverview();
+            default: throw 'missing case';
         }
     }
 }

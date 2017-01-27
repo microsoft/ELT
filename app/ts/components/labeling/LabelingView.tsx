@@ -1,6 +1,5 @@
 // The main labeling view.
 
-import { LabelConfirmationState, SignalsViewMode } from '../../stores/dataStructures/labeling';
 import { LayoutParameters } from '../../stores/dataStructures/LayoutParameters';
 import { KeyCode } from '../../stores/dataStructures/types';
 import * as stores from '../../stores/stores';
@@ -93,8 +92,7 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
                     const newLabel = {
                         timestampStart: p0,
                         timestampEnd: p1,
-                        className: stores.labelingUiStore.currentClass,
-                        state: LabelConfirmationState.UNCONFIRMED
+                        className: stores.labelingUiStore.currentClass
                     };
                     stores.labelingStore.addLabel(newLabel);
                     stores.labelingUiStore.selectLabel(newLabel);
@@ -134,8 +132,7 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
                         const newLabel = {
                             timestampStart: Math.min(t0, t1),
                             timestampEnd: Math.max(t0, t1),
-                            className: stores.labelingUiStore.currentClass,
-                            state: LabelConfirmationState.MANUAL
+                            className: stores.labelingUiStore.currentClass
                         };
                         stores.labelingStore.addLabel(newLabel);
                         stores.labelingUiStore.selectLabel(newLabel);
@@ -152,8 +149,7 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
                                 const newLabel = {
                                     timestampStart: lastLabel.timestampEnd,
                                     timestampEnd: t0,
-                                    className: stores.labelingUiStore.currentClass,
-                                    state: LabelConfirmationState.UNCONFIRMED
+                                    className: stores.labelingUiStore.currentClass
                                 };
                                 stores.labelingStore.addLabel(newLabel);
                                 stores.labelingUiStore.selectLabel(newLabel);
@@ -247,8 +243,7 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
             );
         }
 
-        const signalsViewMode = stores.labelingUiStore.signalsViewMode;
-        const maxOverlapFactor = signalsViewMode === SignalsViewMode.TIMESERIES ? 0.4 : 0;
+        const maxOverlapFactor = 0.4;
         const tracksViewHeight = sensorAreaY1 - sensorAreaY0;
         let trackViewTrackHeight = tracksViewHeight;
         let tracksViewTrackSpacing = 0;
@@ -283,7 +278,6 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
                                     viewWidth={this.props.viewWidth}
                                     colorScale={LayoutParameters.seriesColorScale}
                                     useMipmap={true}
-                                    signalsViewMode={signalsViewMode}
                                     />
                             </g>
                         ))
@@ -316,7 +310,6 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
                             plotWidth={this.props.viewWidth}
                             plotHeight={labelAreaY1 - labelAreaY0}
                             labelKind={LabelKind.Detailed}
-                            highlightLeastConfidentSuggestions={true}
                             />
                     </g>
 

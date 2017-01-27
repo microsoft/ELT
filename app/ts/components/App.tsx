@@ -3,9 +3,7 @@
 import { TabID } from '../stores/dataStructures/types';
 import * as stores from '../stores/stores';
 import { NavigationColumn, NavigationColumnItem } from './common/NavigationColumn';
-import { DeploymentPanel } from './deployment/DeploymentPanel';
 import { HomeMenu } from './menus/HomeMenu';
-import { OptionsMenu } from './menus/OptionsMenu';
 import { WorkPanel } from './WorkPanel';
 import { remote } from 'electron';
 import { observer } from 'mobx-react';
@@ -82,12 +80,6 @@ export class App extends React.Component<{}, {}> {
                     </NavigationColumnItem>
                     <NavigationColumnItem title='Labeling' name='labeling' showButton={true} iconClass={'glyphicon glyphicon-tags'}>
                         <WorkPanel mode='labeling' />
-                    </NavigationColumnItem>
-                    <NavigationColumnItem title='Deployment' name='deploying' iconClass='glyphicon glyphicon-export'>
-                        <DeploymentPanel />
-                    </NavigationColumnItem>
-                    <NavigationColumnItem title='Options' name='options' iconClass='glyphicon glyphicon-cog'>
-                        <OptionsMenu />
                     </NavigationColumnItem>
                 </NavigationColumn>
             </div>

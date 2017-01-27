@@ -1,9 +1,9 @@
 import { Track } from '../stores/dataStructures/alignment';
 import { Dataset, SensorTimeSeries } from '../stores/dataStructures/dataset';
-import { Label, LabelConfirmationState, PartialLabel } from '../stores/dataStructures/labeling';
+import { Label, PartialLabel } from '../stores/dataStructures/labeling';
 import { SavedLabelingState } from '../stores/dataStructures/project';
 import { resampleColumn } from '../stores/dataStructures/sampling';
-import { mergeTimeRangeArrays, TimeRangeIndex } from '../stores/dataStructures/TimeRangeIndex';
+import { TimeRangeIndex } from '../stores/dataStructures/TimeRangeIndex';
 import { AlignmentStore } from './AlignmentStore';
 import { labelingUiStore, projectStore, projectUiStore } from './stores';
 import * as d3 from 'd3';
@@ -30,7 +30,6 @@ export class LabelingStore {
     @observable private _labelsIndex: TimeRangeIndex<Label>;
     @observable private _windowLabelsIndex: TimeRangeIndex<Label>;
     @observable private _windowAccuracyLabelsIndex: TimeRangeIndex<Label>;
-    @observable private _suggestedLabelsIndex: TimeRangeIndex<Label>;
 
     @observable private _windowLabelIndexHistory: TimeRangeIndex<Label>[];
     @observable private _windowLabelsHistory: Label[][];
@@ -44,7 +43,6 @@ export class LabelingStore {
     constructor(alignmentStore: AlignmentStore) {
         this._labelsIndex = new TimeRangeIndex<Label>();
         this._windowLabelsIndex = new TimeRangeIndex<Label>();
-        this._suggestedLabelsIndex = new TimeRangeIndex<Label>();
         this._windowAccuracyLabelsIndex = new TimeRangeIndex<Label>();
 
         this._windowLabelIndexHistory = [];
@@ -61,14 +59,8 @@ export class LabelingStore {
         return this._labelsIndex.items;
     }
 
-    @computed public get suggestions(): Label[] {
-        return this._suggestedLabelsIndex.items;
-    }
-
     public getLabelsInRange(tmin: number, tmax: number): Label[] {
-        return mergeTimeRangeArrays(
-            this._labelsIndex.getRangesInRange(tmin, tmax),
-            this._suggestedLabelsIndex.getRangesInRange(tmin, tmax));
+        return this._labelsIndex.getRangesInRange(tmin, tmax);
     }
 
 
@@ -82,9 +74,6 @@ export class LabelingStore {
         if (this._labelsIndex.has(label)) {
             this._labelsIndex.remove(label);
         }
-        if (this._suggestedLabelsIndex.has(label)) {
-            label.state = LabelConfirmationState.REJECTED;
-        }
     }
 
     @action public updateLabel(label: Label, newLabel: PartialLabel): void {
@@ -93,97 +82,17 @@ export class LabelingStore {
         if (newLabel.timestampStart !== undefined) { label.timestampStart = newLabel.timestampStart; }
         if (newLabel.timestampEnd !== undefined) { label.timestampEnd = newLabel.timestampEnd; }
         if (newLabel.className !== undefined) { label.className = newLabel.className; }
-        if (newLabel.state !== undefined) { label.state = newLabel.state; }
         if (newLabel.suggestionConfidence !== undefined) { label.suggestionConfidence = newLabel.suggestionConfidence; }
         if (newLabel.suggestionGeneration !== undefined) { label.suggestionGeneration = newLabel.suggestionGeneration; }
-
-        // Turn a suggestion into a label, criteria: BOTH ends confirmed.
-        if (this._suggestedLabelsIndex.has(label)) {
-            if (label.state === LabelConfirmationState.CONFIRMED_BOTH) {
-                this._suggestedLabelsIndex.remove(label);
-                this._labelsIndex.add(label);
-
-                const decision = labelingUiStore.suggestionLogic.onConfirmLabels({
-                    labelsConfirmed: [label],
-                    currentSuggestions: this._suggestedLabelsIndex
-                });
-                if (decision) {
-                    if (decision.confirmLabels) {
-                        decision.confirmLabels.forEach(lab => {
-                            lab.state = LabelConfirmationState.CONFIRMED_BOTH;
-                            this._suggestedLabelsIndex.remove(lab);
-                            this._labelsIndex.add(lab);
-                        });
-                    }
-                    if (decision.deleteLabels) {
-                        decision.deleteLabels.forEach(lab => {
-                            this._suggestedLabelsIndex.remove(lab);
-                        });
-                    }
-                    if (decision.rejectLabels) {
-                        decision.rejectLabels.forEach(lab => {
-                            lab.state = LabelConfirmationState.REJECTED;
-                        });
-                    }
-                }
-            }
-        }
-    }
-
-    @action public suggestLabels(
-        labels: Label[],
-        timestampStart: number,
-        timestampEnd: number,
-        timestampCompleted: number,
-        generation: number): void {
-
-        const lastLabelTimestampEnd = timestampCompleted;
-        const thisGeneration = generation;
-        let labelsChanged = false;
-        const selectedLabels = labelingUiStore.selectedLabels;
-
-        if (lastLabelTimestampEnd) {
-            // get labels that are earlier than the current suggestion timestamp.
-            const refreshDecision = labelingUiStore.suggestionLogic.refreshSuggestions({
-                suggestionProgress: {
-                    timestampStart: timestampStart,
-                    timestampEnd: timestampEnd,
-                    timestampCompleted: timestampCompleted
-                },
-                currentSuggestions: this._suggestedLabelsIndex
-            });
-            let labelsToRemove = refreshDecision.deleteLabels;
-            // Only remove unconfirmed suggestions of older generations.
-            labelsToRemove = labelsToRemove.filter(label =>
-                label.suggestionGeneration < thisGeneration && label.state === LabelConfirmationState.UNCONFIRMED);
-            // Don't remove selected suggestions.
-            labelsToRemove = labelsToRemove.filter(label => !selectedLabels.has(label));
-            // Remove them.
-            labelsToRemove.forEach(label => this._suggestedLabelsIndex.remove(label));
-            labelsChanged = labelsChanged || labelsToRemove.length > 0;
-        }
-        labels.forEach(label => {
-            const margin = (label.timestampEnd - label.timestampStart) * 0.15;
-            if (this._labelsIndex.getRangesWithinMargin(label.timestampStart, label.timestampEnd, margin).length === 0 &&
-                this._suggestedLabelsIndex.getRangesWithinMargin(label.timestampStart, label.timestampEnd, margin).length === 0) {
-                this._suggestedLabelsIndex.add(label);
-                labelsChanged = labelsChanged || true;
-            }
-        });
     }
 
     @action public suggestChangePoints(changePoints: number[]): void {
         this.changePoints = changePoints;
     }
 
-    @action public removeAllSuggestions(): void {
-        this._suggestedLabelsIndex.clear();
-    }
-
     @action public removeAllLabels(): void {
         projectStore.labelingHistoryRecord();
         this._labelsIndex.clear();
-        this._suggestedLabelsIndex.clear();
     }
 
     @action public addClass(className: string): void {
@@ -225,12 +134,6 @@ export class LabelingStore {
                     renamed = true;
                 }
             });
-            this._suggestedLabelsIndex.forEach(label => {
-                if (label.className === oldClassName) {
-                    label.className = newClassName;
-                    renamed = true;
-                }
-            });
 
             const index = this.classes.indexOf(oldClassName);
             if (index >= 0) {
@@ -239,21 +142,6 @@ export class LabelingStore {
                 labelingUiStore.currentClass = newClassName;
             }
         }
-    }
-
-    @action public confirmVisibleSuggestions(): void {
-        projectStore.labelingHistoryRecord();
-        // Get visible suggestions.
-        let visibleSuggestions = this._suggestedLabelsIndex.getRangesInRange(
-            projectUiStore.referenceViewStart,
-            projectUiStore.referenceViewEnd);
-        // Filter out rejected suggestions.
-        visibleSuggestions = visibleSuggestions.filter(x => x.state !== LabelConfirmationState.REJECTED);
-        visibleSuggestions.forEach(label => {
-            label.state = LabelConfirmationState.CONFIRMED_BOTH;
-            this._suggestedLabelsIndex.remove(label);
-            this._labelsIndex.add(label);
-        });
     }
 
 
@@ -373,7 +261,6 @@ export class LabelingStore {
         }
 
         this._labelsIndex.clear();
-        this._suggestedLabelsIndex.clear();
         for (const label of state.labels) {
             this._labelsIndex.add(label);
         }
@@ -386,7 +273,6 @@ export class LabelingStore {
 
     public reset(): void {
         this._labelsIndex.clear();
-        this._suggestedLabelsIndex.clear();
         this.classes = ['IGNORE', 'Positive'];
         this.updateColors();
         this.changePoints = [];

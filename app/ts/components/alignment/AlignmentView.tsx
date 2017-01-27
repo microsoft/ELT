@@ -325,7 +325,6 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
                         onWheel={this.onTrackWheel}
                         zoomTransform={zoom}
                         useMipmap={true}
-                        signalsViewMode={stores.labelingUiStore.signalsViewMode}
                         />
 
                     <rect className='track-decoration'

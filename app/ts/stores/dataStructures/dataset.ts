@@ -128,8 +128,6 @@ export function loadVideoTimeSeriesFromFile(filename: string, callback: (video: 
 }
 
 
-// FIXME: what's the difference between this and loadMultipleSensorTimeSeriesFromFile?
-// This function reads Liang's sensor data format.
 export function loadSensorTimeSeriesFromFile(filename: string): SensorTimeSeries {
     const content = readFileSync(filename, 'utf-8');
     const rows = d3.tsvParseRows(content)
