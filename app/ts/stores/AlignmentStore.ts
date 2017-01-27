@@ -120,15 +120,13 @@ export class AlignmentStore {
         autorun(() => this.rearrangeSeries());
     }
 
-    @action
-    public addMarker(marker: Marker): void {
+    @action public addMarker(marker: Marker): void {
         projectStore.alignmentHistoryRecord();
         this.markers.push(marker);
         alignmentUiStore.selectedMarker = marker;
     }
 
-    @action
-    public updateMarker(marker: Marker, newLocalTimestamp: number, recompute: boolean = true, recordState: boolean = true): void {
+    @action public updateMarker(marker: Marker, newLocalTimestamp: number, recompute: boolean = true, recordState: boolean = true): void {
         if (recordState) {
             projectStore.alignmentHistoryRecord();
         }
@@ -138,8 +136,7 @@ export class AlignmentStore {
         }
     }
 
-    @action
-    public deleteMarker(marker: Marker): void {
+    @action public deleteMarker(marker: Marker): void {
         projectStore.alignmentHistoryRecord();
         const index = this.markers.indexOf(marker);
         if (index >= 0) {
@@ -151,8 +148,7 @@ export class AlignmentStore {
         }
     }
 
-    @action
-    public addMarkerCorrespondence(marker1: Marker, marker2: Marker): void {
+    @action public addMarkerCorrespondence(marker1: Marker, marker2: Marker): void {
         projectStore.alignmentHistoryRecord();
         // Remove all conflicting correspondence.
         this.correspondences = this.correspondences.filter(c => {
@@ -183,8 +179,7 @@ export class AlignmentStore {
         this.alignAllTimeSeries(true);
     }
 
-    @action
-    public deleteMarkerCorrespondence(correspondence: MarkerCorrespondence): void {
+    @action public deleteMarkerCorrespondence(correspondence: MarkerCorrespondence): void {
         projectStore.alignmentHistoryRecord();
         const index = this.correspondences.indexOf(correspondence);
         if (index >= 0) {
@@ -261,9 +256,7 @@ export class AlignmentStore {
         const snapshot0 = new TimeSeriesStateSnapshot(this);
         projectStore.tracks.forEach(track => {
             track.alignedTimeSeries.forEach(ts => {
-                const correspondence = ts.align(this.correspondences);
-                ts.referenceStart = correspondence.referenceStart;
-                ts.referenceEnd = correspondence.referenceEnd;
+                ts.align(this.correspondences);
             });
         });
         this.rearrangeSeries();

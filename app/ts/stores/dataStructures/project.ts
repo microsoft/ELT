@@ -19,13 +19,11 @@ export interface SavedMarkerCorrespondence {
 
 export interface SavedAlignedTimeSeries {
     id: string;
-    trackID: string;
+    trackId: string;
+    source: string;
+    aligned: boolean;
     referenceStart: number;
     referenceEnd: number;
-
-    source: string;
-
-    aligned: boolean;
 }
 
 export interface SavedTrack {
