@@ -58,7 +58,7 @@ export class AlignedTimeSeries {
         return { rangeStart: this.referenceStart, pixelsPerSecond: viewWidth / this.duration };
     }
 
-    public align(correspondences: MarkerCorrespondence[]): { referenceStart: number, referenceEnd: number } {
+    public align(correspondences: MarkerCorrespondence[]): void {
         if (correspondences.length === 0) { throw 'AlignedTimeSeries.align correspondences empty'; }
 
         // Find all correspondences above.
@@ -82,10 +82,9 @@ export class AlignedTimeSeries {
         // Find the translation and scale for correspondences.
         const [k, b] = leastSquares(tCorrespondences);
         const project = x => k * x + b;
-        return {
-            referenceStart: project(this.timeSeries[0].timestampStart),
-            referenceEnd: project(this.timeSeries[0].timestampEnd)
-        };
+
+        this.referenceStart = project(this.timeSeries[0].timestampStart);
+        this.referenceEnd = project(this.timeSeries[0].timestampEnd);
     }
 
 }
@@ -116,9 +115,6 @@ export class Track {
         return track;
     }
 
-    public foo(): void {
-        return;
-    }
 }
 
 

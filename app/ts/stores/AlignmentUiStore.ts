@@ -28,8 +28,7 @@ export class AlignmentUiStore {
         this.getTimeCursor = this.getTimeCursor.bind(this);
     }
 
-    @action
-    public setReferenceViewTimeCursor(timeCursor: number): void {
+    @action public setReferenceViewTimeCursor(timeCursor: number): void {
         const blocks = alignmentStore.getAlignedBlocks();
         blocks.forEach(block => {
             if (alignmentStore.isBlockAligned(block)) {
@@ -43,8 +42,7 @@ export class AlignmentUiStore {
         });
     }
 
-    @action
-    public setTimeCursor(series: AlignedTimeSeries, timeCursor: number): void {
+    @action public setTimeCursor(series: AlignedTimeSeries, timeCursor: number): void {
         this._seriesTimeCursor.set(series.id.toString(), timeCursor);
     }
 
@@ -58,8 +56,7 @@ export class AlignmentUiStore {
         return map;
     }
 
-    @action
-    public setTimeSeriesZooming(alignedSeries: AlignedTimeSeries, rangeStart?: number, pixelsPerSecond?: number): void {
+    @action public setTimeSeriesZooming(alignedSeries: AlignedTimeSeries, rangeStart?: number, pixelsPerSecond?: number): void {
         const block = alignmentStore.getConnectedSeries(alignedSeries);
         block.forEach(series => {
             const currentState = this._alignmentParameterMap.get(series.id.toString());
@@ -74,20 +71,17 @@ export class AlignmentUiStore {
         });
     }
 
-    @action
-    public selectMarker(marker: Marker): void {
+    @action public selectMarker(marker: Marker): void {
         this.selectedMarker = marker;
         this.selectedCorrespondence = null;
     }
 
-    @action
-    public selectMarkerCorrespondence(correspondence: MarkerCorrespondence): void {
+    @action public selectMarkerCorrespondence(correspondence: MarkerCorrespondence): void {
         this.selectedCorrespondence = correspondence;
         this.selectedMarker = null;
     }
 
-    @action
-    public setTrackMinimized(track: Track, minimized: boolean): void {
+    @action public setTrackMinimized(track: Track, minimized: boolean): void {
         track.minimized = minimized;
     }
 
@@ -107,8 +101,7 @@ export class AlignmentUiStore {
         return this._alignmentParameterMap.get(timeSeries.id);
     }
 
-    @action
-    public setAlignmentParameters(timeSeries: AlignedTimeSeries, state: AlignmentParameters): void {
+    @action public setAlignmentParameters(timeSeries: AlignedTimeSeries, state: AlignmentParameters): void {
         if (timeSeries.id !== projectStore.referenceTrack.id) {
             this._alignmentParameterMap.set(timeSeries.id.toString(), state);
         }

@@ -95,23 +95,20 @@ export class ProjectStore {
         });
     }
 
-    @action
-    public loadVideoTrack(fileName: string): void {
+    @action public loadVideoTrack(fileName: string): void {
         this.alignmentHistoryRecord();
         loadVideoTimeSeriesFromFile(fileName, video => {
             this.tracks.push(Track.fromFile(fileName, [video]));
         });
     }
 
-    @action
-    public loadSensorTrack(fileName: string): void {
+    @action public loadSensorTrack(fileName: string): void {
         this.alignmentHistoryRecord();
         const sensors = loadMultipleSensorTimeSeriesFromFile(fileName);
         this.tracks.push(Track.fromFile(fileName, sensors));
     }
 
-    @action
-    public deleteTrack(track: Track): void {
+    @action public deleteTrack(track: Track): void {
         this.alignmentHistoryRecord();
         const index = this.tracks.indexOf(track);
         this.tracks.splice(index, 1);
@@ -134,8 +131,7 @@ export class ProjectStore {
         localStorage.setItem('recent-projects', JSON.stringify(existing));
     }
 
-    @action
-    public loadProject(fileName: string): void {
+    @action public loadProject(fileName: string): void {
         try {
             const json = fs.readFileSync(fileName, 'utf-8');
             const project = JSON.parse(json);
@@ -151,8 +147,7 @@ export class ProjectStore {
         }
     }
 
-    @action
-    public saveProject(fileName: string): void {
+    @action public saveProject(fileName: string): void {
         const project = this.saveProjectHelper();
         const json = JSON.stringify(project, null, 2);
         fs.writeFileSync(fileName, json, 'utf-8');
@@ -164,7 +159,7 @@ export class ProjectStore {
         const saveTimeSeries = (timeSeries: AlignedTimeSeries): SavedAlignedTimeSeries => {
             return {
                 id: timeSeries.id,
-                trackID: timeSeries.trackId,
+                trackId: timeSeries.trackId,
                 referenceStart: timeSeries.referenceStart,
                 referenceEnd: timeSeries.referenceEnd,
                 source: timeSeries.source,
@@ -251,21 +246,20 @@ export class ProjectStore {
         });
     }
 
-    @action
-    private loadProjectHelper(project: SavedProject, loadProjectCallback: () => any): void {
+    @action private loadProjectHelper(project: SavedProject, loadProjectCallback: () => any): void {
         const deferred = new DeferredCallbacks();
 
         // Load the AlignedTimeSeries structure.
-        const loadTimeSeries = (track: Track, timeSeries: SavedAlignedTimeSeries): AlignedTimeSeries => {
+        const loadTimeSeries = (track: Track, savedTimeSeries: SavedAlignedTimeSeries): AlignedTimeSeries => {
             const result = new AlignedTimeSeries(
                 track.id,
                 [],
-                timeSeries.source,
-                timeSeries.aligned,
-                timeSeries.referenceStart,
-                timeSeries.referenceEnd
+                savedTimeSeries.source,
+                savedTimeSeries.aligned,
+                savedTimeSeries.referenceStart,
+                savedTimeSeries.referenceEnd
             );
-            result.id = timeSeries.id;
+            result.id = savedTimeSeries.id;
             const cb = deferred.callback();
             // Load TimeSeries data from a file.
             const fileName = result.source;
@@ -320,8 +314,7 @@ export class ProjectStore {
         });
     }
 
-    @action
-    public newProject(): void {
+    @action public newProject(): void {
         this.projectFileLocation = null;
         this.referenceTrack = null;
         this.tracks = [];

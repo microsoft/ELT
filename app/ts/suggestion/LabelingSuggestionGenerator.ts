@@ -66,8 +66,7 @@ export class LabelingSuggestionGenerator {
 
     }
 
-    @action
-    public removeAllSuggestions(): void {
+    @action public removeAllSuggestions(): void {
         delayAction(1, () => {
             this._engine.cancelSuggestion(this._currentSuggestionCallback);
             labelingUiStore.setSuggestionProgress(false, null, null, null);
