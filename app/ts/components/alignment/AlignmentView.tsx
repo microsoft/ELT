@@ -50,7 +50,6 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
         this.onTrackMouseEnter = this.onTrackMouseEnter.bind(this);
         this.onTrackMouseLeave = this.onTrackMouseLeave.bind(this);
         this.onTrackWheel = this.onTrackWheel.bind(this);
-        this.getZoomTransform = this.getZoomTransform.bind(this);
         this.state = {};
     }
 
@@ -266,14 +265,6 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
         };
     }
 
-    private getZoomTransform(track: Track): {
-        rangeStart: number,
-        pixelsPerSecond: number
-    } {
-        return stores.alignmentUiStore.getAlignmentParameters(track);
-    }
-
-
     private computeTrackLayout(): Map<string, TrackLayout> {
         const map = new Map<string, TrackLayout>();
 
@@ -310,8 +301,8 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
             const trackLayout = layoutMap.get(track.id);
             if (!trackLayout) { return null; }
             let timeAxis = null;
+            const zoom = stores.alignmentUiStore.getAlignmentParameters(track);
             if (!track.aligned) {
-                const zoom = this.getZoomTransform(track);
                 const scale = d3.scaleLinear()
                     .domain([zoom.rangeStart, zoom.rangeStart + this.props.viewWidth / zoom.pixelsPerSecond])
                     .range([0, this.props.viewWidth]);
@@ -332,7 +323,7 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
                         onMouseEnter={this.onTrackMouseEnter}
                         onMouseLeave={this.onTrackMouseLeave}
                         onWheel={this.onTrackWheel}
-                        zoomTransform={this.getZoomTransform}
+                        zoomTransform={zoom}
                         useMipmap={true}
                         signalsViewMode={stores.labelingUiStore.signalsViewMode}
                         />

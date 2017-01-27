@@ -33,7 +33,7 @@ export class AlignmentStore {
         this._alignmentTransitionController = null;
 
         reaction(() => projectStore.tracks, () => this.onTracksChanged());
-        autorun(() => this.rearrangeSeries());
+        autorun(() => this.alignTrackBlocks());
     }
 
     @action public addMarker(marker: Marker): void {
@@ -48,7 +48,7 @@ export class AlignmentStore {
         }
         marker.localTimestamp = newLocalTimestamp;
         if (recompute) {
-            this.alignAllTimeSeries(true);
+            this.alignAllTracks(true);
         }
     }
 
@@ -60,7 +60,7 @@ export class AlignmentStore {
             this.correspondences = this.correspondences.filter(c => {
                 return c.marker1 !== marker && c.marker2 !== marker;
             });
-            this.alignAllTimeSeries(true);
+            this.alignAllTracks(true);
         }
     }
 
@@ -92,7 +92,7 @@ export class AlignmentStore {
         const corr = { marker1: marker1, marker2: marker2 };
         this.correspondences.push(corr);
         alignmentUiStore.selectedCorrespondence = corr;
-        this.alignAllTimeSeries(true);
+        this.alignAllTracks(true);
     }
 
     @action public deleteMarkerCorrespondence(correspondence: MarkerCorrespondence): void {
@@ -100,7 +100,7 @@ export class AlignmentStore {
         const index = this.correspondences.indexOf(correspondence);
         if (index >= 0) {
             this.correspondences.splice(index, 1);
-            this.alignAllTimeSeries(true);
+            this.alignAllTracks(true);
         }
     }
 
@@ -115,43 +115,43 @@ export class AlignmentStore {
             return this.markers.indexOf(c.marker1) >= 0 && this.markers.indexOf(c.marker2) >= 0;
         });
 
-        this.alignAllTimeSeries(true);
+        this.alignAllTracks(true);
     }
 
-    // Find all timeSeries that are connected with series (including series in the reference track).
-    public getConnectedSeries(track: Track): Set<Track> {
-        const result = new Set<Track>();
-        result.add(track);
+    // Find all tracks that are connected with other tracks (including the reference track).
+    public getConnectedTracks(track: Track): Set<Track> {
+        const connected = new Set<Track>();
+        connected.add(track);
         let added = true;
         while (added) {
             added = false;
             for (const c of this.correspondences) {
-                const h1 = result.has(c.marker1.track);
-                const h2 = result.has(c.marker2.track);
-                if (h1 !== h2) {
-                    if (h1) { result.add(c.marker2.track); }
-                    if (h2) { result.add(c.marker1.track); }
+                const has1 = connected.has(c.marker1.track);
+                const has2 = connected.has(c.marker2.track);
+                if (has1 !== has2) {
+                    if (has1) { connected.add(c.marker2.track); }
+                    if (has2) { connected.add(c.marker1.track); }
                     added = true;
                 }
             }
         }
-        return result;
+        return connected;
     }
 
     public getAlignedBlocks(): Set<Track>[] {
-        const result: Set<Track>[] = [];
+        const blocks: Set<Track>[] = [];
         const visitedSeries = new Set<Track>();
         for (const track of projectStore.tracks) {
             if (!visitedSeries.has(track)) {
-                const block = this.getConnectedSeries(track);
-                result.push(block);
+                const block = this.getConnectedTracks(track);
+                blocks.push(block);
                 block.forEach(s => visitedSeries.add(s));
             }
         }
-        return result;
+        return blocks;
     }
 
-    public isBlockAligned(block: Set<Track>): boolean {
+    public blockHasReferenceTrack(block: Set<Track>): boolean {
         return block.has(projectStore.referenceTrack);
     }
 
@@ -164,14 +164,14 @@ export class AlignmentStore {
         }
     }
 
-    public alignAllTimeSeries(animate: boolean = false): void {
+    public alignAllTracks(animate: boolean = false): void {
         if (this.correspondences.length === 0) { return; }
         this.stopAnimation();
         const snapshot0 = new TimeSeriesStateSnapshot();
         projectStore.tracks.forEach(track => {
             track.align(this.correspondences);
         });
-        this.rearrangeSeries();
+        this.alignTrackBlocks();
         if (animate) {
             const snapshot1 = new TimeSeriesStateSnapshot();
             snapshot0.apply();
@@ -184,15 +184,16 @@ export class AlignmentStore {
         }
     }
 
-    private rearrangeSeries(animate: boolean = false): void {
+    private alignTrackBlocks(animate: boolean = false): void {
+        // A "block" is a set of connected tracks.
         const blocks = this.getAlignedBlocks();
         for (const block of blocks) {
             // If it's a reference track.
-            if (this.isBlockAligned(block)) {
-                block.forEach(s => {
-                    s.aligned = true;
+            if (this.blockHasReferenceTrack(block)) {
+                block.forEach(track => {
+                    track.aligned = true;
                     alignmentUiStore.setAlignmentParameters(
-                        s, {
+                        track, {
                             rangeStart: projectUiStore.referenceViewStart,
                             pixelsPerSecond: projectUiStore.referenceViewPPS
                         }
@@ -200,11 +201,11 @@ export class AlignmentStore {
                 });
             } else {
                 const ranges: [number, number][] = [];
-                block.forEach(s => {
-                    s.aligned = false;
-                    const info = alignmentUiStore.getAlignmentParameters(s);
-                    if (info) {
-                        ranges.push([info.rangeStart, info.pixelsPerSecond]);
+                block.forEach(track => {
+                    track.aligned = false;
+                    const alignmentParms = alignmentUiStore.getAlignmentParameters(track);
+                    if (alignmentParms) {
+                        ranges.push([alignmentParms.rangeStart, alignmentParms.pixelsPerSecond]);
                     }
                 });
                 const averageStart = d3.mean(ranges, x => x[0]);
@@ -274,7 +275,7 @@ export class AlignmentStore {
             ts.referenceStart = tsState.referenceStart;
             ts.referenceEnd = tsState.referenceEnd;
         });
-        this.alignAllTimeSeries(false);
+        this.alignAllTracks(false);
     }
 
     public reset(): void {
@@ -283,6 +284,6 @@ export class AlignmentStore {
         this.markers = [];
         this.correspondences = [];
 
-        this.alignAllTimeSeries(false);
+        this.alignAllTracks(false);
     }
 }

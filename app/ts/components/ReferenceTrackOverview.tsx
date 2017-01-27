@@ -161,10 +161,10 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
                         track={stores.projectStore.referenceTrack}
                         viewWidth={this.props.viewWidth}
                         viewHeight={videoY1 - videoY0}
-                        zoomTransform={ts => ({
+                        zoomTransform={{
                             rangeStart: start,
                             pixelsPerSecond: this.props.viewWidth / (end - start)
-                        })}
+                        }}
                         useMipmap={true}
                         />
                 </g>
@@ -179,10 +179,10 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
                                         track={track}
                                         viewWidth={this.props.viewWidth}
                                         viewHeight={labelsY1 - labelsY0}
-                                        zoomTransform={ts => ({
+                                        zoomTransform={{
                                             rangeStart: start,
                                             pixelsPerSecond: this.props.viewWidth / (end - start)
-                                        })}
+                                        }}
                                         useMipmap={true}
                                         colorScale={this.props.mode === 'labeling' ?
                                             LayoutParameters.seriesColorScale : null}

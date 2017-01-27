@@ -31,7 +31,7 @@ export class AlignmentUiStore {
     @action public setReferenceViewTimeCursor(timeCursor: number): void {
         const blocks = alignmentStore.getAlignedBlocks();
         blocks.forEach(block => {
-            if (alignmentStore.isBlockAligned(block)) {
+            if (alignmentStore.blockHasReferenceTrack(block)) {
                 block.forEach(series => {
                     const scale = d3.scaleLinear()
                         .domain([series.referenceStart, series.referenceEnd])
@@ -51,7 +51,7 @@ export class AlignmentUiStore {
     }
 
     @action public setTimeSeriesZooming(track: Track, rangeStart?: number, pixelsPerSecond?: number): void {
-        const block = alignmentStore.getConnectedSeries(track);
+        const block = alignmentStore.getConnectedTracks(track);
         block.forEach(series => {
             const currentState = this._alignmentParameterMap.get(series.id.toString());
             if (currentState) {
