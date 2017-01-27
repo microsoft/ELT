@@ -224,7 +224,7 @@ export function generateArduinoCodeForDtwModel(sampleRate: number, arduinoSample
         const length = Math.ceil(ref.series.length / sampleRate * arduinoSampleRate);
         const dimensions: Float32Array[] = [];
         for (let i = 0; i < dim; i++) {
-            dimensions.push(resampleColumn(ref.series.map((x) => x[i]), 0, 1, 0, 1, length));
+            dimensions.push(resampleColumn(ref.series.map(x => x[i]), 0, 1, 0, 1, length));
         }
         const newSamples = [];
         for (let i = 0; i < length; i++) {
@@ -255,10 +255,10 @@ export function generateArduinoCodeForDtwModel(sampleRate: number, arduinoSample
 
     return templateArduino
         .replace('%%GLOBAL%%', lines.join('\n'))
-        .replace('%%SETUP%%', setupLines.map((x) => '    ' + x).join('\n'))
-        .replace('%%RESET%%', resetLines.map((x) => '    ' + x).join('\n'))
-        .replace('%%MATCH%%', matchLines.map((x) => '    ' + x).join('\n'))
-        .replace('%%MATCH_COMPARISON%%', matchComparisonLines.map((x) => '    ' + x).join('\n'))
+        .replace('%%SETUP%%', setupLines.map(x => '    ' + x).join('\n'))
+        .replace('%%RESET%%', resetLines.map(x => '    ' + x).join('\n'))
+        .replace('%%MATCH%%', matchLines.map(x => '    ' + x).join('\n'))
+        .replace('%%MATCH_COMPARISON%%', matchComparisonLines.map(x => '    ' + x).join('\n'))
         ;
 }
 
@@ -276,7 +276,7 @@ export function generateMicrobitCodeForDtwModel(sampleRate: number, arduinoSampl
         maxLength = Math.max(length, maxLength);
         const dimensions: Float32Array[] = [];
         for (let i = 0; i < dim; i++) {
-            dimensions.push(resampleColumn(ref.series.map((x) => x[i]), 0, 1, 0, 1, length));
+            dimensions.push(resampleColumn(ref.series.map(x => x[i]), 0, 1, 0, 1, length));
         }
         const newSamples = [];
         for (let i = 0; i < length; i++) {
@@ -308,9 +308,9 @@ export function generateMicrobitCodeForDtwModel(sampleRate: number, arduinoSampl
         .replace('%%ARRAY_INITIALIZATION%%', '[ ' + initialArray.join(', ') + ' ]')
         .replace('%%ARRAY_INITIALIZATION%%', '[ ' + initialArray.join(', ') + ' ]')
         .replace('%%GLOBAL%%', lines.join('\n'))
-        .replace('%%SETUP%%', setupLines.map((x) => '    ' + x).join('\n'))
-        .replace('%%MATCH%%', matchLines.map((x) => '    ' + x).join('\n'))
-        .replace('%%MATCH_COMPARISON%%', matchComparisonLines.map((x) => '    ' + x).join('\n'))
+        .replace('%%SETUP%%', setupLines.map(x => '    ' + x).join('\n'))
+        .replace('%%MATCH%%', matchLines.map(x => '    ' + x).join('\n'))
+        .replace('%%MATCH_COMPARISON%%', matchComparisonLines.map(x => '    ' + x).join('\n'))
         ;
 }
 

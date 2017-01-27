@@ -170,7 +170,7 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
                 </g>
                 <g className='labels' transform={`translate(0, ${labelsY0})`}>
                     {
-                        stores.projectStore.tracks.map((track) => {
+                        stores.projectStore.tracks.map(track => {
                             return (
                                 <TrackView
                                     key={track.id}
@@ -217,11 +217,11 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
                         <rect x={0} y={0}
                             width={rangeX0}
                             height={this.props.viewHeight}
-                            onClick={(e) => this.detailedViewCursorPosition(e)} />
+                            onClick={e => this.detailedViewCursorPosition(e)} />
                         <rect x={rangeX1} y={0}
                             width={this.props.viewWidth - rangeX1}
                             height={this.props.viewHeight}
-                            onClick={(e) => this.detailedViewCursorPosition(e)} />
+                            onClick={e => this.detailedViewCursorPosition(e)} />
                     </g>
                 </g>
 

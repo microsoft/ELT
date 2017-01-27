@@ -86,7 +86,7 @@ export class HomeMenu extends React.Component<{}, {}> {
                     message: 'Do you want to save your current project?',
                     buttons: ['Save', 'Discard', 'Cancel']
                 },
-                (response) => {
+                response => {
                     if (response === 0) { // User clicked 'Save'
                         // If we have a saved location, save.
                         this.saveCurrentProject(

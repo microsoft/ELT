@@ -187,7 +187,7 @@ export class LabelingChangePointSuggestionGenerator extends EventEmitter {
 
         let data: Float32Array[] = [];
         for (const ts of dataset.timeSeries) {
-            data = data.concat((ts as SensorTimeSeries).dimensions.map((x) => new Float32Array(x)));
+            data = data.concat((ts as SensorTimeSeries).dimensions.map(x => new Float32Array(x)));
         }
 
         data = computeDimensionsMipmapLevels(data)[2];
@@ -195,7 +195,7 @@ export class LabelingChangePointSuggestionGenerator extends EventEmitter {
         const n = data[0].length;
         const sampleRate = (dataset.timestampEnd - dataset.timestampStart) / (n - 1);
         const pts = pelt(data, 20 * Math.log(n), Math.ceil(3 / sampleRate));
-        const timestamps = pts.map((p) => (p / (n - 1)) * (dataset.timestampEnd - dataset.timestampStart) + dataset.timestampStart);
+        const timestamps = pts.map(p => (p / (n - 1)) * (dataset.timestampEnd - dataset.timestampStart) + dataset.timestampStart);
         labelingStore.suggestChangePoints(timestamps);
     }
 }

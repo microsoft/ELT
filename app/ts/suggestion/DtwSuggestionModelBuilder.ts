@@ -124,7 +124,7 @@ export class DtwSuggestionModelBuilder extends LabelingSuggestionModelBuilder {
         };
         this._currentCallbackID = 1;
 
-        this._emitter.addListener('model.build.callback', (data) => {
+        this._emitter.addListener('model.build.callback', data => {
             const callbackID = data.callbackID;
             const cb = this._registeredCallbacks.get(callbackID);
             if (cb) {

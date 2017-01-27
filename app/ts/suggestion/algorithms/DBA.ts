@@ -109,7 +109,7 @@ export class DBA<SampleType> {
 
     public computeVariance(series: SampleType[][], center: SampleType[]): number {
         if (series.length < 3) { return null; }
-        const distances = series.map((s) => this.dynamicTimeWarp(s, center)[0]);
+        const distances = series.map(s => this.dynamicTimeWarp(s, center)[0]);
         let sumsq = 0;
         for (const d of distances) { sumsq += d * d; }
         return Math.sqrt(sumsq / (distances.length - 1));
@@ -148,7 +148,7 @@ export class DBA<SampleType> {
             return classSeries;
         };
 
-        const currentCenters = random.choose(series.length, k).map((i) => series[i]);
+        const currentCenters = random.choose(series.length, k).map(i => series[i]);
         let assigned = assignSeriesToCenters(currentCenters);
 
         // KMeans iterations.

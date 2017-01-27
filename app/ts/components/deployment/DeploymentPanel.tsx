@@ -173,7 +173,7 @@ export class DeploymentPanel extends React.Component<{}, DeploymentPanelState> {
         };
         proc.stdout.on('data', data => report(data.toString(), false));
         proc.stderr.on('data', data => report(data.toString(), true));
-        proc.on('close', (m) => report('Done', false));
+        proc.on('close', m => report('Done', false));
         this.toolOutputPanel.open();
     }
 

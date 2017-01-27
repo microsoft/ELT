@@ -24,7 +24,7 @@ export class NavigationColumn extends React.Component<NavigationColumnProps, {}>
             };
         });
 
-        const buttons = tabInfos.map((info) => {
+        const buttons = tabInfos.map(info => {
             if (!info.showButton) { return null; }
             return (
                 <div key={info.name} role='button'

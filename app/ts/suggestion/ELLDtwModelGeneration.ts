@@ -50,7 +50,7 @@ function generateEllPrototypes(
         maxLength = Math.max(length, maxLength);
         const dimensions: Float32Array[] = [];
         for (let i = 0; i < dim; i++) {
-            dimensions.push(resampleColumn(ref.series.map((x) => x[i]), 0, 1, 0, 1, length));
+            dimensions.push(resampleColumn(ref.series.map(x => x[i]), 0, 1, 0, 1, length));
         }
         const newSamples: number[][] = [];
         for (let i = 0; i < length; i++) {

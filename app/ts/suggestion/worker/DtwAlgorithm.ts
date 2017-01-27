@@ -44,7 +44,7 @@ function averageFunction(x: number[][]): number[] {
 
 function groupBy<InputType>(input: InputType[], groupFunc: (itype: InputType) => string): { group: string, items: InputType[] }[] {
     const groupName2Items: { [name: string]: InputType[] } = {};
-    input.forEach((inp) => {
+    input.forEach(inp => {
         const group = groupFunc(inp);
         if (groupName2Items[group]) {
             groupName2Items[group].push(inp);
@@ -91,12 +91,12 @@ function getAverageLabelsPerClass(
     const result: ReferenceLabel[] = [];
 
     for (const { group, items } of classes_array) {
-        const means = dba.computeKMeans(items.map((x) => x.samples), 1, 10, 10, 0.01);
+        const means = dba.computeKMeans(items.map(x => x.samples), 1, 10, 10, 0.01);
 
         const errors1: number[] = [];
         const errors2: number[] = [];
 
-        items.forEach((item) => {
+        items.forEach(item => {
             const itemDuration = item.timestampEnd - item.timestampStart;
             const margin = 0.1 * itemDuration;
             const samplesWithMargin = resampleDatasetRowMajor(
@@ -104,17 +104,17 @@ function getAverageLabelsPerClass(
                 item.timestampStart - margin, item.timestampEnd + margin,
                 Math.round(sampleRate * (item.timestampEnd - item.timestampStart + margin * 2))
             );
-            const sampleIndex2Time = (index) => {
+            const sampleIndex2Time = index => {
                 return index / (samplesWithMargin.length - 1) * (item.timestampEnd - item.timestampStart + margin * 2) +
                     (item.timestampStart - margin);
             };
 
             const spring = new MultipleSpringAlgorithmBestMatch<number[], number[]>(
-                means.map((x) => x.mean),
-                means.map((x) => x.variance),
+                means.map(x => x.mean),
+                means.map(x => x.variance),
                 distanceFunction
             );
-            samplesWithMargin.forEach((x) => spring.feed(x));
+            samplesWithMargin.forEach(x => spring.feed(x));
 
             const [which, , ts, te] = spring.getBestMatch();
             if (which !== null) {
@@ -184,7 +184,7 @@ class DtwSuggestionModel extends LabelingSuggestionModel {
         timestampEnd = Math.round(this._sampleRate * timestampEnd) / this._sampleRate;
 
         let labels = this._references;
-        labels = labels.filter((x) => x.variance !== null);
+        labels = labels.filter(x => x.variance !== null);
         if (labels.length === 0) {
             callback(
                 [],
@@ -206,16 +206,16 @@ class DtwSuggestionModel extends LabelingSuggestionModel {
             // return 1 - invertGaussianPercentPoint(-distance / variance) * 2;
             return Math.exp(-distance * distance / variance / variance / 2);
         };
-        const thresholds = labels.map((label) => {
+        const thresholds = labels.map(label => {
             return Math.sqrt(-2 * Math.log(confidenceThreshold)) * label.variance;
         });
 
         let labelCache: Label[] = [];
 
         const algo = new MultipleSpringAlgorithm<number[], number[]>(
-            labels.map((label) => label.series),
+            labels.map(label => label.series),
             thresholds,
-            labels.map((label) => [label.series.length * 0.8, label.series.length * 1.2]),
+            labels.map(label => [label.series.length * 0.8, label.series.length * 1.2]),
             10,
             distanceFunction,
             (which, dist, ts, te) => {
@@ -306,7 +306,7 @@ class DtwSuggestionModel extends LabelingSuggestionModel {
     }
 
     public dispose(): void {
-        this._allTimers.forEach((x) => clearTimeout(x));
+        this._allTimers.forEach(x => clearTimeout(x));
     }
 }
 
@@ -314,7 +314,7 @@ class DtwSuggestionModel extends LabelingSuggestionModel {
 export module DtwAlgorithm {
 
     export function createModel(dataset: Dataset, labels: Label[]): LabelingSuggestionModel {
-        const maxDuration = labels.map((label) => label.timestampEnd - label.timestampStart).reduce((a, b) => Math.max(a, b), 0);
+        const maxDuration = labels.map(label => label.timestampEnd - label.timestampStart).reduce((a, b) => Math.max(a, b), 0);
         const sampleRate = 100 / maxDuration; // / referenceDuration;
         const references = getAverageLabelsPerClass(dataset, labels, sampleRate);
         return new DtwSuggestionModel(references, sampleRate);

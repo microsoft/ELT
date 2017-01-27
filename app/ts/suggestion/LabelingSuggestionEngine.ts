@@ -84,7 +84,7 @@ export class LabelingSuggestionEngine extends EventEmitter {
 
     private storeModel(dataset: Dataset, labels: Label[]): void {
         const maxDuration = labels
-            .map((label) => label.timestampEnd - label.timestampStart)
+            .map(label => label.timestampEnd - label.timestampStart)
             .reduce((a, b) => Math.max(a, b), 0);
         const sampleRate = 100 / maxDuration; // / referenceDuration;
         stores.dtwModelStore.prototypes = DtwAlgorithm.getReferenceLabels(dataset, labels);
@@ -117,7 +117,7 @@ export class LabelingSuggestionEngine extends EventEmitter {
                         this._onModelBuiltCallbackQueue = [];
 
                         // Restart any existing calculation.
-                        restartInfos.forEach((info) => {
+                        restartInfos.forEach(info => {
                             this.computeSuggestion(
                                 info.parameters.timestampStart,
                                 info.parameters.timestampEnd,
@@ -162,7 +162,7 @@ export class LabelingSuggestionEngine extends EventEmitter {
         this._computingInstances.set(callback, cbInfo);
 
         if (!this._currentModel) {
-            this._onModelBuiltCallbackQueue.push((model) => {
+            this._onModelBuiltCallbackQueue.push(model => {
                 if (this._computingInstances.has(callback)) {
                     cbInfo.model = model;
                     model.computeSuggestion(this._dataset, timestampStart, timestampEnd, confidenceThreshold, generation, cbProxy);

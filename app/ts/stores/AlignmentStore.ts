@@ -6,7 +6,7 @@ import { SavedAlignmentState, SavedMarker, SavedMarkerCorrespondence } from '../
 import { TransitionController } from '../stores/utils';
 import { ProjectStore } from './ProjectStore';
 import { ProjectUiStore } from './ProjectUiStore';
-import { projectStore, projectUiStore, alignmentUiStore } from './stores';
+import { alignmentUiStore, projectStore, projectUiStore } from './stores';
 import * as d3 from 'd3';
 import { action, autorun, observable, reaction } from 'mobx';
 
@@ -29,8 +29,8 @@ export class TimeSeriesStateSnapshot {
         this.alignmentStore = alignmentStore;
         this.data = new Map<string, TimeSeriesStateSnapshotInfo>();
         // Take the snapshot.
-        projectStore.tracks.forEach((track) => {
-            track.alignedTimeSeries.forEach((timeSeries) => {
+        projectStore.tracks.forEach(track => {
+            track.alignedTimeSeries.forEach(timeSeries => {
                 const state = alignmentUiStore.getAlignmentParameters(timeSeries);
                 this.data.set(timeSeries.id, {
                     referenceStart: timeSeries.referenceStart,
@@ -144,7 +144,7 @@ export class AlignmentStore {
         const index = this.markers.indexOf(marker);
         if (index >= 0) {
             this.markers.splice(index, 1);
-            this.correspondences = this.correspondences.filter((c) => {
+            this.correspondences = this.correspondences.filter(c => {
                 return c.marker1 !== marker && c.marker2 !== marker;
             });
             this.alignAllTimeSeries(true);
@@ -155,7 +155,7 @@ export class AlignmentStore {
     public addMarkerCorrespondence(marker1: Marker, marker2: Marker): void {
         projectStore.alignmentHistoryRecord();
         // Remove all conflicting correspondence.
-        this.correspondences = this.correspondences.filter((c) => {
+        this.correspondences = this.correspondences.filter(c => {
             // Multiple connections.
             if (c.marker1 === marker1 && c.marker2.timeSeries === marker2.timeSeries) { return false; }
             if (c.marker1 === marker2 && c.marker2.timeSeries === marker1.timeSeries) { return false; }
@@ -197,10 +197,10 @@ export class AlignmentStore {
     private onTracksChanged(): void {
         this.stopAnimation();
 
-        this.markers = this.markers.filter((m) => {
+        this.markers = this.markers.filter(m => {
             return projectStore.getTimeSeriesByID(m.timeSeries.id) !== null;
         });
-        this.correspondences = this.correspondences.filter((c) => {
+        this.correspondences = this.correspondences.filter(c => {
             return this.markers.indexOf(c.marker1) >= 0 && this.markers.indexOf(c.marker2) >= 0;
         });
 
@@ -235,7 +235,7 @@ export class AlignmentStore {
                 if (!visitedSeries.has(timeSeries)) {
                     const block = this.getConnectedSeries(timeSeries);
                     result.push(block);
-                    block.forEach((s) => visitedSeries.add(s));
+                    block.forEach(s => visitedSeries.add(s));
                 }
             }
         }
@@ -243,7 +243,7 @@ export class AlignmentStore {
     }
 
     public isBlockAligned(block: Set<AlignedTimeSeries>): boolean {
-        return projectStore.referenceTrack.alignedTimeSeries.some((x) => block.has(x));
+        return projectStore.referenceTrack.alignedTimeSeries.some(x => block.has(x));
     }
 
 
@@ -261,7 +261,9 @@ export class AlignmentStore {
         const snapshot0 = new TimeSeriesStateSnapshot(this);
         projectStore.tracks.forEach(track => {
             track.alignedTimeSeries.forEach(ts => {
-                [ts.referenceStart, ts.referenceEnd] = ts.align(this.correspondences);
+                const correspondence = ts.align(this.correspondences);
+                ts.referenceStart = correspondence.referenceStart;
+                ts.referenceEnd = correspondence.referenceEnd;
             });
         });
         this.rearrangeSeries();
@@ -282,7 +284,7 @@ export class AlignmentStore {
         for (const block of blocks) {
             // If it's a reference track.
             if (this.isBlockAligned(block)) {
-                block.forEach((s) => {
+                block.forEach(s => {
                     s.aligned = true;
                     alignmentUiStore.setAlignmentParameters(
                         s, {
@@ -293,16 +295,16 @@ export class AlignmentStore {
                 });
             } else {
                 const ranges: [number, number][] = [];
-                block.forEach((s) => {
+                block.forEach(s => {
                     s.aligned = false;
                     const info = alignmentUiStore.getAlignmentParameters(s);
                     if (info) {
                         ranges.push([info.rangeStart, info.pixelsPerSecond]);
                     }
                 });
-                const averageStart = d3.mean(ranges, (x) => x[0]);
-                const averagePPS = 1 / d3.mean(ranges, (x) => 1 / x[1]);
-                block.forEach((s) => {
+                const averageStart = d3.mean(ranges, x => x[0]);
+                const averagePPS = 1 / d3.mean(ranges, x => 1 / x[1]);
+                block.forEach(s => {
                     alignmentUiStore.setAlignmentParameters(
                         s, { rangeStart: averageStart, pixelsPerSecond: averagePPS }
                     );

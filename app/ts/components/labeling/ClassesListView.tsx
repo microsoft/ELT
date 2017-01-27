@@ -32,10 +32,10 @@ export class ClassesListView extends React.Component<{}, {}> {
                     <input
                         type='text'
                         defaultValue={c}
-                        onFocus={(e) => {
+                        onFocus={e => {
                             (e.target as HTMLInputElement).select();
                         } }
-                        onBlur={(e) => {
+                        onBlur={e => {
                             const v = (e.target as HTMLInputElement).value;
                             stores.labelingStore.renameClass(c, v);
                         } }

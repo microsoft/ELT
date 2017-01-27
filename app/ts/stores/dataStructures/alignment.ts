@@ -2,7 +2,6 @@
 
 import { TimeSeries } from './dataset';
 import * as d3 from 'd3';
-import { observable } from 'mobx';
 
 
 
@@ -26,6 +25,7 @@ export class Marker {
     public timeSeries: AlignedTimeSeries;   // The timeseries of the marker.
 }
 
+
 export class MarkerCorrespondence {
     public marker1: Marker;
     public marker2: Marker;
@@ -37,11 +37,11 @@ export class AlignedTimeSeries {
 
     constructor(
         public trackId: string,
+        public timeSeries: TimeSeries[],   // should have the same timestampStart and timestampEnd (aka., from the same sensor)
+        public source: string,             // The filename of the timeseries. timeSeries should be what loaded from the file.
+        public aligned: boolean,
         public referenceStart: number,     // The starting point of the timeseries in reference time.
         public referenceEnd: number,       // The ending point of the timeseries in reference time.
-        public timeSeries: TimeSeries[], // should have the same timestampStart and timestampEnd (aka., from the same sensor)
-        public source: string, // The filename of the timeseries. timeSeries should be what loaded from the file.
-        public aligned: boolean,
     ) {
         this.id = seriesIdFactory();
     }
@@ -49,7 +49,7 @@ export class AlignedTimeSeries {
     // tslint:disable-next-line:function-name
     public static clone(other: AlignedTimeSeries, track: Track): AlignedTimeSeries {
         return new AlignedTimeSeries(
-            track.id, other.referenceStart, other.referenceEnd, other.timeSeries, other.source, other.aligned);
+            track.id, other.timeSeries, other.source, other.aligned, other.referenceStart, other.referenceEnd);
     }
 
     public get duration(): number { return this.referenceEnd - this.referenceStart; }
@@ -58,14 +58,12 @@ export class AlignedTimeSeries {
         return { rangeStart: this.referenceStart, pixelsPerSecond: viewWidth / this.duration };
     }
 
-    public align(correspondences: MarkerCorrespondence[]): [number, number] {
+    public align(correspondences: MarkerCorrespondence[]): { referenceStart: number, referenceEnd: number } {
         if (correspondences.length === 0) { throw 'AlignedTimeSeries.align correspondences empty'; }
 
-        // const tracks = alignmentLabelingStore.tracks;
-        // const tTrackIndex = tracks.indexOf(this.track);
         // Find all correspondences above.
         const tCorrespondences: [number, number][] = [];
-        correspondences.forEach((correspondence) => {
+        correspondences.forEach(correspondence => {
             let thisMarker: Marker = null; let otherMarker: Marker = null;
             if (correspondence.marker1.timeSeries === this) {
                 [thisMarker, otherMarker] = [correspondence.marker1, correspondence.marker2];
@@ -83,7 +81,11 @@ export class AlignedTimeSeries {
 
         // Find the translation and scale for correspondences.
         const [k, b] = leastSquares(tCorrespondences);
-        return [k * this.timeSeries[0].timestampStart + b, k * this.timeSeries[0].timestampEnd + b];
+        const project = x => k * x + b;
+        return {
+            referenceStart: project(this.timeSeries[0].timestampStart),
+            referenceEnd: project(this.timeSeries[0].timestampEnd)
+        };
     }
 
 }
@@ -105,10 +107,10 @@ export class Track {
         track.alignedTimeSeries = [
             new AlignedTimeSeries(
                 track.id,
-                0, timeseries[0].timestampEnd - timeseries[0].timestampStart,
                 timeseries,
                 fileName,
-                false
+                false,
+                0, timeseries[0].timestampEnd - timeseries[0].timestampStart
             )
         ];
         return track;

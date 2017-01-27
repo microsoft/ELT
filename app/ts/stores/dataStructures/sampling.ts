@@ -38,7 +38,7 @@ export function resampleDatasetRowMajorOne(dataset: Dataset, index: number, t0: 
 
 export function resampleDatasetRowMajorAverage(dataset: Dataset, t0: number, t1: number, length: number): number[] {
     const resampled = resampleDatasetRowMajor(dataset, t0, t1, length);
-    return resampled.map((row) => {
+    return resampled.map(row => {
         let s = 0;
         for (let i = 0; i < row.length; i++) { s += row[i]; }
         return s / row.length;
@@ -49,16 +49,16 @@ export function resampleDatasetRowMajor(dataset: Dataset, t0: number, t1: number
     const resampled = resampleDataset(dataset, t0, t1, length);
     const resampledArray: number[][] = [];
     for (let i = 0; i < length; i++) {
-        resampledArray[i] = resampled.map((y) => y[i]);
+        resampledArray[i] = resampled.map(y => y[i]);
     }
     return resampledArray;
 }
 
 function resampleDataset(dataset: Dataset, t0: number, t1: number, length: number): Float32Array[] {
     const data: Float32Array[] = [];
-    const sensors = dataset.timeSeries.filter((ts) => ts.kind !== TimeSeriesKind.VIDEO) as SensorTimeSeries[];
-    sensors.forEach((sensor) => {
-        sensor.dimensions.forEach((dim) => {
+    const sensors = dataset.timeSeries.filter(ts => ts.kind !== TimeSeriesKind.VIDEO) as SensorTimeSeries[];
+    sensors.forEach(sensor => {
+        sensor.dimensions.forEach(dim => {
             data.push(resampleColumn(dim, sensor.timestampStart, sensor.timestampEnd, t0, t1, length));
         });
     });

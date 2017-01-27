@@ -135,7 +135,7 @@ export class ArrayThrottler<ItemType, StationaryType> {
 
     public addItems(items: ItemType[]): void {
         if (items.length < 10) {
-            items.forEach((x) => this._queue.push(x));
+            items.forEach(x => this._queue.push(x));
         } else {
             this._queue = this._queue.concat(items);
         }
@@ -212,7 +212,7 @@ export function loadDataFromMetadata(metadataPath: string, callback: (dataset: D
         }
     }
 
-    metadata.sensors.forEach((s) => {
+    metadata.sensors.forEach(s => {
         const sensor = loadSensorTimeSeriesFromFile(path_module.join(path_module.dirname(metadataPath), s.path));
         sensor.name = s.name;
         if (s.timestampStart !== undefined) { sensor.timestampStart = s.timestampStart; }
@@ -225,16 +225,16 @@ export function loadDataFromMetadata(metadataPath: string, callback: (dataset: D
             // Resolve name and start/end for the dataset.
             dataset.name = metadata.name;
 
-            dataset.timestampStart = d3.max(dataset.timeSeries, (x) => x.timestampStart);
-            dataset.timestampEnd = d3.min(dataset.timeSeries, (x) => x.timestampEnd);
+            dataset.timestampStart = d3.max(dataset.timeSeries, x => x.timestampStart);
+            dataset.timestampEnd = d3.min(dataset.timeSeries, x => x.timestampEnd);
             // Call the callback.
             callback(dataset);
         }
     };
 
-    metadata.videos.forEach((s) => {
+    metadata.videos.forEach(s => {
         nTasks += 1;
-        loadVideoTimeSeriesFromFile(path_module.join(path_module.dirname(metadataPath), s.path), (video) => {
+        loadVideoTimeSeriesFromFile(path_module.join(path_module.dirname(metadataPath), s.path), video => {
             video.name = s.name;
             if (s.timestampStart !== undefined) { video.timestampStart = s.timestampStart; }
             if (s.timestampEnd !== undefined) { video.timestampEnd = s.timestampEnd; }

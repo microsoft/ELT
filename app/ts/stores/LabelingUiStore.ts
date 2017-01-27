@@ -59,7 +59,7 @@ export class LabelingUiStore {
         this.suggestionConfidenceThreshold = 0.2;
         this._suggestionConfidenceHistogram = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
-        const nonIgnoreClases = labelingStore.classes.filter((x) => x !== 'IGNORE');
+        const nonIgnoreClases = labelingStore.classes.filter(x => x !== 'IGNORE');
         this.currentClass = nonIgnoreClases.length > 0 ? nonIgnoreClases[0] : null;
 
         this._isSuggesting = false;
@@ -102,7 +102,7 @@ export class LabelingUiStore {
 
     @action public clearLabelSelection(): void {
         const previous_selected_labels: Label[] = [];
-        this.selectedLabels.forEach((label) => { previous_selected_labels.push(label); });
+        this.selectedLabels.forEach(label => { previous_selected_labels.push(label); });
         this.selectedLabels.clear();
     }
 
@@ -167,7 +167,7 @@ export class LabelingUiStore {
     // private onLabelsArrayChanged(): void {
     //     // Remove labels from selection if deleted.
     //     let deleted_labels = false;
-    //     this.selectedLabels.forEach((label) => {
+    //     this.selectedLabels.forEach(label => {
     //         if (labelingStore.labels.indexOf(label) < 0) {
     //             this.selectedLabels.remove(label);
     //             deleted_labels = true;

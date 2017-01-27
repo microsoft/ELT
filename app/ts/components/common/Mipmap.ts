@@ -24,7 +24,7 @@ export function computeDimensionsMipmap(dimensions: (number[] | Float32Array)[])
 
 export function computeDimensionsMipmapLevels(dimensions: (number[] | Float32Array)[]): Float32Array[][] {
     const levelCount = Math.floor(Math.log(dimensions[0].length) / Math.log(2) - 6);
-    let dims = dimensions.map((x) => new Float32Array(x));
+    let dims = dimensions.map(x => new Float32Array(x));
     const levels = [dims];
     for (let i = 0; i < levelCount; i++) {
         dims = computeDimensionsMipmap(dims);

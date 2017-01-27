@@ -14,6 +14,7 @@ export interface ZoomTrasform {
     (timeSeries: AlignedTimeSeries): { rangeStart: number, pixelsPerSecond: number };
 }
 
+
 export interface TrackViewProps {
     track: Track;
 
@@ -38,6 +39,8 @@ export interface TrackViewProps {
     onMouseEnter?: (event: React.MouseEvent<Element>, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number) => any;
     onMouseLeave?: (event: React.MouseEvent<Element>, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number) => any;
 }
+
+
 
 export function truncatePPS(pps: number): number {
     if (pps <= 0) { return pps; }
@@ -270,7 +273,8 @@ export class TrackView extends React.Component<TrackViewProps, {}> {
                     height={this.props.viewHeight}
                     />
                 {
-                    this.props.track.alignedTimeSeries.map(timeSeries => this.renderTimeseries(timeSeries))
+                    this.props.track.alignedTimeSeries.map(timeSeries =>
+                        this.renderTimeseries(timeSeries))
                 }
             </g>
         );

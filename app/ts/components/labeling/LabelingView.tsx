@@ -43,7 +43,7 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
         if (event.srcElement === document.body) {
             if (event.keyCode === KeyCode.BACKSPACE || event.keyCode === KeyCode.DELETE) {
                 if (stores.labelingUiStore.selectedLabels) {
-                    stores.labelingUiStore.selectedLabels.forEach((label) => {
+                    stores.labelingUiStore.selectedLabels.forEach(label => {
                         stores.labelingStore.removeLabel(label);
                     });
                 }
@@ -80,7 +80,7 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
             const cps = stores.labelingStore.changePoints;
             let p0 = null;
             let p1 = null;
-            cps.forEach((d) => {
+            cps.forEach(d => {
                 if (d < t0) {
                     if (p0 === null || p0 < d) { p0 = d; }
                 }

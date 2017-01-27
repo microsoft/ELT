@@ -2,7 +2,7 @@
 // Stores the information about tracks and handles project load/save and undo/redo state saving.
 
 import { AlignedTimeSeries, Track } from './dataStructures/alignment';
-import { loadMultipleSensorTimeSeriesFromFile, loadRawSensorTimeSeriesFromFile, loadVideoTimeSeriesFromFile, TimeSeries }
+import { loadMultipleSensorTimeSeriesFromFile, loadRawSensorTimeSeriesFromFile, loadVideoTimeSeriesFromFile }
     from './dataStructures/dataset';
 import { DeferredCallbacks } from './dataStructures/DeferredCallbacks';
 import { HistoryTracker } from './dataStructures/HistoryTracker';
@@ -63,7 +63,7 @@ export class ProjectStore {
         // There are so few tracks/timeseries that linear search is fine.
         const allSeries = this.tracks.concat(this.referenceTrack)
             .map(ts => ts.alignedTimeSeries);
-        const flattened : AlignedTimeSeries[] = [].concat(...allSeries);
+        const flattened: AlignedTimeSeries[] = [].concat(...allSeries);
         const found = flattened.filter(s => s.id === seriesId);
         return (found.length > 0) ? found[0] : undefined;
     }
@@ -203,8 +203,8 @@ export class ProjectStore {
             return [k, b];
         }
         // for each timeseries, get the source file, and save to a .labels file
-        this.tracks.map((track) => {
-            track.alignedTimeSeries.map((timeSeries) => {
+        this.tracks.map(track => {
+            track.alignedTimeSeries.map(timeSeries => {
                 const sourceFile = timeSeries.source;
                 //const destinationFile = sourceFile + '.labels.tsv';
                 // read in the source file via dataset.ts (see loadMultipleSensorTimeSeriesFromFile)
@@ -220,7 +220,7 @@ export class ProjectStore {
                 // get the labels from labelingStore .labels()
                 // map the timestamps of the labels from the reference time to the time of the current time series
                 // (i.e., localTime = (refTime - b)/k)
-                const mappedLabels = labelingStore.labels.map((label) => {
+                const mappedLabels = labelingStore.labels.map(label => {
                     return new MappedLabel(label.className, (label.timestampStart - b) / k, (label.timestampEnd - b) / k);
                 });
                 mappedLabels.sort((l1, l2) => l1.timestampStart - l2.timestampStart);
@@ -255,42 +255,40 @@ export class ProjectStore {
     private loadProjectHelper(project: SavedProject, loadProjectCallback: () => any): void {
         const deferred = new DeferredCallbacks();
 
-        // Load TimeSeries data from a file.
-        const loadContentFromFile = (fileName: string, callback: (timeSeries: TimeSeries[]) => void) => {
+        // Load the AlignedTimeSeries structure.
+        const loadTimeSeries = (track: Track, timeSeries: SavedAlignedTimeSeries): AlignedTimeSeries => {
+            const result = new AlignedTimeSeries(
+                track.id,
+                [],
+                timeSeries.source,
+                timeSeries.aligned,
+                timeSeries.referenceStart,
+                timeSeries.referenceEnd
+            );
+            result.id = timeSeries.id;
+            const cb = deferred.callback();
+            // Load TimeSeries data from a file.
+            const fileName = result.source;
+            const callback = ts => {
+                result.timeSeries = ts;
+                cb();
+            };
             if (fileName.match(/\.tsv$/i)) {
                 const ts = loadMultipleSensorTimeSeriesFromFile(fileName);
                 callback(ts);
             }
             if (fileName.match(/\.(webm|mp4|mov)$/i)) {
-                loadVideoTimeSeriesFromFile(fileName, (ts) => {
+                loadVideoTimeSeriesFromFile(fileName, ts => {
                     callback([ts]);
                 });
             }
-        };
-
-        // Load the AlignedTimeSeries structure.
-        const loadTimeSeries = (track: Track, timeSeries: SavedAlignedTimeSeries): AlignedTimeSeries => {
-            const result = new AlignedTimeSeries(
-                track.id,
-                timeSeries.referenceStart,
-                timeSeries.referenceEnd,
-                [],
-                timeSeries.source,
-                timeSeries.aligned,
-            );
-            result.id = timeSeries.id;
-            const cb = deferred.callback();
-            loadContentFromFile(result.source, ts => {
-                result.timeSeries = ts;
-                cb();
-            });
             return result;
         };
 
         // Load saved track.
         const loadTrack = (track: SavedTrack): Track => {
             const result = new Track(track.id, track.minimized, []);
-            result.alignedTimeSeries = track.timeSeries.map((ts) => loadTimeSeries(result, ts));
+            result.alignedTimeSeries = track.timeSeries.map(ts => loadTimeSeries(result, ts));
             return result;
         };
 
@@ -337,7 +335,8 @@ export class ProjectStore {
         const cloneTrack = (track: Track): Track => {
             if (track === null) { return null; }
             const result = new Track(track.id, track.minimized, []);
-            result.alignedTimeSeries = track.alignedTimeSeries.map((x) => AlignedTimeSeries.clone(x, result));
+            result.alignedTimeSeries = track.alignedTimeSeries.map(x =>
+                AlignedTimeSeries.clone(x, result));
             return result;
         };
         return {

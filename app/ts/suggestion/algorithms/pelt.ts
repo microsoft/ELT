@@ -43,7 +43,7 @@ export function pelt(data: (number[] | Float32Array)[], beta: number, minSegment
     const n = data[0].length;
     const rangeCost = (j: number, i: number) => {
         let r = 0;
-        sumStatistics.forEach((ss) => {
+        sumStatistics.forEach(ss => {
             r += mbicMeanVar(ss[0][j] - ss[0][i], ss[1][j] - ss[1][i], ss[2][j] - ss[2][i], j - i);
         });
         return r;
@@ -58,7 +58,7 @@ export function pelt(data: (number[] | Float32Array)[], beta: number, minSegment
     const tmpLike: number[] = [];
     const tmpT: number[] = [];
 
-    [tmpLike, tmpT, checkList, lastChangeLike, lastChangeCpts].forEach((x) => {
+    [tmpLike, tmpT, checkList, lastChangeLike, lastChangeCpts].forEach(x => {
         for (let i = 0; i < x.length; i++) { x[i] = 0; }
     });
 
