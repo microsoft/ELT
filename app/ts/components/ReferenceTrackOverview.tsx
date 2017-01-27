@@ -170,24 +170,25 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
                 </g>
                 <g className='labels' transform={`translate(0, ${labelsY0})`}>
                     {
-                        stores.projectStore.tracks.map(track => {
-                            return (
-                                <TrackView
-                                    key={track.id}
-                                    track={track}
-                                    viewWidth={this.props.viewWidth}
-                                    viewHeight={labelsY1 - labelsY0}
-                                    zoomTransform={ts => ({
-                                        rangeStart: start,
-                                        pixelsPerSecond: this.props.viewWidth / (end - start)
-                                    })}
-                                    useMipmap={true}
-                                    filterTimeSeries={series => series.aligned}
-                                    colorScale={this.props.mode === 'labeling' ?
-                                        LayoutParameters.seriesColorScale : null}
-                                    />
-                            );
-                        })
+                        stores.projectStore.tracks
+                            .filter(track => track.aligned)
+                            .map(track => {
+                                return (
+                                    <TrackView
+                                        key={track.id}
+                                        track={track}
+                                        viewWidth={this.props.viewWidth}
+                                        viewHeight={labelsY1 - labelsY0}
+                                        zoomTransform={ts => ({
+                                            rangeStart: start,
+                                            pixelsPerSecond: this.props.viewWidth / (end - start)
+                                        })}
+                                        useMipmap={true}
+                                        colorScale={this.props.mode === 'labeling' ?
+                                            LayoutParameters.seriesColorScale : null}
+                                        />
+                                );
+                            })
                     }
                     {
                         this.props.mode === 'labeling' ? (

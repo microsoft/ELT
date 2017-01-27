@@ -1,7 +1,7 @@
 // AlignmentStore
 // Store alignment markers and correspondences (connections between markers).
 
-import { AlignedTimeSeries, Marker, MarkerCorrespondence } from '../stores/dataStructures/alignment';
+import { Marker, MarkerCorrespondence, Track } from '../stores/dataStructures/alignment';
 import { SavedAlignmentState, SavedMarker, SavedMarkerCorrespondence } from '../stores/dataStructures/project';
 import { TransitionController } from '../stores/utils';
 import { ProjectStore } from './ProjectStore';
@@ -12,7 +12,7 @@ import { action, autorun, observable, reaction } from 'mobx';
 
 
 
-// Take a snapshot from the alignmentStore, isolate all current rendering parametes.
+// Take a snapshot from the alignmentStore, isolate all current rendering parameters.
 interface TimeSeriesStateSnapshotInfo {
     referenceStart: number;
     referenceEnd: number;
@@ -30,14 +30,12 @@ export class TimeSeriesStateSnapshot {
         this.data = new Map<string, TimeSeriesStateSnapshotInfo>();
         // Take the snapshot.
         projectStore.tracks.forEach(track => {
-            track.alignedTimeSeries.forEach(timeSeries => {
-                const state = alignmentUiStore.getAlignmentParameters(timeSeries);
-                this.data.set(timeSeries.id, {
-                    referenceStart: timeSeries.referenceStart,
-                    referenceEnd: timeSeries.referenceEnd,
-                    rangeStart: state ? state.rangeStart : null,
-                    pixelsPerSecond: state ? state.pixelsPerSecond : null
-                });
+            const state = alignmentUiStore.getAlignmentParameters(track);
+            this.data.set(track.id, {
+                referenceStart: track.referenceStart,
+                referenceEnd: track.referenceEnd,
+                rangeStart: state ? state.rangeStart : null,
+                pixelsPerSecond: state ? state.pixelsPerSecond : null
             });
         });
     }
@@ -52,8 +50,8 @@ export class TimeSeriesStateSnapshot {
 
     // Apply the snapshot to the store.
     public apply(): void {
-        this.data.forEach((info, seriesID) => {
-            const series = projectStore.getTimeSeriesByID(seriesID);
+        this.data.forEach((info, trackId) => {
+            const series = projectStore.getTrackByID(trackId);
             if (!series) { return; }
             series.referenceStart = info.referenceStart;
             series.referenceEnd = info.referenceEnd;
@@ -74,10 +72,10 @@ export class TimeSeriesStateSnapshot {
             if (a === null || b === null) { return null; }
             return 1 / ((1 / a) * (1 - t) + (1 / b) * t);
         };
-        this.data.forEach((info, seriesID) => {
-            const series = projectStore.getTimeSeriesByID(seriesID);
+        this.data.forEach((info, trackID) => {
+            const series = projectStore.getTrackByID(trackID);
             if (!series) { return; }
-            const info2 = s2.data.get(seriesID);
+            const info2 = s2.data.get(trackID);
             series.referenceStart = mix(info.referenceStart, info2.referenceStart);
             series.referenceEnd = mix(info.referenceEnd, info2.referenceEnd);
             alignmentUiStore.setAlignmentParameters(
@@ -153,18 +151,18 @@ export class AlignmentStore {
         // Remove all conflicting correspondence.
         this.correspondences = this.correspondences.filter(c => {
             // Multiple connections.
-            if (c.marker1 === marker1 && c.marker2.timeSeries === marker2.timeSeries) { return false; }
-            if (c.marker1 === marker2 && c.marker2.timeSeries === marker1.timeSeries) { return false; }
-            if (c.marker2 === marker1 && c.marker1.timeSeries === marker2.timeSeries) { return false; }
-            if (c.marker2 === marker2 && c.marker1.timeSeries === marker1.timeSeries) { return false; }
+            if (c.marker1 === marker1 && c.marker2.track === marker2.track) { return false; }
+            if (c.marker1 === marker2 && c.marker2.track === marker1.track) { return false; }
+            if (c.marker2 === marker1 && c.marker1.track === marker2.track) { return false; }
+            if (c.marker2 === marker2 && c.marker1.track === marker1.track) { return false; }
             // Crossings.
-            if (c.marker1.timeSeries === marker1.timeSeries && c.marker2.timeSeries === marker2.timeSeries) {
+            if (c.marker1.track === marker1.track && c.marker2.track === marker2.track) {
                 if ((c.marker1.localTimestamp - marker1.localTimestamp) *
                     (c.marker2.localTimestamp - marker2.localTimestamp) < 0) {
                     return false;
                 }
             }
-            if (c.marker1.timeSeries === marker2.timeSeries && c.marker2.timeSeries === marker1.timeSeries) {
+            if (c.marker1.track === marker2.track && c.marker2.track === marker1.track) {
                 if ((c.marker1.localTimestamp - marker2.localTimestamp) *
                     (c.marker2.localTimestamp - marker1.localTimestamp) < 0) {
                     return false;
@@ -193,7 +191,7 @@ export class AlignmentStore {
         this.stopAnimation();
 
         this.markers = this.markers.filter(m => {
-            return projectStore.getTimeSeriesByID(m.timeSeries.id) !== null;
+            return projectStore.getTrackByID(m.track.id) !== null;
         });
         this.correspondences = this.correspondences.filter(c => {
             return this.markers.indexOf(c.marker1) >= 0 && this.markers.indexOf(c.marker2) >= 0;
@@ -203,18 +201,18 @@ export class AlignmentStore {
     }
 
     // Find all timeSeries that are connected with series (including series in the reference track).
-    public getConnectedSeries(series: AlignedTimeSeries): Set<AlignedTimeSeries> {
-        const result = new Set<AlignedTimeSeries>();
-        result.add(series);
+    public getConnectedSeries(track: Track): Set<Track> {
+        const result = new Set<Track>();
+        result.add(track);
         let added = true;
         while (added) {
             added = false;
             for (const c of this.correspondences) {
-                const h1 = result.has(c.marker1.timeSeries);
-                const h2 = result.has(c.marker2.timeSeries);
+                const h1 = result.has(c.marker1.track);
+                const h2 = result.has(c.marker2.track);
                 if (h1 !== h2) {
-                    if (h1) { result.add(c.marker2.timeSeries); }
-                    if (h2) { result.add(c.marker1.timeSeries); }
+                    if (h1) { result.add(c.marker2.track); }
+                    if (h2) { result.add(c.marker1.track); }
                     added = true;
                 }
             }
@@ -222,23 +220,21 @@ export class AlignmentStore {
         return result;
     }
 
-    public getAlignedBlocks(): Set<AlignedTimeSeries>[] {
-        const result: Set<AlignedTimeSeries>[] = [];
-        const visitedSeries = new Set<AlignedTimeSeries>();
+    public getAlignedBlocks(): Set<Track>[] {
+        const result: Set<Track>[] = [];
+        const visitedSeries = new Set<Track>();
         for (const track of projectStore.tracks) {
-            for (const timeSeries of track.alignedTimeSeries) {
-                if (!visitedSeries.has(timeSeries)) {
-                    const block = this.getConnectedSeries(timeSeries);
-                    result.push(block);
-                    block.forEach(s => visitedSeries.add(s));
-                }
+            if (!visitedSeries.has(track)) {
+                const block = this.getConnectedSeries(track);
+                result.push(block);
+                block.forEach(s => visitedSeries.add(s));
             }
         }
         return result;
     }
 
-    public isBlockAligned(block: Set<AlignedTimeSeries>): boolean {
-        return projectStore.referenceTrack.alignedTimeSeries.some(x => block.has(x));
+    public isBlockAligned(block: Set<Track>): boolean {
+        return block.has(projectStore.referenceTrack);
     }
 
 
@@ -255,9 +251,7 @@ export class AlignmentStore {
         this.stopAnimation();
         const snapshot0 = new TimeSeriesStateSnapshot(this);
         projectStore.tracks.forEach(track => {
-            track.alignedTimeSeries.forEach(ts => {
-                ts.align(this.correspondences);
-            });
+            track.align(this.correspondences);
         });
         this.rearrangeSeries();
         if (animate) {
@@ -316,7 +310,7 @@ export class AlignmentStore {
             marker2ID.set(marker, id);
             return {
                 id: id,
-                timeSeriesID: marker.timeSeries.id,
+                trackId: marker.track.id,
                 localTimestamp: marker.localTimestamp
             };
         };
@@ -344,7 +338,7 @@ export class AlignmentStore {
         const markerID2Marker = new Map<string, Marker>();
         for (const marker of state.markers) {
             const newMarker = {
-                timeSeries: projectStore.getTimeSeriesByID(marker.timeSeriesID),
+                track: projectStore.getTrackByID(marker.trackId),
                 localTimestamp: marker.localTimestamp
             };
             this.markers.push(newMarker);
@@ -358,11 +352,7 @@ export class AlignmentStore {
         }
         Object.keys(state.timeSeriesStates).forEach(id => {
             const tsState = state.timeSeriesStates[id];
-            const ts = projectStore.getTimeSeriesByID(id);
-            // alignmentUiStore.setAlignmentParameters(ts, {
-            //     rangeStart: tsState.rangeStart,
-            //     pixelsPerSecond: tsState.pixelsPerSecond
-            // });
+            const ts = projectStore.getTrackByID(id);
             ts.referenceStart = tsState.referenceStart;
             ts.referenceEnd = tsState.referenceEnd;
         });

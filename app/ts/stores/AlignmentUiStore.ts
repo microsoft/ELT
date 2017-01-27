@@ -1,6 +1,6 @@
 // UI states for alignment.
 
-import { AlignedTimeSeries, AlignmentParameters, Marker, MarkerCorrespondence, Track } from '../stores/dataStructures/alignment';
+import { AlignmentParameters, Marker, MarkerCorrespondence, Track } from '../stores/dataStructures/alignment';
 import { alignmentStore, projectStore, projectUiStore } from './stores';
 import * as d3 from 'd3';
 import { action, observable, ObservableMap } from 'mobx';
@@ -42,22 +42,16 @@ export class AlignmentUiStore {
         });
     }
 
-    @action public setTimeCursor(series: AlignedTimeSeries, timeCursor: number): void {
-        this._seriesTimeCursor.set(series.id.toString(), timeCursor);
+    @action public setTimeCursor(track: Track, timeCursor: number): void {
+        this._seriesTimeCursor.set(track.id.toString(), timeCursor);
     }
 
-    public getTimeCursor(series: AlignedTimeSeries): number {
-        return this._seriesTimeCursor.get(series.id.toString());
+    public getTimeCursor(track: Track): number {
+        return this._seriesTimeCursor.get(track.id.toString());
     }
 
-    public getTimeCursorMap(): { [seriesId: string]: number } {
-        const map = {};
-        this._seriesTimeCursor.entries().forEach(v => map[v[0]] = v[1]);
-        return map;
-    }
-
-    @action public setTimeSeriesZooming(alignedSeries: AlignedTimeSeries, rangeStart?: number, pixelsPerSecond?: number): void {
-        const block = alignmentStore.getConnectedSeries(alignedSeries);
+    @action public setTimeSeriesZooming(track: Track, rangeStart?: number, pixelsPerSecond?: number): void {
+        const block = alignmentStore.getConnectedSeries(track);
         block.forEach(series => {
             const currentState = this._alignmentParameterMap.get(series.id.toString());
             if (currentState) {
@@ -85,25 +79,25 @@ export class AlignmentUiStore {
         track.minimized = minimized;
     }
 
-    public getAlignmentParameters(timeSeries: AlignedTimeSeries): AlignmentParameters {
-        if (timeSeries.trackId === projectStore.referenceTrack.id) {
+    public getAlignmentParameters(track: Track): AlignmentParameters {
+        if (track.id === projectStore.referenceTrack.id) {
             return {
                 rangeStart: projectUiStore.referenceViewStart,
                 pixelsPerSecond: projectUiStore.referenceViewPPS
             };
         }
-        if (!this._alignmentParameterMap.has(timeSeries.id)) {
-            this.setAlignmentParameters(timeSeries, {
-                rangeStart: timeSeries.referenceStart,
-                pixelsPerSecond: projectUiStore.viewWidth / timeSeries.duration
+        if (!this._alignmentParameterMap.has(track.id)) {
+            this.setAlignmentParameters(track, {
+                rangeStart: track.referenceStart,
+                pixelsPerSecond: projectUiStore.viewWidth / track.duration
             });
         }
-        return this._alignmentParameterMap.get(timeSeries.id);
+        return this._alignmentParameterMap.get(track.id);
     }
 
-    @action public setAlignmentParameters(timeSeries: AlignedTimeSeries, state: AlignmentParameters): void {
-        if (timeSeries.id !== projectStore.referenceTrack.id) {
-            this._alignmentParameterMap.set(timeSeries.id.toString(), state);
+    @action public setAlignmentParameters(track: Track, state: AlignmentParameters): void {
+        if (track.id !== projectStore.referenceTrack.id) {
+            this._alignmentParameterMap.set(track.id.toString(), state);
         }
     }
 
