@@ -80,7 +80,7 @@ export class AlignmentUiStore {
     }
 
     public getAlignmentParameters(track: Track): AlignmentParameters {
-        if (track.id === projectStore.referenceTrack.id) {
+        if (projectStore.isReferenceTrack(track)) {
             return {
                 rangeStart: projectUiStore.referenceViewStart,
                 pixelsPerSecond: projectUiStore.referenceViewPPS
@@ -96,7 +96,7 @@ export class AlignmentUiStore {
     }
 
     @action public setAlignmentParameters(track: Track, state: AlignmentParameters): void {
-        if (track.id !== projectStore.referenceTrack.id) {
+        if (!projectStore.isReferenceTrack(track)) {
             this._alignmentParameterMap.set(track.id.toString(), state);
         }
     }

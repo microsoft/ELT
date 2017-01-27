@@ -1,4 +1,4 @@
-export function computeMipmap(array: number[] | Float32Array): Float32Array {
+function computeMipmap(array: number[] | Float32Array): Float32Array {
     const length = Math.ceil(array.length / 2);
     const result = new Float32Array(length);
     for (let i = 0; i < length; i++) {
@@ -18,9 +18,11 @@ export function computeMipmap(array: number[] | Float32Array): Float32Array {
     return result;
 }
 
-export function computeDimensionsMipmap(dimensions: (number[] | Float32Array)[]): Float32Array[] {
+
+function computeDimensionsMipmap(dimensions: (number[] | Float32Array)[]): Float32Array[] {
     return dimensions.map(computeMipmap);
 }
+
 
 export function computeDimensionsMipmapLevels(dimensions: (number[] | Float32Array)[]): Float32Array[][] {
     const levelCount = Math.floor(Math.log(dimensions[0].length) / Math.log(2) - 6);
@@ -32,6 +34,7 @@ export function computeDimensionsMipmapLevels(dimensions: (number[] | Float32Arr
     }
     return levels;
 }
+
 
 export class MipmapCache {
     private _dimensions2Mipmap: WeakMap<(number[] | Float32Array)[], Float32Array[][]>;
