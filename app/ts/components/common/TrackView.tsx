@@ -10,23 +10,16 @@ import * as d3 from 'd3';
 import * as React from 'react';
 
 
-export interface ZoomTrasform {
-    (track: Track): { rangeStart: number, pixelsPerSecond: number };
-}
-
 
 export interface TrackViewProps {
     track: Track;
-
     viewWidth: number;
     viewHeight: number;
-
+    zoomTransform: { rangeStart: number, pixelsPerSecond: number };
     signalsViewMode?: SignalsViewMode;
     colorScale?: any;
     useMipmap?: boolean;
-
     timeCursor?: number;
-    zoomTransform?: ZoomTrasform;
 
     onWheel?: (event: React.WheelEvent<Element>, track: Track, t: number, pps: number, deltaY: number) => any;
     onMouseMove?: (event: React.MouseEvent<Element>, track: Track, t: number, pps: number) => any;
@@ -80,7 +73,7 @@ export class TrackView extends React.Component<TrackViewProps, {}> {
     public render(): JSX.Element {
         const track = this.props.track;
         // Get zooming factors.
-        const zooming = this.props.zoomTransform(track);
+        const zooming = this.props.zoomTransform;
         // scale: Reference -> Pixel.
         const sReferenceToPixel = d3.scaleLinear()
             .domain([zooming.rangeStart, zooming.rangeStart + this.props.viewWidth / zooming.pixelsPerSecond])

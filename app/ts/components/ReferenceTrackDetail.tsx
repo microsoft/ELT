@@ -99,7 +99,7 @@ export class ReferenceTrackDetail extends React.Component<ReferenceTrackDetailPr
                         track={stores.projectStore.referenceTrack}
                         viewWidth={this.props.viewWidth}
                         viewHeight={this.props.viewHeight}
-                        zoomTransform={ts => ({ rangeStart: start, pixelsPerSecond: pps })}
+                        zoomTransform={{ rangeStart: start, pixelsPerSecond: pps }}
                         timeCursor={stores.projectUiStore.referenceViewTimeCursor}
                         useMipmap={true}
                         />
