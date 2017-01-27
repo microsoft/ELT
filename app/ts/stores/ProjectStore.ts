@@ -1,15 +1,14 @@
 // AlignmentLabelingStore
 // Stores the information about tracks and handles project load/save and undo/redo state saving.
 
-import { AlignedTimeSeries, Track } from './dataStructures/alignment';
+import { Track } from './dataStructures/alignment';
 import { loadMultipleSensorTimeSeriesFromFile, loadRawSensorTimeSeriesFromFile, loadVideoTimeSeriesFromFile }
     from './dataStructures/dataset';
 import { DeferredCallbacks } from './dataStructures/DeferredCallbacks';
 import { HistoryTracker } from './dataStructures/HistoryTracker';
-import { SavedAlignedTimeSeries, SavedAlignmentSnapshot, SavedLabelingSnapshot, SavedProject, SavedTrack }
+import { SavedAlignmentSnapshot, SavedLabelingSnapshot, SavedProject, SavedTrack }
     from './dataStructures/project';
 import { alignmentStore, labelingStore, projectUiStore } from './stores';
-import * as d3 from 'd3';
 import * as fs from 'fs';
 import { action, computed, observable, runInAction } from 'mobx';
 
@@ -59,15 +58,6 @@ export class ProjectStore {
     }
 
 
-    public getTimeSeriesByID(seriesId: string): AlignedTimeSeries {
-        // There are so few tracks/timeseries that linear search is fine.
-        const allSeries = this.tracks.concat(this.referenceTrack)
-            .map(ts => ts.alignedTimeSeries);
-        const flattened: AlignedTimeSeries[] = [].concat(...allSeries);
-        const found = flattened.filter(s => s.id === seriesId);
-        return (found.length > 0) ? found[0] : undefined;
-    }
-
     public getTrackByID(trackId: string): Track {
         // There are so few tracks that linear search is fine.
         return this.tracks.concat(this.referenceTrack).filter(t => t.id === trackId)[0];
@@ -75,14 +65,14 @@ export class ProjectStore {
 
     // Keep the time range of the reference track.
     @computed public get referenceTimestampStart(): number {
-        return this.referenceTrack && this.referenceTrack.alignedTimeSeries ?
-            d3.min(this.referenceTrack.alignedTimeSeries, x => x.referenceStart)
+        return this.referenceTrack && this.referenceTrack ?
+            this.referenceTrack.referenceStart
             : 0;
     }
 
     @computed public get referenceTimestampEnd(): number {
-        return this.referenceTrack && this.referenceTrack.alignedTimeSeries ?
-            d3.max(this.referenceTrack.alignedTimeSeries, x => x.referenceEnd)
+        return this.referenceTrack && this.referenceTrack ?
+            this.referenceTrack.referenceEnd
             : 100;
     }
 
@@ -156,21 +146,14 @@ export class ProjectStore {
     }
 
     private saveProjectHelper(): SavedProject {
-        const saveTimeSeries = (timeSeries: AlignedTimeSeries): SavedAlignedTimeSeries => {
-            return {
-                id: timeSeries.id,
-                trackId: timeSeries.trackId,
-                referenceStart: timeSeries.referenceStart,
-                referenceEnd: timeSeries.referenceEnd,
-                source: timeSeries.source,
-                aligned: timeSeries.aligned
-            };
-        };
         const saveTrack = (track: Track): SavedTrack => {
             return {
                 id: track.id,
                 minimized: track.minimized,
-                timeSeries: track.alignedTimeSeries.map(saveTimeSeries)
+                referenceStart: track.referenceStart,
+                referenceEnd: track.referenceEnd,
+                source: track.source,
+                aligned: track.aligned
             };
         };
 
@@ -199,67 +182,65 @@ export class ProjectStore {
         }
         // for each timeseries, get the source file, and save to a .labels file
         this.tracks.map(track => {
-            track.alignedTimeSeries.map(timeSeries => {
-                const sourceFile = timeSeries.source;
-                //const destinationFile = sourceFile + '.labels.tsv';
-                // read in the source file via dataset.ts (see loadMultipleSensorTimeSeriesFromFile)
-                // you can also get the timestampStart and timestampEnd from this
-                // which you want to map to timeSeries.referenceStart and timeSeries.referenceEnd
-                const rawSensorData = loadRawSensorTimeSeriesFromFile(sourceFile);
-                const localStart = rawSensorData.timestampStart;
-                const localEnd = rawSensorData.timestampEnd;
-                const referenceStart = timeSeries.referenceStart;
-                const referenceEnd = timeSeries.referenceEnd;
-                // use these to recompute k and b
-                const [k, b] = solveForKandB(localStart, referenceStart, localEnd, referenceEnd);
-                // get the labels from labelingStore .labels()
-                // map the timestamps of the labels from the reference time to the time of the current time series
-                // (i.e., localTime = (refTime - b)/k)
-                const mappedLabels = labelingStore.labels.map(label => {
-                    return new MappedLabel(label.className, (label.timestampStart - b) / k, (label.timestampEnd - b) / k);
-                });
-                mappedLabels.sort((l1, l2) => l1.timestampStart - l2.timestampStart);
-                // map the labels onto the source file by looking up the timeseries
-                // add a column
-                const countLabels = mappedLabels.length;
-                const timeColumn = rawSensorData.timeColumn;
-                const numRows = timeColumn.length;
-                const annotatedSensorData: string[] = [];
-                if (countLabels > 0) {
-                    let currLabelIndex = 0;
-                    let currentLabel = mappedLabels[currLabelIndex];
-                    for (let i = 0; i < numRows; i++) {
-                        const currentTime = timeColumn[i] / 1000;
-                        if (currentTime > currentLabel.timestampStart && currentTime <= currentLabel.timestampEnd) {
-                            annotatedSensorData[i] = rawSensorData.rawData[i].join('\t') + '\t' + currentLabel.className;
-                        } else {
-                            annotatedSensorData[i] = rawSensorData.rawData[i].join('\t') + '\t' + '';
-                        }
-                        if (currentTime >= currentLabel.timestampEnd && (currLabelIndex + 1) < countLabels) {
-                            currLabelIndex++;
-                            currentLabel = mappedLabels[currLabelIndex];
-                        }
+            const sourceFile = track.source;
+            //const destinationFile = sourceFile + '.labels.tsv';
+            // read in the source file via dataset.ts (see loadMultipleSensorTimeSeriesFromFile)
+            // you can also get the timestampStart and timestampEnd from this
+            // which you want to map to timeSeries.referenceStart and timeSeries.referenceEnd
+            const rawSensorData = loadRawSensorTimeSeriesFromFile(sourceFile);
+            const localStart = rawSensorData.timestampStart;
+            const localEnd = rawSensorData.timestampEnd;
+            const referenceStart = track.referenceStart;
+            const referenceEnd = track.referenceEnd;
+            // use these to recompute k and b
+            const [k, b] = solveForKandB(localStart, referenceStart, localEnd, referenceEnd);
+            // get the labels from labelingStore .labels()
+            // map the timestamps of the labels from the reference time to the time of the current time series
+            // (i.e., localTime = (refTime - b)/k)
+            const mappedLabels = labelingStore.labels.map(label => {
+                return new MappedLabel(label.className, (label.timestampStart - b) / k, (label.timestampEnd - b) / k);
+            });
+            mappedLabels.sort((l1, l2) => l1.timestampStart - l2.timestampStart);
+            // map the labels onto the source file by looking up the timeseries
+            // add a column
+            const countLabels = mappedLabels.length;
+            const timeColumn = rawSensorData.timeColumn;
+            const numRows = timeColumn.length;
+            const annotatedSensorData: string[] = [];
+            if (countLabels > 0) {
+                let currLabelIndex = 0;
+                let currentLabel = mappedLabels[currLabelIndex];
+                for (let i = 0; i < numRows; i++) {
+                    const currentTime = timeColumn[i] / 1000;
+                    if (currentTime > currentLabel.timestampStart && currentTime <= currentLabel.timestampEnd) {
+                        annotatedSensorData[i] = rawSensorData.rawData[i].join('\t') + '\t' + currentLabel.className;
+                    } else {
+                        annotatedSensorData[i] = rawSensorData.rawData[i].join('\t') + '\t' + '';
+                    }
+                    if (currentTime >= currentLabel.timestampEnd && (currLabelIndex + 1) < countLabels) {
+                        currLabelIndex++;
+                        currentLabel = mappedLabels[currLabelIndex];
                     }
                 }
-                fs.writeFileSync(fileName, annotatedSensorData.join('\n'), 'utf-8');
-            });
+            }
+            fs.writeFileSync(fileName, annotatedSensorData.join('\n'), 'utf-8');
         });
     }
 
     @action private loadProjectHelper(project: SavedProject, loadProjectCallback: () => any): void {
         const deferred = new DeferredCallbacks();
 
-        // Load the AlignedTimeSeries structure.
-        const loadTimeSeries = (track: Track, savedTimeSeries: SavedAlignedTimeSeries): AlignedTimeSeries => {
-            const result = new AlignedTimeSeries(
-                track.id,
+        // Load saved track.
+        const loadTrack = (track: SavedTrack): Track => {
+            const result = new Track(
+                track.id, track.minimized,
                 [],
-                savedTimeSeries.source,
-                savedTimeSeries.aligned,
-                savedTimeSeries.referenceStart,
-                savedTimeSeries.referenceEnd
+                track.source,
+                track.aligned,
+                track.referenceStart,
+                track.referenceEnd
             );
-            result.id = savedTimeSeries.id;
+            result.id = track.id;
             const cb = deferred.callback();
             // Load TimeSeries data from a file.
             const fileName = result.source;
@@ -276,13 +257,6 @@ export class ProjectStore {
                     callback([ts]);
                 });
             }
-            return result;
-        };
-
-        // Load saved track.
-        const loadTrack = (track: SavedTrack): Track => {
-            const result = new Track(track.id, track.minimized, []);
-            result.alignedTimeSeries = track.timeSeries.map(ts => loadTimeSeries(result, ts));
             return result;
         };
 
@@ -325,16 +299,9 @@ export class ProjectStore {
     }
 
     private getAlignmentSnapshot(): SavedAlignmentSnapshot {
-        const cloneTrack = (track: Track): Track => {
-            if (track === null) { return null; }
-            const result = new Track(track.id, track.minimized, []);
-            result.alignedTimeSeries = track.alignedTimeSeries.map(x =>
-                AlignedTimeSeries.clone(x, result));
-            return result;
-        };
         return {
-            referenceTrack: cloneTrack(this.referenceTrack),
-            tracks: this.tracks.map(cloneTrack),
+            referenceTrack: Track.clone(this.referenceTrack),
+            tracks: this.tracks.map(Track.clone),
             alignment: alignmentStore.saveState()
         };
     }

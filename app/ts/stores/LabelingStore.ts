@@ -1,4 +1,4 @@
-import { AlignedTimeSeries, Track } from '../stores/dataStructures/alignment';
+import { Track } from '../stores/dataStructures/alignment';
 import { Dataset, SensorTimeSeries } from '../stores/dataStructures/dataset';
 import { Label, LabelConfirmationState, PartialLabel } from '../stores/dataStructures/labeling';
 import { SavedLabelingState } from '../stores/dataStructures/project';
@@ -307,27 +307,26 @@ export class LabelingStore {
         // This makes it easier to process.
 
         // First determine the global dimensions and sample rate.
-        const timeSeriesToMerge: AlignedTimeSeries[] = [];
+        const tracksToMerge: Track[] = [];
         // Gather all timeSeries.
         for (const track of tracks) {
             // Each track generate a set of timeSeries.
-            if (track.alignedTimeSeries.length === 0) { continue; } // skip empty track.
+            if (track == null) { continue; } // skip empty track.
             // Assumption: the track only contain one timeSeries.
-            const timeSeries = track.alignedTimeSeries[0];
-            timeSeriesToMerge.push(timeSeries);
+            tracksToMerge.push(track);
         }
         // The widest range of all series.
-        const tMin = d3.min(timeSeriesToMerge, ts => ts.referenceStart);
-        const tMax = d3.max(timeSeriesToMerge, ts => ts.referenceEnd);
+        const tMin = d3.min(tracksToMerge, ts => ts.referenceStart);
+        const tMax = d3.max(tracksToMerge, ts => ts.referenceEnd);
         // Compute the max sample rate.
-        const maxSampleRate = d3.max(timeSeriesToMerge, ts =>
+        const maxSampleRate = d3.max(tracksToMerge, ts =>
             ((ts.timeSeries[0] as SensorTimeSeries).dimensions[0].length - 1) /
             ts.duration);
         // How many samples in the new dataset.
         const totalSamples = Math.ceil((tMax - tMin) * maxSampleRate);
         // Compute the actual sample rate.
         const actualSampleRate = (totalSamples - 1) / (tMax - tMin);
-        for (const ts of timeSeriesToMerge) {
+        for (const ts of tracksToMerge) {
             const timeSeries = ts.timeSeries[0] as SensorTimeSeries;
             // Create the sensor structure.
             const sensor: SensorTimeSeries = {

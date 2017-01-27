@@ -1,14 +1,14 @@
 // Data structures for project saving and loading, as well as undo/redo snapshots.
 
-import {Track} from './alignment';
-import {Label} from './labeling';
-import {TabID} from './types';
+import { Track } from './alignment';
+import { Label } from './labeling';
+import { TabID } from './types';
 
 // These saved states are JSON.stringify()-able objects that can be saved directly to disk in JSON format.
 
 export interface SavedMarker {
     id: string;
-    timeSeriesID: string;
+    trackId: string;
     localTimestamp: number;
 }
 
@@ -17,19 +17,13 @@ export interface SavedMarkerCorrespondence {
     marker2ID: string;
 }
 
-export interface SavedAlignedTimeSeries {
+export interface SavedTrack {
     id: string;
-    trackId: string;
+    minimized: boolean;
     source: string;
     aligned: boolean;
     referenceStart: number;
     referenceEnd: number;
-}
-
-export interface SavedTrack {
-    id: string;
-    timeSeries: SavedAlignedTimeSeries[];     // The timeseries within the track.
-    minimized: boolean;                       // Is the track minimized. 
 }
 
 export interface SavedAlignedTimeSeriesState {

@@ -13,7 +13,6 @@ function uniqueIdFactory(prefix: string): () => string {
 }
 
 const trackIdFactory = uniqueIdFactory('track');
-const seriesIdFactory = uniqueIdFactory('series');
 
 
 
@@ -22,7 +21,7 @@ const seriesIdFactory = uniqueIdFactory('series');
 
 export class Marker {
     public localTimestamp: number;          // The timestamp in the timeseries's time.
-    public timeSeries: AlignedTimeSeries;   // The timeseries of the marker.
+    public track: Track;   // The timeseries of the marker.
 }
 
 
@@ -32,24 +31,37 @@ export class MarkerCorrespondence {
 }
 
 
-export class AlignedTimeSeries {
-    public id: string;
+
+export class Track {
 
     constructor(
-        public trackId: string,
+        public id: string,
+        public minimized: boolean,                  // Is the track minimized. 
         public timeSeries: TimeSeries[],   // should have the same timestampStart and timestampEnd (aka., from the same sensor)
         public source: string,             // The filename of the timeseries. timeSeries should be what loaded from the file.
         public aligned: boolean,
         public referenceStart: number,     // The starting point of the timeseries in reference time.
         public referenceEnd: number,       // The ending point of the timeseries in reference time.
-    ) {
-        this.id = seriesIdFactory();
+    ) { }
+
+    // tslint:disable-next-line:function-name
+    public static fromFile(fileName: string, timeseries: TimeSeries[]): Track {
+        if (timeseries.length === 0) { throw 'Track constructor empty timeseries'; }
+        return new Track(
+            trackIdFactory(), false,
+            timeseries,
+            fileName,
+            false,
+            0, timeseries[0].timestampEnd - timeseries[0].timestampStart
+        );
     }
 
     // tslint:disable-next-line:function-name
-    public static clone(other: AlignedTimeSeries, track: Track): AlignedTimeSeries {
-        return new AlignedTimeSeries(
-            track.id, other.timeSeries, other.source, other.aligned, other.referenceStart, other.referenceEnd);
+    public static clone(other: Track): Track {
+        return other == null ? null :
+            new Track(
+                other.id, other.minimized, other.timeSeries, other.source, other.aligned,
+                other.referenceStart, other.referenceEnd);
     }
 
     public get duration(): number { return this.referenceEnd - this.referenceStart; }
@@ -65,17 +77,17 @@ export class AlignedTimeSeries {
         const tCorrespondences: [number, number][] = [];
         correspondences.forEach(correspondence => {
             let thisMarker: Marker = null; let otherMarker: Marker = null;
-            if (correspondence.marker1.timeSeries === this) {
+            if (correspondence.marker1.track === this) {
                 [thisMarker, otherMarker] = [correspondence.marker1, correspondence.marker2];
             }
-            if (correspondence.marker2.timeSeries === this) {
+            if (correspondence.marker2.track === this) {
                 [thisMarker, otherMarker] = [correspondence.marker2, correspondence.marker1];
             }
             if (!otherMarker) { return; } // not on this timeseries.
             // if (tTrackIndex - 1 !== tracks.indexOf(otherMarker.timeSeries.track)) { return; } // must be the previous track.
             const otherScale = d3.scaleLinear()
-                .domain([otherMarker.timeSeries.timeSeries[0].timestampStart, otherMarker.timeSeries.timeSeries[0].timestampEnd])
-                .range([otherMarker.timeSeries.referenceStart, otherMarker.timeSeries.referenceEnd]);
+                .domain([otherMarker.track.timeSeries[0].timestampStart, otherMarker.track.timeSeries[0].timestampEnd])
+                .range([otherMarker.track.referenceStart, otherMarker.track.referenceEnd]);
             tCorrespondences.push([otherScale(otherMarker.localTimestamp), thisMarker.localTimestamp]);
         });
 
@@ -85,34 +97,6 @@ export class AlignedTimeSeries {
 
         this.referenceStart = project(this.timeSeries[0].timestampStart);
         this.referenceEnd = project(this.timeSeries[0].timestampEnd);
-    }
-
-}
-
-
-
-export class Track {
-
-    constructor(
-        public id: string,
-        public minimized: boolean,                  // Is the track minimized. 
-        public alignedTimeSeries: AlignedTimeSeries[]     // The timeseries within the track.
-    ) { }
-
-    // tslint:disable-next-line:function-name
-    public static fromFile(fileName: string, timeseries: TimeSeries[]): Track {
-        if (timeseries.length === 0) { throw 'Track constructor empty timeseries'; }
-        const track = new Track(trackIdFactory(), false, []);
-        track.alignedTimeSeries = [
-            new AlignedTimeSeries(
-                track.id,
-                timeseries,
-                fileName,
-                false,
-                0, timeseries[0].timestampEnd - timeseries[0].timestampStart
-            )
-        ];
-        return track;
     }
 
 }

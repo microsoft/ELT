@@ -2,7 +2,7 @@
 // - Including tracks (but not the reference track), markers and correspondences.
 // - Handles alignment keyboard events.
 
-import { AlignedTimeSeries, Marker, Track } from '../../stores/dataStructures/alignment';
+import { Marker, Track } from '../../stores/dataStructures/alignment';
 import { LayoutParameters } from '../../stores/dataStructures/LayoutParameters';
 import { KeyCode } from '../../stores/dataStructures/types';
 import * as stores from '../../stores/stores';
@@ -84,42 +84,42 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
 
     // In these events, t and pps are in the timeSeries' local time, not the reference time.
     private onTrackMouseMove(
-        event: React.MouseEvent<Element>, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number): void {
-        if (timeSeries.aligned) {
+        event: React.MouseEvent<Element>, track: Track, t: number, pps: number): void {
+        if (track.aligned) {
             const scale = d3.scaleLinear()
-                .domain([timeSeries.referenceStart, timeSeries.referenceEnd])
-                .range([timeSeries.timeSeries[0].timestampStart, timeSeries.timeSeries[0].timestampEnd]);
+                .domain([track.referenceStart, track.referenceEnd])
+                .range([track.timeSeries[0].timestampStart, track.timeSeries[0].timestampEnd]);
             stores.projectUiStore.setReferenceViewTimeCursor(scale.invert(t));
         } else {
-            stores.alignmentUiStore.setTimeCursor(timeSeries, t);
+            stores.alignmentUiStore.setTimeCursor(track, t);
         }
     }
 
     private onTrackMouseDown(
-        event: React.MouseEvent<Element>, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number): void {
-        if (t < timeSeries.timeSeries[0].timestampStart || t > timeSeries.timeSeries[0].timestampEnd) { return; }
+        event: React.MouseEvent<Element>, track: Track, t: number, pps: number): void {
+        if (t < track.timeSeries[0].timestampStart || t > track.timeSeries[0].timestampEnd) { return; }
         const x0 = event.clientX;
         let moved = false;
-        const rangeStart = stores.alignmentUiStore.getAlignmentParameters(timeSeries).rangeStart;
+        const rangeStart = stores.alignmentUiStore.getAlignmentParameters(track).rangeStart;
         const referenceRangeStart = stores.projectUiStore.referenceViewStart;
         startDragging(
             (mouseEvent: MouseEvent) => {
                 const x1 = mouseEvent.clientX;
                 if (moved || Math.abs(x1 - x0) >= 3) {
                     moved = true;
-                    if (timeSeries.aligned) {
+                    if (track.aligned) {
                         const dt = (x1 - x0) / stores.projectUiStore.referenceViewPPS;
                         stores.projectUiStore.setReferenceViewZooming(referenceRangeStart - dt, null);
                     } else {
                         const dt = (x1 - x0) / pps;
-                        stores.alignmentUiStore.setTimeSeriesZooming(timeSeries, rangeStart - dt, null);
+                        stores.alignmentUiStore.setTimeSeriesZooming(track, rangeStart - dt, null);
                     }
                 }
             },
             upEvent => {
                 if (!moved) {
                     const marker: Marker = {
-                        timeSeries: timeSeries,
+                        track: track,
                         localTimestamp: t
                     };
                     stores.alignmentStore.addMarker(marker);
@@ -127,31 +127,31 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
             });
     }
 
-    private onTrackMouseLeave(event: React.MouseEvent<Element>, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number): void {
-        stores.alignmentUiStore.setTimeCursor(timeSeries, null);
+    private onTrackMouseLeave(event: React.MouseEvent<Element>, track: Track, t: number, pps: number): void {
+        stores.alignmentUiStore.setTimeCursor(track, null);
     }
 
-    private onTrackMouseEnter(event: React.MouseEvent<Element>, track: Track, timeSeries: AlignedTimeSeries, t: number, pps: number): void {
-        stores.alignmentUiStore.setTimeCursor(timeSeries, t);
+    private onTrackMouseEnter(event: React.MouseEvent<Element>, track: Track, t: number, pps: number): void {
+        stores.alignmentUiStore.setTimeCursor(track, t);
     }
 
 
     private onTrackWheel(
-        event: React.WheelEvent<Element>, trackId: string, timeSeries: AlignedTimeSeries, _: number, pps: number, deltaY: number): void {
-        if (trackId === stores.projectStore.referenceTrack.id || timeSeries.aligned) {
+        event: React.WheelEvent<Element>, track: Track, _: number, pps: number, deltaY: number): void {
+        if (track.id === stores.projectStore.referenceTrack.id || track.aligned) {
             stores.projectUiStore.referenceViewPanAndZoom(0, deltaY / 1000, 'cursor');
         } else {
             const scale = d3.scaleLinear()
-                .domain([timeSeries.referenceStart, timeSeries.referenceEnd])
-                .range([timeSeries.timeSeries[0].timestampStart, timeSeries.timeSeries[0].timestampEnd]);
-            const t = stores.alignmentUiStore.getTimeCursor(timeSeries);
+                .domain([track.referenceStart, track.referenceEnd])
+                .range([track.timeSeries[0].timestampStart, track.timeSeries[0].timestampEnd]);
+            const t = stores.alignmentUiStore.getTimeCursor(track);
             if (t === null) { return; }
             const { rangeStart: oldStart, pixelsPerSecond: oldPPS } =
-                stores.alignmentUiStore.getAlignmentParameters(timeSeries);
+                stores.alignmentUiStore.getAlignmentParameters(track);
             const k = Math.exp(-deltaY / 1000);
             const newPPS = oldPPS * k;
             const newStart = oldStart / k + scale.invert(t) * (1 - 1 / k);
-            stores.alignmentUiStore.setTimeSeriesZooming(timeSeries, newStart, newPPS);
+            stores.alignmentUiStore.setTimeSeriesZooming(track, newStart, newPPS);
         }
     }
 
@@ -200,10 +200,10 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
                 if (candidate) {
                     const trackIndex1 =
                         stores.projectStore.tracks.map(t => t.id)
-                            .indexOf(this.state.markerStart.timeSeries.trackId);
+                            .indexOf(this.state.markerStart.track.id);
                     const trackIndex2 =
                         stores.projectStore.tracks.map(t => t.id)
-                            .indexOf(candidate.timeSeries.trackId);
+                            .indexOf(candidate.track.id);
                     if (!(trackIndex2 === trackIndex1 - 1 || trackIndex2 === trackIndex1 + 1)) { candidate = null; }
                 }
 
@@ -241,10 +241,10 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
         y0: number,
         y1: number
     } {
-        const timeSeries = marker.timeSeries;
-        const trackLayout = layoutMap.get(timeSeries.trackId);
+        const track = marker.track;
+        const trackLayout = layoutMap.get(track.id);
         if (!trackLayout) { return null; }
-        const alignmentState = stores.alignmentUiStore.getAlignmentParameters(timeSeries);
+        const alignmentState = stores.alignmentUiStore.getAlignmentParameters(track);
         const [rangeStart, pixelsPerSecond] = [alignmentState.rangeStart, alignmentState.pixelsPerSecond];
         // scale: Reference -> Pixel.
         const sReferenceToPixel = d3.scaleLinear()
@@ -252,8 +252,8 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
             .range([0, this.props.viewWidth]);
         // scale: Signal -> Reference.
         const sSignalToReference = d3.scaleLinear()
-            .domain([timeSeries.timeSeries[0].timestampStart, timeSeries.timeSeries[0].timestampEnd])
-            .range([timeSeries.referenceStart, timeSeries.referenceEnd]);
+            .domain([track.timeSeries[0].timestampStart, track.timeSeries[0].timestampEnd])
+            .range([track.referenceStart, track.referenceEnd]);
         const x = sReferenceToPixel(sSignalToReference(marker.localTimestamp));
         const pps = sSignalToReference(sReferenceToPixel(1)) - sSignalToReference(sReferenceToPixel(0));
         return {
@@ -266,20 +266,11 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
         };
     }
 
-    private getZoomTransform(series: AlignedTimeSeries): {
+    private getZoomTransform(track: Track): {
         rangeStart: number,
         pixelsPerSecond: number
     } {
-        // const alignmentParms = stores.alignmentUiStore.getAlignmentParameters(series);
-        // if (!alignmentParms) {
-        //     return {
-        //         rangeStart: stores.alignmentLabelingUiStore.referenceViewStart,
-        //         pixelsPerSecond: stores.alignmentLabelingUiStore.referenceViewPPS
-        //     };
-        // } else {
-        //     return { rangeStart: alignmentParms.rangeStart, pixelsPerSecond: alignmentParms.pixelsPerSecond };
-        // }
-        return stores.alignmentUiStore.getAlignmentParameters(series);
+        return stores.alignmentUiStore.getAlignmentParameters(track);
     }
 
 
@@ -319,8 +310,8 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
             const trackLayout = layoutMap.get(track.id);
             if (!trackLayout) { return null; }
             let timeAxis = null;
-            if (!track.alignedTimeSeries[0].aligned) {
-                const zoom = this.getZoomTransform(track.alignedTimeSeries[0]);
+            if (!track.aligned) {
+                const zoom = this.getZoomTransform(track);
                 const scale = d3.scaleLinear()
                     .domain([zoom.rangeStart, zoom.rangeStart + this.props.viewWidth / zoom.pixelsPerSecond])
                     .range([0, this.props.viewWidth]);
@@ -335,8 +326,7 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
                         track={track}
                         viewWidth={this.props.viewWidth}
                         viewHeight={trackLayout.height}
-                        timeCursorMap={stores.alignmentUiStore.getTimeCursorMap()}
-                        enableMouseEvents={true}
+                        timeCursor={stores.alignmentUiStore.getTimeCursor(track)}
                         onMouseMove={this.onTrackMouseMove}
                         onMouseDown={this.onTrackMouseDown}
                         onMouseEnter={this.onTrackMouseEnter}
@@ -420,13 +410,13 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
                         y1={y0} y2={y1}
                         onWheel={event => {
                             this.onTrackWheel(
-                                event, marker.timeSeries.trackId, marker.timeSeries, marker.localTimestamp, pps, event.deltaY);
+                                event, marker.track, marker.localTimestamp, pps, event.deltaY);
                         } }
                         onMouseEnter={event => {
-                            if (marker.timeSeries.trackId === stores.projectStore.referenceTrack.id) {
+                            if (marker.track.id === stores.projectStore.referenceTrack.id) {
                                 stores.projectUiStore.setReferenceViewTimeCursor(marker.localTimestamp);
                             } else {
-                                stores.alignmentUiStore.setTimeCursor(marker.timeSeries, marker.localTimestamp);
+                                stores.alignmentUiStore.setTimeCursor(marker.track, marker.localTimestamp);
                             }
                         } }
                         onMouseDown={event => {
@@ -438,10 +428,10 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
                                         .xScaleInvert(this.getRelativePosition(moveEvent)[0]);
                                     stores.alignmentStore.updateMarker(marker, newT, false, isFirstUpdate);
                                     isFirstUpdate = false;
-                                    if (marker.timeSeries.trackId === stores.projectStore.referenceTrack.id) {
+                                    if (marker.track.id === stores.projectStore.referenceTrack.id) {
                                         stores.projectUiStore.setReferenceViewTimeCursor(newT);
                                     } else {
-                                        stores.alignmentUiStore.setTimeCursor(marker.timeSeries, newT);
+                                        stores.alignmentUiStore.setTimeCursor(marker.track, newT);
                                     }
                                 },
                                 () => { stores.alignmentStore.updateMarker(marker, marker.localTimestamp, true, false); }
