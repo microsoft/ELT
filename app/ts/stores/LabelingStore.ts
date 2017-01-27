@@ -176,7 +176,6 @@ export class LabelingStore {
         this.changePoints = changePoints;
     }
 
-    // FIXME: removeAllSuggestions also called in LabelingSUggestionGenerator
     @action public removeAllSuggestions(): void {
         this._suggestedLabelsIndex.clear();
     }

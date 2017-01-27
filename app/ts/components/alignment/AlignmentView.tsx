@@ -138,7 +138,7 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
 
     private onTrackWheel(
         event: React.WheelEvent<Element>, track: Track, _: number, pps: number, deltaY: number): void {
-        if (track.id === stores.projectStore.referenceTrack.id || track.aligned) {
+        if (stores.projectStore.isReferenceTrack(track) || track.aligned) {
             stores.projectUiStore.referenceViewPanAndZoom(0, deltaY / 1000, 'cursor');
         } else {
             const scale = d3.scaleLinear()
@@ -413,7 +413,7 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
                                 event, marker.track, marker.localTimestamp, pps, event.deltaY);
                         } }
                         onMouseEnter={event => {
-                            if (marker.track.id === stores.projectStore.referenceTrack.id) {
+                            if (stores.projectStore.isReferenceTrack(marker.track)) {
                                 stores.projectUiStore.setReferenceViewTimeCursor(marker.localTimestamp);
                             } else {
                                 stores.alignmentUiStore.setTimeCursor(marker.track, marker.localTimestamp);
@@ -428,7 +428,7 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
                                         .xScaleInvert(this.getRelativePosition(moveEvent)[0]);
                                     stores.alignmentStore.updateMarker(marker, newT, false, isFirstUpdate);
                                     isFirstUpdate = false;
-                                    if (marker.track.id === stores.projectStore.referenceTrack.id) {
+                                    if (stores.projectStore.isReferenceTrack(marker.track)) {
                                         stores.projectUiStore.setReferenceViewTimeCursor(newT);
                                     } else {
                                         stores.alignmentUiStore.setTimeCursor(marker.track, newT);

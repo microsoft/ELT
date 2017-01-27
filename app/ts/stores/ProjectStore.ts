@@ -85,6 +85,10 @@ export class ProjectStore {
         });
     }
 
+    public isReferenceTrack(track: Track): boolean {
+        return this.referenceTrack != null && track.id === this.referenceTrack.id;
+    }
+
     @action public loadVideoTrack(fileName: string): void {
         this.alignmentHistoryRecord();
         loadVideoTimeSeriesFromFile(fileName, video => {
@@ -274,9 +278,7 @@ export class ProjectStore {
                 alignmentStore.loadState(project.alignment);
                 labelingStore.loadState(project.labeling);
 
-                // TODO: Load the reference zooming info here.
                 projectUiStore.setProjectReferenceViewZooming(project.ui.referenceViewStart, project.ui.referenceViewPPS);
-                // TODO: Load the tabs here.
                 if (project.ui.currentTab === 'file') {
                     projectUiStore.currentTab = 'alignment';
                 } else {
