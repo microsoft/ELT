@@ -13,7 +13,7 @@ export module LayoutParameters {
     export const referenceDetailedViewHeightLabeling = 250;
     export const referenceDetailedViewHeightAlignment = 250;
 
-    export const seriesColorScale = (x) => 'rgba(0, 0, 0, 0.5)';
+    export const seriesColorScale = x => 'rgba(0, 0, 0, 0.5)';
 
     export const alignmentTrackHeight = 150;
     export const alignmentTrackMinimizedHeight = 40;

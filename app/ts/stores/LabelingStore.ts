@@ -154,15 +154,15 @@ export class LabelingStore {
             });
             let labelsToRemove = refreshDecision.deleteLabels;
             // Only remove unconfirmed suggestions of older generations.
-            labelsToRemove = labelsToRemove.filter((label) =>
+            labelsToRemove = labelsToRemove.filter(label =>
                 label.suggestionGeneration < thisGeneration && label.state === LabelConfirmationState.UNCONFIRMED);
             // Don't remove selected suggestions.
-            labelsToRemove = labelsToRemove.filter((label) => !selectedLabels.has(label));
+            labelsToRemove = labelsToRemove.filter(label => !selectedLabels.has(label));
             // Remove them.
-            labelsToRemove.forEach((label) => this._suggestedLabelsIndex.remove(label));
+            labelsToRemove.forEach(label => this._suggestedLabelsIndex.remove(label));
             labelsChanged = labelsChanged || labelsToRemove.length > 0;
         }
-        labels.forEach((label) => {
+        labels.forEach(label => {
             const margin = (label.timestampEnd - label.timestampStart) * 0.15;
             if (this._labelsIndex.getRangesWithinMargin(label.timestampStart, label.timestampEnd, margin).length === 0 &&
                 this._suggestedLabelsIndex.getRangesWithinMargin(label.timestampStart, label.timestampEnd, margin).length === 0) {
@@ -199,7 +199,7 @@ export class LabelingStore {
         projectStore.labelingHistoryRecord();
         // Remove the labels of that class.
         const toRemove = [];
-        this._labelsIndex.forEach((label) => {
+        this._labelsIndex.forEach(label => {
             if (label.className === className) {
                 toRemove.push(label);
             }
@@ -220,13 +220,13 @@ export class LabelingStore {
         projectStore.labelingHistoryRecord();
         if (this.classes.indexOf(newClassName) < 0) {
             let renamed = false;
-            this._labelsIndex.forEach((label) => {
+            this._labelsIndex.forEach(label => {
                 if (label.className === oldClassName) {
                     label.className = newClassName;
                     renamed = true;
                 }
             });
-            this._suggestedLabelsIndex.forEach((label) => {
+            this._suggestedLabelsIndex.forEach(label => {
                 if (label.className === oldClassName) {
                     label.className = newClassName;
                     renamed = true;
@@ -249,8 +249,8 @@ export class LabelingStore {
             projectUiStore.referenceViewStart,
             projectUiStore.referenceViewEnd);
         // Filter out rejected suggestions.
-        visibleSuggestions = visibleSuggestions.filter((x) => x.state !== LabelConfirmationState.REJECTED);
-        visibleSuggestions.forEach((label) => {
+        visibleSuggestions = visibleSuggestions.filter(x => x.state !== LabelConfirmationState.REJECTED);
+        visibleSuggestions.forEach(label => {
             label.state = LabelConfirmationState.CONFIRMED_BOTH;
             this._suggestedLabelsIndex.remove(label);
             this._labelsIndex.add(label);
@@ -317,12 +317,12 @@ export class LabelingStore {
             timeSeriesToMerge.push(timeSeries);
         }
         // The widest range of all series.
-        const tMin = d3.min(timeSeriesToMerge, (ts) => ts.referenceStart);
-        const tMax = d3.max(timeSeriesToMerge, (ts) => ts.referenceEnd);
+        const tMin = d3.min(timeSeriesToMerge, ts => ts.referenceStart);
+        const tMax = d3.max(timeSeriesToMerge, ts => ts.referenceEnd);
         // Compute the max sample rate.
-        const maxSampleRate = d3.max(timeSeriesToMerge, (ts) =>
+        const maxSampleRate = d3.max(timeSeriesToMerge, ts =>
             ((ts.timeSeries[0] as SensorTimeSeries).dimensions[0].length - 1) /
-            (ts.referenceEnd - ts.referenceStart));
+            ts.duration);
         // How many samples in the new dataset.
         const totalSamples = Math.ceil((tMax - tMin) * maxSampleRate);
         // Compute the actual sample rate.
@@ -333,7 +333,7 @@ export class LabelingStore {
             const sensor: SensorTimeSeries = {
                 name: 'aggregated',
                 kind: timeSeries.kind,
-                dimensions: timeSeries.dimensions.map((d) =>
+                dimensions: timeSeries.dimensions.map(d =>
                     resampleColumn(d, ts.referenceStart, ts.referenceEnd, tMin, tMax, totalSamples)),
                 timestampStart: tMin,
                 timestampEnd: tMax,
@@ -382,7 +382,7 @@ export class LabelingStore {
         // this.updateAlignedDataset(true);
 
         // Update the current class.
-        const nonIgnoreClases = this.classes.filter((x) => x !== 'IGNORE');
+        const nonIgnoreClases = this.classes.filter(x => x !== 'IGNORE');
         labelingUiStore.currentClass = nonIgnoreClases.length > 0 ? nonIgnoreClases[0] : null;
     }
 
@@ -392,7 +392,7 @@ export class LabelingStore {
         this.classes = ['IGNORE', 'Positive'];
         this.updateColors();
         this.changePoints = [];
-        const nonIgnoreClases = this.classes.filter((x) => x !== 'IGNORE');
+        const nonIgnoreClases = this.classes.filter(x => x !== 'IGNORE');
         labelingUiStore.currentClass = nonIgnoreClases.length > 0 ? nonIgnoreClases[0] : null;
     }
 

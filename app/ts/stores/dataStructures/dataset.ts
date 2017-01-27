@@ -2,7 +2,7 @@ import * as d3 from 'd3';
 import { readFileSync } from 'fs';
 import * as fs from 'fs';
 
-// Types of input timeseries.
+// Types of input time series.
 // Do not change already assigned numbers.
 export enum TimeSeriesKind {
     TEMPERATURE = 1,
@@ -16,13 +16,6 @@ export enum TimeSeriesKind {
 }
 
 
-export enum AlignedState {
-    ALIGNED = 1,
-    NOT_ALIGNED = 2,
-    IN_PROCESS = 3
-}
-
-
 // Base class of all timeseries.
 // To make serialization easier, Timeseries should be plain objects.
 export interface TimeSeries {
@@ -30,7 +23,6 @@ export interface TimeSeries {
     name: string;
     timestampStart: number;
     timestampEnd: number;
-    aligned?: AlignedState;
 }
 
 // Just loads the raw data from file (used for exporting labels, i.e., annotating the original data)
@@ -141,7 +133,7 @@ export function loadVideoTimeSeriesFromFile(filename: string, callback: (video: 
 export function loadSensorTimeSeriesFromFile(filename: string): SensorTimeSeries {
     const content = readFileSync(filename, 'utf-8');
     const rows = d3.tsvParseRows(content)
-        .filter((x) => x.length > 0 && x.join('').length > 0);
+        .filter(x => x.length > 0 && x.join('').length > 0);
     const numColumns = rows[0].length;
     const columns: number[][] = [];
     const isColumnValid: boolean[] = [];
@@ -172,8 +164,7 @@ export function loadSensorTimeSeriesFromFile(filename: string): SensorTimeSeries
             timestampEnd: timeColumn[timeColumn.length - 1] / 1000,
             sampleRate: (timeColumn[timeColumn.length - 1] - timeColumn[0]) / 1000 / (timeColumn.length - 1),
             dimensions: [X, Y, Z],
-            scales: [scale, scale, scale],
-            aligned: 0
+            scales: [scale, scale, scale]
         };
     }
     if (isColumnValid[7] && isColumnValid[8] && isColumnValid[9]) {
@@ -190,8 +181,7 @@ export function loadSensorTimeSeriesFromFile(filename: string): SensorTimeSeries
             timestampEnd: timeColumn[timeColumn.length - 1] / 1000,
             sampleRate: (timeColumn[timeColumn.length - 1] - timeColumn[0]) / 1000 / (timeColumn.length - 1),
             dimensions: [X, Y, Z],
-            scales: [scale, scale, scale],
-            aligned: 0
+            scales: [scale, scale, scale]
         };
     }
     return null;
@@ -202,7 +192,7 @@ export function loadSensorTimeSeriesFromFile(filename: string): SensorTimeSeries
 export function loadMultipleSensorTimeSeriesFromFile(filename: string): SensorTimeSeries[] {
     const content = readFileSync(filename, 'utf-8');
     const rows = d3.tsvParseRows(content)
-        .filter((x) => x.length > 0 && x.join('').length > 0);
+        .filter(x => x.length > 0 && x.join('').length > 0);
     const numColumns = rows[0].length;
     const columns: number[][] = [];
     const isColumnValid: boolean[] = [];
@@ -241,8 +231,7 @@ export function loadMultipleSensorTimeSeriesFromFile(filename: string): SensorTi
             timestampEnd: timeColumn[timeColumn.length - 1] / 1000,
             sampleRate: (timeColumn[timeColumn.length - 1] - timeColumn[0]) / 1000 / (timeColumn.length - 1),
             dimensions: [X, Y, Z],
-            scales: [scale, scale, scale],
-            aligned: 0
+            scales: [scale, scale, scale]
         });
     }
     if (isColumnValid[7] && isColumnValid[8] && isColumnValid[9]) {
@@ -259,8 +248,7 @@ export function loadMultipleSensorTimeSeriesFromFile(filename: string): SensorTi
             timestampEnd: timeColumn[timeColumn.length - 1] / 1000,
             sampleRate: (timeColumn[timeColumn.length - 1] - timeColumn[0]) / 1000 / (timeColumn.length - 1),
             dimensions: [X, Y, Z],
-            scales: [scale, scale, scale],
-            aligned: 0
+            scales: [scale, scale, scale]
         });
     }
     return result;
@@ -269,7 +257,7 @@ export function loadMultipleSensorTimeSeriesFromFile(filename: string): SensorTi
 export function loadRawSensorTimeSeriesFromFile(filename: string): RawTimeSeries {
     const content = readFileSync(filename, 'utf-8');
     let rows = d3.tsvParseRows(content);
-    rows = rows.filter((x) => x.length > 0 && x.join('').length > 0);
+    rows = rows.filter(x => x.length > 0 && x.join('').length > 0);
     const numColumns = rows[0].length;
     const columns: number[][] = [];
     for (let i = 0; i < numColumns; i++) {

@@ -200,8 +200,8 @@ export class MultipleSpringAlgorithm<InputType, SampleType> {
         distanceFunction: (a: InputType, b: SampleType) => number,
         report: (which: number, dmin: number, ts: number, te: number) => void
     ) {
-        this._cores = inputs.map((input) => new SpringAlgorithmCore(input, distanceFunction));
-        this._M = inputs.map((input) => input.length);
+        this._cores = inputs.map(input => new SpringAlgorithmCore(input, distanceFunction));
+        this._M = inputs.map(input => input.length);
         this._thresholdScales = thresholdScales;
         this._lengthRanges = lengthRanges;
         this._margin = margin;
@@ -212,11 +212,11 @@ export class MultipleSpringAlgorithm<InputType, SampleType> {
     }
 
     public feed(xt: SampleType): [number, number] {
-        this._cores.forEach((core) => core.feed(xt));
+        this._cores.forEach(core => core.feed(xt));
 
         const t = this._cores[0].t;
-        const ds = this._cores.map((core) => core.d);
-        const ss = this._cores.map((core) => core.s);
+        const ds = this._cores.map(core => core.d);
+        const ss = this._cores.map(core => core.s);
 
 
         if (this._dmin <= 1) {
@@ -289,8 +289,8 @@ export class MultipleSpringAlgorithmBestMatch<InputType, SampleType> {
         thresholdScales: number[],
         distanceFunction: (a: InputType, b: SampleType) => number
     ) {
-        this._cores = inputs.map((input) => new SpringAlgorithmCore(input, distanceFunction));
-        this._M = inputs.map((input) => input.length);
+        this._cores = inputs.map(input => new SpringAlgorithmCore(input, distanceFunction));
+        this._M = inputs.map(input => input.length);
         this._thresholdScales = thresholdScales;
         this._dmin = null;
         this._whichMin = null;
@@ -299,11 +299,11 @@ export class MultipleSpringAlgorithmBestMatch<InputType, SampleType> {
     }
 
     public feed(xt: SampleType): void {
-        this._cores.forEach((core) => core.feed(xt));
+        this._cores.forEach(core => core.feed(xt));
 
         const t = this._cores[0].t;
-        const ds = this._cores.map((core) => core.d);
-        const ss = this._cores.map((core) => core.s);
+        const ds = this._cores.map(core => core.d);
+        const ss = this._cores.map(core => core.s);
 
         // Find the minimum d and s.
         let minI = null; let minD = null; let minS = null;

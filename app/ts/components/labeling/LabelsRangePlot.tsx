@@ -29,7 +29,7 @@ export class LabelsRangePlot extends React.Component<LabelsRangePlotProps, {}> {
         let threeLeastConfidentSuggestions: Label[] = null;
         if (props.highlightLeastConfidentSuggestions) {
             threeLeastConfidentSuggestions = stores.labelingUiStore.suggestionLogic.calculateHighlightedLabels({
-                suggestionsInView: labels.filter((l) => l.state === LabelConfirmationState.UNCONFIRMED)
+                suggestionsInView: labels.filter(l => l.state === LabelConfirmationState.UNCONFIRMED)
             });
         }
 

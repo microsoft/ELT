@@ -230,7 +230,7 @@ export class VideoFrameCache {
 
     private onLoadedMetadata(): void {
         this.isDurationLoaded = true;
-        this.durationListeners.forEach((x) => x(this.videoElement.duration));
+        this.durationListeners.forEach(x => x(this.videoElement.duration));
     }
 
     private onSeeked(): void {

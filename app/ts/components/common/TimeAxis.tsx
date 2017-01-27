@@ -38,7 +38,7 @@ export class TimeAxis extends React.Component<TimeAxisProps, TimeAxisState> {
             .ticks(newProps.scale.range()[1] / 50);
         const tickValues = newProps.scale.ticks(axis.tickArguments()[0]) as number[];
         for (let i = 0; i <= 3; i++) {
-            const tf = (d) => d.toFixed(i) + 's';
+            const tf = d => d.toFixed(i) + 's';
             axis.tickFormat(tf);
             const s = tickValues.map(tf);
             if (s.every((x, j) => j === 0 || s[j - 1] !== s[j])) { break; }

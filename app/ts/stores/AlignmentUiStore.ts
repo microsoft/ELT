@@ -31,9 +31,9 @@ export class AlignmentUiStore {
     @action
     public setReferenceViewTimeCursor(timeCursor: number): void {
         const blocks = alignmentStore.getAlignedBlocks();
-        blocks.forEach((block) => {
+        blocks.forEach(block => {
             if (alignmentStore.isBlockAligned(block)) {
-                block.forEach((series) => {
+                block.forEach(series => {
                     const scale = d3.scaleLinear()
                         .domain([series.referenceStart, series.referenceEnd])
                         .range([series.timeSeries[0].timestampStart, series.timeSeries[0].timestampEnd]);

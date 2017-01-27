@@ -100,11 +100,11 @@ export class DtwSuggestionWorker extends EventEmitter {
 
 const worker = new DtwSuggestionWorker();
 
-self.onmessage = (message) => {
+self.onmessage = message => {
     const data = message.data;
     worker.handleMessage(data);
 };
 
-worker.addListener('.post', (message) => {
+worker.addListener('.post', message => {
     self.postMessage(message, undefined);
 });

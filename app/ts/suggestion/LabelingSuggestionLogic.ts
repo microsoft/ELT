@@ -159,7 +159,7 @@ class Forward implements LabelingSuggestionLogic {
         detailedViewRange: TimeRange
     }): TimeRange {
         return {
-            timestampStart: d3.max(info.labels, (l) => l.timestampEnd - (l.timestampEnd - l.timestampStart) * 0.1),
+            timestampStart: d3.max(info.labels, l => l.timestampEnd - (l.timestampEnd - l.timestampStart) * 0.1),
             timestampEnd: info.dataset.timestampEnd
         };
     }
@@ -222,7 +222,7 @@ class ForwardConfirm extends Forward implements LabelingSuggestionLogic {
             deleteLabels: Label[]
         } {
         return {
-            confirmLabels: info.currentSuggestions.getRangesInRange(-1e10, d3.min(info.labelsConfirmed, (l) => l.timestampStart)),
+            confirmLabels: info.currentSuggestions.getRangesInRange(-1e10, d3.min(info.labelsConfirmed, l => l.timestampStart)),
             rejectLabels: [],
             deleteLabels: []
         };
@@ -250,7 +250,7 @@ class ForwardReject extends Forward implements LabelingSuggestionLogic {
         return {
             confirmLabels: [],
             rejectLabels: [],
-            deleteLabels: info.currentSuggestions.getRangesInRange(-1e10, d3.min(info.labelsConfirmed, (l) => l.timestampStart))
+            deleteLabels: info.currentSuggestions.getRangesInRange(-1e10, d3.min(info.labelsConfirmed, l => l.timestampStart))
         };
     };
 }

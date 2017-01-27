@@ -13,7 +13,7 @@ export class TimeRangeIndex<TimeRangeType extends TimeRange> extends ObservableS
     }
 
     @action public addRanges(ranges: TimeRangeType[]): void {
-        ranges.forEach((r) => this.add(r));
+        ranges.forEach(r => this.add(r));
     }
 
     // Get all ranges that *overlaps* with [tmin, tmax], return them in order by timestampStart.

@@ -175,7 +175,7 @@ export class LabelPlot extends React.Component<LabelPlotProps, {}> {
                 <g className='label-controls' transform={`translate(${x1}, 0)`}>
                     <SVGGlyphiconButton
                         x={Math.max(0, x2 - x1 - 24)} y={0} width={24} height={24} text='remove'
-                        onMouseDown={(e) => {
+                        onMouseDown={e => {
                             e.stopPropagation();
                             stores.labelingUiStore.removeLabel(this.props.label);
                         } }

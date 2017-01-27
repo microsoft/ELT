@@ -45,8 +45,8 @@ export class SensorPlot extends React.Component<SensorPlotProps, {}> {
             y0 = this.props.yDomain[0];
             y1 = this.props.yDomain[1];
         } else {
-            y0 = d3.min(this.props.timeSeries.scales, (x) => x[0]);
-            y1 = d3.max(this.props.timeSeries.scales, (x) => x[1]);
+            y0 = d3.min(this.props.timeSeries.scales, x => x[0]);
+            y1 = d3.max(this.props.timeSeries.scales, x => x[1]);
         }
 
         const numSeries = this.props.timeSeries.dimensions.length;
@@ -193,7 +193,7 @@ export class SensorRangePlot extends React.Component<SensorRangePlotProps, {}> {
                 this.props.pixelsPerSecond * (timeseries.timestampEnd - timeseries.timestampStart) * 2);
         } else {
             // Mipmap disables, use the original data.
-            mipmap = timeseries.dimensions.map((x) => new Float32Array(x));
+            mipmap = timeseries.dimensions.map(x => new Float32Array(x));
         }
 
         // Divide the whole timeseries into chunks.
@@ -214,7 +214,7 @@ export class SensorRangePlot extends React.Component<SensorRangePlotProps, {}> {
                 slices.push(slice);
             }
         }
-        const slicePlots = slices.map((slice) => {
+        const slicePlots = slices.map(slice => {
             return (
                 <SensorPlot
                     key={`slice-${slice[0]}`}
