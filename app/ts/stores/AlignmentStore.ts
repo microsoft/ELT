@@ -6,7 +6,7 @@ import { ProjectUiStore } from './ProjectUiStore';
 import { alignmentUiStore, projectStore, projectUiStore } from './stores';
 import { TransitionController } from './utils';
 import * as d3 from 'd3';
-import { action, autorun, observable, reaction } from 'mobx';
+import { action, observable, reaction } from 'mobx';
 
 
 
@@ -27,13 +27,15 @@ export class AlignmentStore {
     // IDEA: move the transition handling to the view, handle transition for track add/remove.
     private _alignmentTransitionController: TransitionController;
 
-    constructor(alignmentLabelingStore: ProjectStore, alignmentLabelingUiStore: ProjectUiStore) {
+    constructor(projectStore: ProjectStore, projectUiStore: ProjectUiStore) {
         this.markers = [];
         this.correspondences = [];
         this._alignmentTransitionController = null;
 
         reaction(() => projectStore.tracks, () => this.onTracksChanged());
-        autorun(() => this.alignTrackBlocks());
+        reaction(
+            () => [projectUiStore.referenceViewStart, projectUiStore.referenceViewPPS],
+            () => this.alignTrackBlocks());
     }
 
     @action public addMarker(marker: Marker): void {
