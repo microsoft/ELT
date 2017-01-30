@@ -35,7 +35,7 @@ export class ProjectUiStore {
 
         // Listen to the track changed event from the alignmentLabelingStore.
         // alignmentLabelingStore.tracksChanged.on(this.onTracksChanged.bind(this));
-        autorun(() => this.onTracksChanged());
+        autorun('ProjectUiStore.onTracksChanged', () => this.onTracksChanged());
     }
 
     @action
@@ -88,7 +88,7 @@ export class ProjectUiStore {
     }
 
     @action
-    public setReferenceViewZooming(referenceViewStart: number, referenceViewPPS: number = null, animate: boolean = false): void {
+    public setReferenceTrackPanZoom(referenceViewStart: number, referenceViewPPS: number = null, animate: boolean = false): void {
         if (!referenceViewStart) { referenceViewStart = this.referenceViewStart; }
         if (!referenceViewPPS) { referenceViewPPS = this.referenceViewPPS; }
         const [start, pps] =
@@ -111,12 +111,14 @@ export class ProjectUiStore {
                 const zoom0 = this.referenceViewPPS;
                 const start1 = start;
                 const zoom1 = pps;
-                this._referenceViewTransition = new TransitionController(100, 'linear', action((t: number) => {
-                    this.referenceViewStart = start0 + (start1 - start0) * t;
-                    if (zoom1) {
-                        this.referenceViewPPS = 1 / (1 / zoom0 + (1 / zoom1 - 1 / zoom0) * t);
-                    }
-                }));
+                this._referenceViewTransition = new TransitionController(
+                    100, 'linear',
+                    action('setReferenceTrackPanZoom animation', (t: number) => {
+                        this.referenceViewStart = start0 + (start1 - start0) * t;
+                        if (zoom1) {
+                            this.referenceViewPPS = 1 / (1 / zoom0 + (1 / zoom1 - 1 / zoom0) * t);
+                        }
+                    }));
             }
         }
     }
@@ -134,18 +136,17 @@ export class ProjectUiStore {
             if (zoomCenter === 'cursor') { timeCursor = this.referenceViewTimeCursor; }
             const newPPS = oldPPS * k;
             const newStart = oldStart / k + timeCursor * (1 - 1 / k);
-            this.setReferenceViewZooming(newStart, newPPS, false);
+            this.setReferenceTrackPanZoom(newStart, newPPS, false);
         }
         if (percentage !== 0) {
             const originalStart = this.referenceViewStart;
             const timeWidth = this.referenceViewDuration;
-            this.setReferenceViewZooming(originalStart + timeWidth * percentage, null, true);
+            this.setReferenceTrackPanZoom(originalStart + timeWidth * percentage, null, true);
         }
     }
 
     @action
-    public setReferenceViewTimeCursor(timeCursor: number): void {
-        // Change current class to label's class.
+    public setReferenceTrackTimeCursor(timeCursor: number): void {
         if (this.referenceViewTimeCursor !== timeCursor) {
             this.referenceViewTimeCursor = timeCursor;
         }

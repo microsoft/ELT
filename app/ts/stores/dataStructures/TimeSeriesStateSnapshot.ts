@@ -17,7 +17,7 @@ export class TimeSeriesStateSnapshot {
         this.data = new Map<string, TimeSeriesStateSnapshotInfo>();
         // Take the snapshot.
         projectStore.tracks.forEach(track => {
-            const state = alignmentUiStore.getAlignmentParameters(track);
+            const state = alignmentUiStore.getPanZoomParameters(track);
             this.data.set(track.id, {
                 referenceStart: track.referenceStart,
                 referenceEnd: track.referenceEnd,
@@ -38,14 +38,12 @@ export class TimeSeriesStateSnapshot {
     // Apply the snapshot to the store.
     public apply(): void {
         this.data.forEach((info, trackId) => {
-            const series = projectStore.getTrackByID(trackId);
-            if (!series) { return; }
-            series.referenceStart = info.referenceStart;
-            series.referenceEnd = info.referenceEnd;
-            alignmentUiStore.setAlignmentParameters(
-                series,
-                { rangeStart: info.rangeStart, pixelsPerSecond: info.pixelsPerSecond }
-            );
+            const track = projectStore.getTrackByID(trackId);
+            if (!track) { return; }
+            track.referenceStart = info.referenceStart;
+            track.referenceEnd = info.referenceEnd;
+            alignmentUiStore.setPanZoomParameters(
+                track, info.rangeStart, info.pixelsPerSecond);
         });
     }
 
@@ -60,18 +58,14 @@ export class TimeSeriesStateSnapshot {
             return 1 / ((1 / a) * (1 - t) + (1 / b) * t);
         };
         this.data.forEach((info, trackID) => {
-            const series = projectStore.getTrackByID(trackID);
-            if (!series) { return; }
+            const track = projectStore.getTrackByID(trackID);
+            if (!track) { return; }
             const info2 = s2.data.get(trackID);
-            series.referenceStart = mix(info.referenceStart, info2.referenceStart);
-            series.referenceEnd = mix(info.referenceEnd, info2.referenceEnd);
-            alignmentUiStore.setAlignmentParameters(
-                series,
-                {
-                    rangeStart: mix(info.rangeStart, info2.rangeStart),
-                    pixelsPerSecond: mixINV(info.pixelsPerSecond, info2.pixelsPerSecond)
-                }
-            );
+            track.referenceStart = mix(info.referenceStart, info2.referenceStart);
+            track.referenceEnd = mix(info.referenceEnd, info2.referenceEnd);
+            alignmentUiStore.setPanZoomParameters(
+                track, mix(info.rangeStart, info2.rangeStart),
+                mixINV(info.pixelsPerSecond, info2.pixelsPerSecond));
         });
     }
 }

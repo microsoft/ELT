@@ -14,7 +14,7 @@ import { EventEmitter } from 'events';
 import { action, autorun, observable, reaction, runInAction } from 'mobx';
 
 
-function delayAction(millisec: number, fun: () => void): NodeJS.Timer {
+function delayAction(name: string, millisec: number, fun: () => void): NodeJS.Timer {
     return setTimeout(() => runInAction(fun), millisec);
 }
 
@@ -35,24 +35,27 @@ export class LabelingSuggestionGenerator {
 
         reaction(
             () => observable([labelingStore.alignedDataset, labelingStore.labels]),
-            () => this.onLabelsChanged());
+            () => this.onLabelsChanged(),
+            { name: 'LabelingSuggestionGenerator.onLabelsChanged' });
         reaction(
             () => observable([
                 alignmentLabelingUiStore.referenceViewStart,
                 alignmentLabelingUiStore.referenceViewPPS]),
-            () => this.runSuggestionsZoomChanged());
+            () => this.runSuggestionsZoomChanged(),
+            { name: 'LabelingSuggestionGenerator.runSuggestionsZoomChanged' });
         reaction(
             () => observable([
                 labelingUiStore.suggestionConfidenceThreshold,
                 labelingUiStore.suggestionEnabled,
                 labelingUiStore.suggestionLogic
             ]),
-            () => this.scheduleRunSuggestions());
+            () => this.scheduleRunSuggestions(),
+            { name: 'LabelingSuggestionGenerator.scheduleRunSuggestions' });
 
         // Per-label confirmation logic: If a label remains selected for 200 ms, confirm it.
-        autorun(() => {
+        autorun('LabelingSuggestionGenerator label loop', () => {
             labelingUiStore.selectedLabels.forEach(
-                label => delayAction(200, () => {
+                label => delayAction('LabelingSuggestionGenerator delay', 200, () => {
                     if (labelingUiStore.selectedLabels.has(label)) {
                         if (label.state === LabelConfirmationState.UNCONFIRMED ||
                             label.state === LabelConfirmationState.CONFIRMED_START ||
@@ -67,7 +70,7 @@ export class LabelingSuggestionGenerator {
     }
 
     @action public removeAllSuggestions(): void {
-        delayAction(1, () => {
+        delayAction('removeAllSuggestions delay', 1, () => {
             this._engine.cancelSuggestion(this._currentSuggestionCallback);
             labelingUiStore.setSuggestionProgress(false, null, null, null);
         });
@@ -93,14 +96,14 @@ export class LabelingSuggestionGenerator {
     private _runSuggestionsTimeout: NodeJS.Timer;
 
     @action private scheduleRunSuggestions(): void {
-        setImmediate(() => runInAction(() => {
+        setImmediate(() => runInAction('scheduleRunSuggestions', () => {
             // Cancel current suggestion if running.
             this._engine.cancelSuggestion(this._currentSuggestionCallback);
             labelingUiStore.setSuggestionProgress(false, null, null, null);
             if (this._runSuggestionsTimeout) { clearTimeout(this._runSuggestionsTimeout); }
 
             if (labelingUiStore.suggestionEnabled) {
-                this._runSuggestionsTimeout = delayAction(100, () => {
+                this._runSuggestionsTimeout = delayAction('scheduleRunSuggestions delay', 100, () => {
                     this.doRunSuggestions();
                 });
             }
@@ -149,7 +152,7 @@ export class LabelingSuggestionGenerator {
     }
 
     private onSuggestion(labels: Label[], progress: LabelingSuggestionProgress, completed: boolean): void {
-        runInAction(() => {
+        runInAction('onSuggestion', () => {
             // Throttle suggestions so we don't update the view too often.
             this._throttler.setStationary([progress.timestampStart, progress.timestampEnd, progress.timestampCompleted, this._generation]);
             this._throttler.addItems(labels);
@@ -160,7 +163,7 @@ export class LabelingSuggestionGenerator {
 
     private addSuggestions(labels: Label[], stat: [number, number, number, number]): void {
         // On add suggestions.
-        runInAction(() => labelingStore.suggestLabels(labels, stat[0], stat[1], stat[2], stat[3]));
+        runInAction('addSuggestions', () => labelingStore.suggestLabels(labels, stat[0], stat[1], stat[2], stat[3]));
     }
 }
 
@@ -175,7 +178,7 @@ export class LabelingChangePointSuggestionGenerator extends EventEmitter {
 
         this.runSuggestions = this.runSuggestions.bind(this);
 
-        autorun(() => this.runSuggestions());
+        autorun('LabelingChangePointSuggestionGenerator.runSuggestions', () => this.runSuggestions());
     }
 
     @action private runSuggestions(): void {

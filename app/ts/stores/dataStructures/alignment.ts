@@ -39,7 +39,7 @@ export class Track {
         public minimized: boolean,                  // Is the track minimized. 
         public timeSeries: TimeSeries[],   // should have the same timestampStart and timestampEnd (aka., from the same sensor)
         public source: string,             // The filename of the timeseries. timeSeries should be what loaded from the file.
-        public aligned: boolean,
+        public isAlignedToReferenceTrack: boolean,
         public referenceStart: number,     // The starting point of the timeseries in reference time.
         public referenceEnd: number,       // The ending point of the timeseries in reference time.
     ) { }
@@ -56,19 +56,17 @@ export class Track {
         );
     }
 
+    public toString(): string { return this.id; }
+
     // tslint:disable-next-line:function-name
     public static clone(other: Track): Track {
         return other == null ? null :
             new Track(
-                other.id, other.minimized, other.timeSeries, other.source, other.aligned,
+                other.id, other.minimized, other.timeSeries, other.source, other.isAlignedToReferenceTrack,
                 other.referenceStart, other.referenceEnd);
     }
 
     public get duration(): number { return this.referenceEnd - this.referenceStart; }
-
-    public getAlignmentParameters(viewWidth: number): AlignmentParameters {
-        return { rangeStart: this.referenceStart, pixelsPerSecond: viewWidth / this.duration };
-    }
 
     public align(correspondences: MarkerCorrespondence[]): void {
         if (correspondences.length === 0) { throw 'AlignedTimeSeries.align correspondences empty'; }
@@ -102,15 +100,6 @@ export class Track {
 }
 
 
-
-export class AlignmentParameters {
-    // rangeStart and pixelsPerSecond in the timeSeries's time.
-    public readonly rangeStart: number;
-    public readonly pixelsPerSecond: number;
-    // Only used when undo/redo.
-    public referenceStart?: number;
-    public referenceEnd?: number;
-}
 
 
 

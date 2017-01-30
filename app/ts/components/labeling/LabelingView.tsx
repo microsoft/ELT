@@ -66,7 +66,7 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
     private onMouseMove(event: React.MouseEvent<Element>): void {
         const x = this.getRelativePosition(event)[0];
         const t = this.getTimeFromX(x);
-        stores.projectUiStore.setReferenceViewTimeCursor(t);
+        stores.projectUiStore.setReferenceTrackTimeCursor(t);
     }
 
     private getTimeFromX(x: number): number {

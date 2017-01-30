@@ -39,7 +39,7 @@ export class ReferenceTrackDetail extends React.Component<ReferenceTrackDetailPr
         const start = stores.projectUiStore.referenceViewStart;
         const end = stores.projectUiStore.referenceViewEnd;
         const t = x / this.props.viewWidth * (end - start) + start;
-        stores.projectUiStore.setReferenceViewTimeCursor(t);
+        stores.projectUiStore.setReferenceTrackTimeCursor(t);
     }
 
     private onClickTrack(t: number): void {
@@ -68,7 +68,7 @@ export class ReferenceTrackDetail extends React.Component<ReferenceTrackDetailPr
                 if (moved || Math.abs(y1 - y0) >= 3 || Math.abs(x1 - x0) >= 3) {
                     const t1 = scaleXToTime(x1);
                     const dt = t1 - t0;
-                    stores.projectUiStore.setReferenceViewZooming(start0 - dt, pps0);
+                    stores.projectUiStore.setReferenceTrackPanZoom(start0 - dt, pps0);
                     moved = true;
                 }
             },

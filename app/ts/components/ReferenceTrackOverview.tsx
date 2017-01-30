@@ -55,7 +55,7 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
         const end = stores.projectStore.referenceTimestampEnd;
         const t = x / this.props.viewWidth * (end - start) + start;
         const timeWindow = stores.projectUiStore.referenceViewDuration;
-        stores.projectUiStore.setReferenceViewZooming(t - timeWindow / 2, null, true);
+        stores.projectUiStore.setReferenceTrackPanZoom(t - timeWindow / 2, null, true);
     }
 
     public componentDidMount(): void {
@@ -70,9 +70,9 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
         const newStart = Math.min(t0, t1);
         const newEnd = Math.max(t0, t1);
         if (mode === 'start' || mode === 'end') {
-            stores.projectUiStore.setReferenceViewZooming(newStart, this.props.viewWidth / (newEnd - newStart));
+            stores.projectUiStore.setReferenceTrackPanZoom(newStart, this.props.viewWidth / (newEnd - newStart));
         } else {
-            stores.projectUiStore.setReferenceViewZooming(newStart);
+            stores.projectUiStore.setReferenceTrackPanZoom(newStart);
         }
     }
 
@@ -120,7 +120,7 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
         const start = stores.projectStore.referenceTimestampStart;
         const end = stores.projectStore.referenceTimestampEnd;
         const t = x / this.props.viewWidth * (end - start) + start;
-        stores.projectUiStore.setReferenceViewTimeCursor(t);
+        stores.projectUiStore.setReferenceTrackTimeCursor(t);
     }
 
     public render(): JSX.Element {
@@ -171,7 +171,7 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
                 <g className='labels' transform={`translate(0, ${labelsY0})`}>
                     {
                         stores.projectStore.tracks
-                            .filter(track => track.aligned)
+                            .filter(track => track.isAlignedToReferenceTrack)
                             .map(track => {
                                 return (
                                     <TrackView

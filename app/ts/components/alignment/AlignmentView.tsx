@@ -84,11 +84,11 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
     // In these events, t and pps are in the timeSeries' local time, not the reference time.
     private onTrackMouseMove(
         event: React.MouseEvent<Element>, track: Track, t: number, pps: number): void {
-        if (track.aligned) {
+        if (track.isAlignedToReferenceTrack) {
             const scale = d3.scaleLinear()
                 .domain([track.referenceStart, track.referenceEnd])
                 .range([track.timeSeries[0].timestampStart, track.timeSeries[0].timestampEnd]);
-            stores.projectUiStore.setReferenceViewTimeCursor(scale.invert(t));
+            stores.projectUiStore.setReferenceTrackTimeCursor(scale.invert(t));
         } else {
             stores.alignmentUiStore.setTimeCursor(track, t);
         }
@@ -99,28 +99,25 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
         if (t < track.timeSeries[0].timestampStart || t > track.timeSeries[0].timestampEnd) { return; }
         const x0 = event.clientX;
         let moved = false;
-        const rangeStart = stores.alignmentUiStore.getAlignmentParameters(track).rangeStart;
+        const panZoom = stores.alignmentUiStore.getPanZoomParameters(track);
         const referenceRangeStart = stores.projectUiStore.referenceViewStart;
         startDragging(
-            (mouseEvent: MouseEvent) => {
+            mouseEvent => {
                 const x1 = mouseEvent.clientX;
                 if (moved || Math.abs(x1 - x0) >= 3) {
                     moved = true;
-                    if (track.aligned) {
+                    if (track.isAlignedToReferenceTrack) {
                         const dt = (x1 - x0) / stores.projectUiStore.referenceViewPPS;
-                        stores.projectUiStore.setReferenceViewZooming(referenceRangeStart - dt, null);
+                        stores.projectUiStore.setReferenceTrackPanZoom(referenceRangeStart - dt, null);
                     } else {
                         const dt = (x1 - x0) / pps;
-                        stores.alignmentUiStore.setTimeSeriesZooming(track, rangeStart - dt, null);
+                        stores.alignmentUiStore.setBlockPanZoom(track, panZoom.rangeStart - dt, panZoom.pixelsPerSecond);
                     }
                 }
             },
             upEvent => {
                 if (!moved) {
-                    const marker: Marker = {
-                        track: track,
-                        localTimestamp: t
-                    };
+                    const marker: Marker = { track: track, localTimestamp: t };
                     stores.alignmentStore.addMarker(marker);
                 }
             });
@@ -137,7 +134,7 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
 
     private onTrackWheel(
         event: React.WheelEvent<Element>, track: Track, _: number, pps: number, deltaY: number): void {
-        if (stores.projectStore.isReferenceTrack(track) || track.aligned) {
+        if (stores.projectStore.isReferenceTrack(track) || track.isAlignedToReferenceTrack) {
             stores.projectUiStore.referenceViewPanAndZoom(0, deltaY / 1000, 'cursor');
         } else {
             const scale = d3.scaleLinear()
@@ -146,11 +143,11 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
             const t = stores.alignmentUiStore.getTimeCursor(track);
             if (t === null) { return; }
             const { rangeStart: oldStart, pixelsPerSecond: oldPPS } =
-                stores.alignmentUiStore.getAlignmentParameters(track);
+                stores.alignmentUiStore.getPanZoomParameters(track);
             const k = Math.exp(-deltaY / 1000);
             const newPPS = oldPPS * k;
             const newStart = oldStart / k + scale.invert(t) * (1 - 1 / k);
-            stores.alignmentUiStore.setTimeSeriesZooming(track, newStart, newPPS);
+            stores.alignmentUiStore.setBlockPanZoom(track, newStart, newPPS);
         }
     }
 
@@ -243,7 +240,7 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
         const track = marker.track;
         const trackLayout = layoutMap.get(track.id);
         if (!trackLayout) { return null; }
-        const alignmentState = stores.alignmentUiStore.getAlignmentParameters(track);
+        const alignmentState = stores.alignmentUiStore.getPanZoomParameters(track);
         const [rangeStart, pixelsPerSecond] = [alignmentState.rangeStart, alignmentState.pixelsPerSecond];
         // scale: Reference -> Pixel.
         const sReferenceToPixel = d3.scaleLinear()
@@ -301,8 +298,8 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
             const trackLayout = layoutMap.get(track.id);
             if (!trackLayout) { return null; }
             let timeAxis = null;
-            const zoom = stores.alignmentUiStore.getAlignmentParameters(track);
-            if (!track.aligned) {
+            const zoom = stores.alignmentUiStore.getPanZoomParameters(track);
+            if (!track.isAlignedToReferenceTrack) {
                 const scale = d3.scaleLinear()
                     .domain([zoom.rangeStart, zoom.rangeStart + this.props.viewWidth / zoom.pixelsPerSecond])
                     .range([0, this.props.viewWidth]);
@@ -326,7 +323,7 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
                         zoomTransform={zoom}
                         useMipmap={true}
                         signalsViewMode={stores.labelingUiStore.signalsViewMode}
-                        />
+                    />
 
                     <rect className='track-decoration'
                         x={this.props.viewWidth} y={0}
@@ -359,13 +356,13 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
                 <g className={`marker-correspondence ${isSelected ? 'selected' : ''}`} key={`correspondence-${index}`}>
                     <line key={`correspondence-${index}`}
                         x1={l1.x} x2={l2.x} y1={y1} y2={y2}
-                        />
+                    />
                     <line className='handler'
                         key={`correspondence-handler-${index}`}
                         x1={l1.x} x2={l2.x} y1={y1} y2={y2}
                         onClick={() =>
                             stores.alignmentUiStore.selectMarkerCorrespondence(correspondence)}
-                        />
+                    />
                 </g>
             );
         });
@@ -391,25 +388,25 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
                         } ${
                         (this.state.isCreatingCorrespondence && this.state.markerStart === marker) ? 'marker-start' : ''
                         } ${isSelected ? 'selected' : ''}`}
-                    >
+                >
                     <line className='line'
                         x1={x} x2={x}
                         y1={y0} y2={y1}
-                        />
+                    />
                     <line className='handler'
                         x1={x} x2={x}
                         y1={y0} y2={y1}
                         onWheel={event => {
                             this.onTrackWheel(
                                 event, marker.track, marker.localTimestamp, pps, event.deltaY);
-                        } }
+                        }}
                         onMouseEnter={event => {
                             if (stores.projectStore.isReferenceTrack(marker.track)) {
-                                stores.projectUiStore.setReferenceViewTimeCursor(marker.localTimestamp);
+                                stores.projectUiStore.setReferenceTrackTimeCursor(marker.localTimestamp);
                             } else {
                                 stores.alignmentUiStore.setTimeCursor(marker.track, marker.localTimestamp);
                             }
-                        } }
+                        }}
                         onMouseDown={event => {
                             stores.alignmentUiStore.selectMarker(marker);
                             let isFirstUpdate = true;
@@ -420,37 +417,37 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
                                     stores.alignmentStore.updateMarker(marker, newT, false, isFirstUpdate);
                                     isFirstUpdate = false;
                                     if (stores.projectStore.isReferenceTrack(marker.track)) {
-                                        stores.projectUiStore.setReferenceViewTimeCursor(newT);
+                                        stores.projectUiStore.setReferenceTrackTimeCursor(newT);
                                     } else {
                                         stores.alignmentUiStore.setTimeCursor(marker.track, newT);
                                     }
                                 },
                                 () => { stores.alignmentStore.updateMarker(marker, marker.localTimestamp, true, false); }
                             );
-                        } }
-                        />
+                        }}
+                    />
                     <circle
                         className='marker-circle'
                         cx={x} cy={y0} r={r}
-                        />
+                    />
                     <circle
                         className='marker-circle'
                         cx={x} cy={y1} r={r}
-                        />
+                    />
                     <circle
                         className='marker-handler'
                         cx={x} cy={y0} r={rh}
                         data-type='marker'
                         data-marker-index={markerIndex}
                         onMouseDown={event => this.startCreatingCorrespondence(marker, 'top', event)}
-                        />
+                    />
                     <circle
                         className='marker-handler'
                         cx={x} cy={y1} r={rh}
                         data-type='marker'
                         data-marker-index={markerIndex}
                         onMouseDown={event => this.startCreatingCorrespondence(marker, 'bottom', event)}
-                        />
+                    />
                 </g>
             ));
             if (this.state.isCreatingCorrespondence &&
@@ -460,7 +457,7 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
                     <line key='temporary-correspondence' className='temporary-correspondence'
                         x1={x} y1={this.state.markerStartKnob === 'top' ? y0 : y1}
                         x2={this.state.currentPosition[0]} y2={this.state.currentPosition[1]}
-                        />
+                    />
                 ));
             }
         });

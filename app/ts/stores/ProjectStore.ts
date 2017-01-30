@@ -157,7 +157,7 @@ export class ProjectStore {
                 referenceStart: track.referenceStart,
                 referenceEnd: track.referenceEnd,
                 source: track.source,
-                aligned: track.aligned
+                aligned: track.isAlignedToReferenceTrack
             };
         };
 
@@ -269,7 +269,7 @@ export class ProjectStore {
         const newTracks = project.tracks.map(loadTrack);
 
         deferred.onComplete(() => {
-            runInAction(() => {
+            runInAction('loadProjectHelper', () => {
                 // Set the new tracks once they are loaded successfully.
                 this.referenceTrack = newReferenceTrack;
                 this.tracks = newTracks;

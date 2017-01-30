@@ -3,10 +3,9 @@ import { SavedAlignmentState, SavedMarker, SavedMarkerCorrespondence } from './d
 import { TimeSeriesStateSnapshot } from './dataStructures/TimeSeriesStateSnapshot';
 import { ProjectStore } from './ProjectStore';
 import { ProjectUiStore } from './ProjectUiStore';
-import { alignmentUiStore, projectStore, projectUiStore } from './stores';
+import { alignmentUiStore, projectStore } from './stores';
 import { TransitionController } from './utils';
-import * as d3 from 'd3';
-import { action, autorun, observable, reaction } from 'mobx';
+import { action, computed, observable, reaction } from 'mobx';
 
 
 
@@ -32,8 +31,10 @@ export class AlignmentStore {
         this.correspondences = [];
         this._alignmentTransitionController = null;
 
-        reaction(() => projectStore.tracks, () => this.onTracksChanged());
-        autorun(() => this.alignTrackBlocks());
+        reaction(
+            () => projectStore.tracks,
+            () => this.onTracksChanged(),
+            { name: 'AlignmentStore.onTracksChanged' });
     }
 
     @action public addMarker(marker: Marker): void {
@@ -138,7 +139,7 @@ export class AlignmentStore {
         return connected;
     }
 
-    public getAlignedBlocks(): Set<Track>[] {
+    @computed public get trackBlocks(): Set<Track>[] {
         const blocks: Set<Track>[] = [];
         const visitedSeries = new Set<Track>();
         for (const track of projectStore.tracks) {
@@ -149,10 +150,6 @@ export class AlignmentStore {
             }
         }
         return blocks;
-    }
-
-    public blockHasReferenceTrack(block: Set<Track>): boolean {
-        return block.has(projectStore.referenceTrack);
     }
 
 
@@ -171,51 +168,18 @@ export class AlignmentStore {
         projectStore.tracks.forEach(track => {
             track.align(this.correspondences);
         });
-        this.alignTrackBlocks();
+        alignmentUiStore.updatePanZoomBasedOnAlignment();
         if (animate) {
             const snapshot1 = new TimeSeriesStateSnapshot();
             snapshot0.apply();
-            this._alignmentTransitionController = new TransitionController(100, 'linear', action((t, finish) => {
-                snapshot0.applyInterpolate(snapshot1, t);
-                if (finish) {
-                    snapshot1.apply();
-                }
-            }));
-        }
-    }
-
-    private alignTrackBlocks(animate: boolean = false): void {
-        // A "block" is a set of connected tracks.
-        const blocks = this.getAlignedBlocks();
-        for (const block of blocks) {
-            // If it's a reference track.
-            if (this.blockHasReferenceTrack(block)) {
-                block.forEach(track => {
-                    track.aligned = true;
-                    alignmentUiStore.setAlignmentParameters(
-                        track, {
-                            rangeStart: projectUiStore.referenceViewStart,
-                            pixelsPerSecond: projectUiStore.referenceViewPPS
-                        }
-                    );
-                });
-            } else {
-                const ranges: [number, number][] = [];
-                block.forEach(track => {
-                    track.aligned = false;
-                    const alignmentParms = alignmentUiStore.getAlignmentParameters(track);
-                    if (alignmentParms) {
-                        ranges.push([alignmentParms.rangeStart, alignmentParms.pixelsPerSecond]);
+            this._alignmentTransitionController = new TransitionController(
+                100, 'linear',
+                action('alignAllTracks animation', (t, finish) => {
+                    snapshot0.applyInterpolate(snapshot1, t);
+                    if (finish) {
+                        snapshot1.apply();
                     }
-                });
-                const averageStart = d3.mean(ranges, x => x[0]);
-                const averagePPS = 1 / d3.mean(ranges, x => 1 / x[1]);
-                block.forEach(s => {
-                    alignmentUiStore.setAlignmentParameters(
-                        s, { rangeStart: averageStart, pixelsPerSecond: averagePPS }
-                    );
-                });
-            }
+                }));
         }
     }
 
@@ -271,9 +235,9 @@ export class AlignmentStore {
         }
         Object.keys(state.timeSeriesStates).forEach(id => {
             const tsState = state.timeSeriesStates[id];
-            const ts = projectStore.getTrackByID(id);
-            ts.referenceStart = tsState.referenceStart;
-            ts.referenceEnd = tsState.referenceEnd;
+            const track = projectStore.getTrackByID(id);
+            track.referenceStart = tsState.referenceStart;
+            track.referenceEnd = tsState.referenceEnd;
         });
         this.alignAllTracks(false);
     }
