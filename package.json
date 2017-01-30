@@ -44,7 +44,6 @@
     "digitalsignals": "^1.0.0",
     "electron": "^1.4.12",
     "electron-packager": "^8.4.0",
-    "emll": "file:./emllModule",
     "es6-promise": "^3.2.1",
     "flux": "^2.1.1",
     "jquery": "^2.2.2",
