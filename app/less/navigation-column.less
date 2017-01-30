@@ -1,0 +1,41 @@
+// The left navigation column.
+.navigation-column {
+    @navigation-width: 50px;
+
+    .navigation-column-column {
+        -webkit-user-select: none;
+        background-color: #333;
+        position: fixed;
+        left: 0; width: @navigation-width;
+        top: 0; bottom: 0;
+    }
+
+    .navigation-column-container {
+        -webkit-user-select: none;
+        background-color: white;
+        position: fixed;
+        left: @navigation-width; right: 0;
+        top: 0; bottom: 0;
+    }
+
+    .navigation-column-button {
+        display: block;
+        width: @navigation-width;
+        height: @navigation-width;
+        margin-bottom: 1px;
+        cursor: pointer;
+        line-height: @navigation-width;
+        text-align: center;
+        font-size: 20px;
+        color: #888;
+        &:hover {
+            color: #CCC;
+        }
+        &:active {
+            color: #EEE;
+        }
+        &.active {
+            color: #FFF;
+        }
+    }
+}

@@ -1,0 +1,291 @@
+import { Marker, MarkerCorrespondence, Track } from './dataStructures/alignment';
+import { SavedAlignmentState, SavedMarker, SavedMarkerCorrespondence } from './dataStructures/project';
+import { TimeSeriesStateSnapshot } from './dataStructures/TimeSeriesStateSnapshot';
+import { ProjectStore } from './ProjectStore';
+import { ProjectUiStore } from './ProjectUiStore';
+import { alignmentUiStore, projectStore, projectUiStore } from './stores';
+import { TransitionController } from './utils';
+import * as d3 from 'd3';
+import { action, observable, reaction } from 'mobx';
+
+
+
+
+
+
+
+// Store alignment markers and correspondences (connections between markers).
+export class AlignmentStore {
+
+    // Markers.
+    @observable public markers: Marker[];
+
+    // Correspondences between markers.
+    @observable public correspondences: MarkerCorrespondence[];
+
+    // Manages alignment transitions:
+    // IDEA: move the transition handling to the view, handle transition for track add/remove.
+    private _alignmentTransitionController: TransitionController;
+
+    constructor(projectStore: ProjectStore, projectUiStore: ProjectUiStore) {
+        this.markers = [];
+        this.correspondences = [];
+        this._alignmentTransitionController = null;
+
+        reaction(() => projectStore.tracks, () => this.onTracksChanged());
+        reaction(
+            () => [projectUiStore.referenceViewStart, projectUiStore.referenceViewPPS],
+            () => this.alignTrackBlocks());
+    }
+
+    @action public addMarker(marker: Marker): void {
+        projectStore.alignmentHistoryRecord();
+        this.markers.push(marker);
+        alignmentUiStore.selectedMarker = marker;
+    }
+
+    @action public updateMarker(marker: Marker, newLocalTimestamp: number, recompute: boolean = true, recordState: boolean = true): void {
+        if (recordState) {
+            projectStore.alignmentHistoryRecord();
+        }
+        marker.localTimestamp = newLocalTimestamp;
+        if (recompute) {
+            this.alignAllTracks(true);
+        }
+    }
+
+    @action public deleteMarker(marker: Marker): void {
+        projectStore.alignmentHistoryRecord();
+        const index = this.markers.indexOf(marker);
+        if (index >= 0) {
+            this.markers.splice(index, 1);
+            this.correspondences = this.correspondences.filter(c => {
+                return c.marker1 !== marker && c.marker2 !== marker;
+            });
+            this.alignAllTracks(true);
+        }
+    }
+
+    @action public addMarkerCorrespondence(marker1: Marker, marker2: Marker): void {
+        projectStore.alignmentHistoryRecord();
+        // Remove all conflicting correspondence.
+        this.correspondences = this.correspondences.filter(c => {
+            // Multiple connections.
+            if (c.marker1 === marker1 && c.marker2.track === marker2.track) { return false; }
+            if (c.marker1 === marker2 && c.marker2.track === marker1.track) { return false; }
+            if (c.marker2 === marker1 && c.marker1.track === marker2.track) { return false; }
+            if (c.marker2 === marker2 && c.marker1.track === marker1.track) { return false; }
+            // Crossings.
+            if (c.marker1.track === marker1.track && c.marker2.track === marker2.track) {
+                if ((c.marker1.localTimestamp - marker1.localTimestamp) *
+                    (c.marker2.localTimestamp - marker2.localTimestamp) < 0) {
+                    return false;
+                }
+            }
+            if (c.marker1.track === marker2.track && c.marker2.track === marker1.track) {
+                if ((c.marker1.localTimestamp - marker2.localTimestamp) *
+                    (c.marker2.localTimestamp - marker1.localTimestamp) < 0) {
+                    return false;
+                }
+            }
+            return true;
+        });
+
+        const corr = { marker1: marker1, marker2: marker2 };
+        this.correspondences.push(corr);
+        alignmentUiStore.selectedCorrespondence = corr;
+        this.alignAllTracks(true);
+    }
+
+    @action public deleteMarkerCorrespondence(correspondence: MarkerCorrespondence): void {
+        projectStore.alignmentHistoryRecord();
+        const index = this.correspondences.indexOf(correspondence);
+        if (index >= 0) {
+            this.correspondences.splice(index, 1);
+            this.alignAllTracks(true);
+        }
+    }
+
+    // On tracks changed.
+    private onTracksChanged(): void {
+        this.stopAnimation();
+
+        this.markers = this.markers.filter(m => {
+            return projectStore.getTrackByID(m.track.id) !== null;
+        });
+        this.correspondences = this.correspondences.filter(c => {
+            return this.markers.indexOf(c.marker1) >= 0 && this.markers.indexOf(c.marker2) >= 0;
+        });
+
+        this.alignAllTracks(true);
+    }
+
+    // Find all tracks that are connected with other tracks (including the reference track).
+    public getConnectedTracks(track: Track): Set<Track> {
+        const connected = new Set<Track>();
+        connected.add(track);
+        let added = true;
+        while (added) {
+            added = false;
+            for (const c of this.correspondences) {
+                const has1 = connected.has(c.marker1.track);
+                const has2 = connected.has(c.marker2.track);
+                if (has1 !== has2) {
+                    if (has1) { connected.add(c.marker2.track); }
+                    if (has2) { connected.add(c.marker1.track); }
+                    added = true;
+                }
+            }
+        }
+        return connected;
+    }
+
+    public getAlignedBlocks(): Set<Track>[] {
+        const blocks: Set<Track>[] = [];
+        const visitedSeries = new Set<Track>();
+        for (const track of projectStore.tracks) {
+            if (!visitedSeries.has(track)) {
+                const block = this.getConnectedTracks(track);
+                blocks.push(block);
+                block.forEach(s => visitedSeries.add(s));
+            }
+        }
+        return blocks;
+    }
+
+    public blockHasReferenceTrack(block: Set<Track>): boolean {
+        return block.has(projectStore.referenceTrack);
+    }
+
+
+    // Terminate current animation.
+    public stopAnimation(): void {
+        if (this._alignmentTransitionController) {
+            this._alignmentTransitionController.terminate();
+            this._alignmentTransitionController = null;
+        }
+    }
+
+    public alignAllTracks(animate: boolean = false): void {
+        if (this.correspondences.length === 0) { return; }
+        this.stopAnimation();
+        const snapshot0 = new TimeSeriesStateSnapshot();
+        projectStore.tracks.forEach(track => {
+            track.align(this.correspondences);
+        });
+        this.alignTrackBlocks();
+        if (animate) {
+            const snapshot1 = new TimeSeriesStateSnapshot();
+            snapshot0.apply();
+            this._alignmentTransitionController = new TransitionController(100, 'linear', action((t, finish) => {
+                snapshot0.applyInterpolate(snapshot1, t);
+                if (finish) {
+                    snapshot1.apply();
+                }
+            }));
+        }
+    }
+
+    private alignTrackBlocks(animate: boolean = false): void {
+        // A "block" is a set of connected tracks.
+        const blocks = this.getAlignedBlocks();
+        for (const block of blocks) {
+            // If it's a reference track.
+            if (this.blockHasReferenceTrack(block)) {
+                block.forEach(track => {
+                    track.aligned = true;
+                    alignmentUiStore.setAlignmentParameters(
+                        track, {
+                            rangeStart: projectUiStore.referenceViewStart,
+                            pixelsPerSecond: projectUiStore.referenceViewPPS
+                        }
+                    );
+                });
+            } else {
+                const ranges: [number, number][] = [];
+                block.forEach(track => {
+                    track.aligned = false;
+                    const alignmentParms = alignmentUiStore.getAlignmentParameters(track);
+                    if (alignmentParms) {
+                        ranges.push([alignmentParms.rangeStart, alignmentParms.pixelsPerSecond]);
+                    }
+                });
+                const averageStart = d3.mean(ranges, x => x[0]);
+                const averagePPS = 1 / d3.mean(ranges, x => 1 / x[1]);
+                block.forEach(s => {
+                    alignmentUiStore.setAlignmentParameters(
+                        s, { rangeStart: averageStart, pixelsPerSecond: averagePPS }
+                    );
+                });
+            }
+        }
+    }
+
+    // Save the alignment state.
+    public saveState(): SavedAlignmentState {
+        let markerIndex = 0;
+        const marker2ID = new Map<Marker, string>();
+        const saveMarker = (marker: Marker): SavedMarker => {
+            markerIndex += 1;
+            const id = 'marker' + markerIndex.toString();
+            marker2ID.set(marker, id);
+            return {
+                id: id,
+                trackId: marker.track.id,
+                localTimestamp: marker.localTimestamp
+            };
+        };
+
+        const saveMarkerCorrespondence = (c: MarkerCorrespondence): SavedMarkerCorrespondence => {
+            return {
+                marker1ID: marker2ID.get(c.marker1),
+                marker2ID: marker2ID.get(c.marker2)
+            };
+        };
+        return {
+            markers: this.markers.map(saveMarker),
+            correspondences: this.correspondences.map(saveMarkerCorrespondence),
+            timeSeriesStates: new TimeSeriesStateSnapshot().toObject()
+        };
+    }
+
+    // Load from a saved alignment state.
+    public loadState(state: SavedAlignmentState): void {
+        this.stopAnimation();
+
+        this.markers = [];
+        this.correspondences = [];
+
+        const markerID2Marker = new Map<string, Marker>();
+        for (const marker of state.markers) {
+            const newMarker = {
+                track: projectStore.getTrackByID(marker.trackId),
+                localTimestamp: marker.localTimestamp
+            };
+            this.markers.push(newMarker);
+            markerID2Marker.set(marker.id, newMarker);
+        }
+        for (const c of state.correspondences) {
+            this.correspondences.push({
+                marker1: markerID2Marker.get(c.marker1ID),
+                marker2: markerID2Marker.get(c.marker2ID)
+            });
+        }
+        Object.keys(state.timeSeriesStates).forEach(id => {
+            const tsState = state.timeSeriesStates[id];
+            const ts = projectStore.getTrackByID(id);
+            ts.referenceStart = tsState.referenceStart;
+            ts.referenceEnd = tsState.referenceEnd;
+        });
+        this.alignAllTracks(false);
+    }
+
+    public reset(): void {
+        this.stopAnimation();
+
+        this.markers = [];
+        this.correspondences = [];
+
+        this.alignAllTracks(false);
+    }
+}

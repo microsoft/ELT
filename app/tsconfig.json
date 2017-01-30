@@ -1,0 +1,18 @@
+{
+    "compileOnSave": true,
+    "compilerOptions": {
+        "rootDir": "ts",
+        "outDir": "js",
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "target": "es5",
+        "noImplicitAny": false,
+        "jsx": "react",
+        "sourceMap": true,
+        "experimentalDecorators": true
+         //"forceConsistentCasingInFileNames": true //TODO: check if we need this
+    },
+    "exclude": [
+        "ts/test"
+    ]
+}
