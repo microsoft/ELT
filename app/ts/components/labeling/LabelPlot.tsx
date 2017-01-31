@@ -13,7 +13,7 @@ import * as React from 'react';
 export enum LabelKind { Detailed, Overview }
 
 
-export interface LabelPlotProps {
+interface LabelPlotProps {
     // The label to render.
     label: Label;
     // Zooming factor.
@@ -25,12 +25,19 @@ export interface LabelPlotProps {
     labelKind: LabelKind;
 }
 
+interface LabelPlotState {
+    isHovering: boolean;
+}
+
 
 @observer
-export class LabelPlot extends React.Component<LabelPlotProps, {}> {
+export class LabelPlot extends React.Component<LabelPlotProps, LabelPlotState> {
 
     constructor(props: LabelPlotProps, context: any) {
         super(props, context);
+        this.state = {
+            isHovering: false
+        };
         this.onMouseEnterLabel = this.onMouseEnterLabel.bind(this);
         this.onMouseLeaveLabel = this.onMouseLeaveLabel.bind(this);
     }
@@ -101,12 +108,12 @@ export class LabelPlot extends React.Component<LabelPlotProps, {}> {
         );
     }
 
-    private onMouseEnterLabel(event: React.MouseEvent<Element>): void {
-        stores.labelingUiStore.hoverLabel(this.props.label);
+    private onMouseEnterLabel(): void {
+        this.setState({isHovering: true});
     }
 
-    private onMouseLeaveLabel(event: React.MouseEvent<Element>): void {
-        stores.labelingUiStore.hoverLabel(null);
+    private onMouseLeaveLabel(): void {
+        this.setState({isHovering: false});
     }
 
     private isLabelConfirmed(): boolean {
@@ -168,8 +175,7 @@ export class LabelPlot extends React.Component<LabelPlotProps, {}> {
             additionalClasses.push('selected');
         }
         let uiElements = null;
-        const hovered = stores.labelingUiStore.isLabelHovered(this.props.label);
-        if (hovered) {
+        if(this.state.isHovering) {
             additionalClasses.push('hovered');
             uiElements = (
                 <g className='label-controls' transform={`translate(${x1}, 0)`}>
@@ -198,7 +204,7 @@ export class LabelPlot extends React.Component<LabelPlotProps, {}> {
             );
         }
 
-        const borderColor = hovered || selected ?
+        const borderColor = this.state.isHovering || selected ?
             d3.rgb(this.props.classColormap[label.className]).darker(1) :
             this.props.classColormap[label.className];
         const lineY0 = topBand ? -20 : 0;

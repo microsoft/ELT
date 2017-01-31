@@ -16,7 +16,6 @@ import { action, computed, observable } from 'mobx';
 
 export class LabelingUiStore {
     // Label hover and selection.
-    @observable public hoveringLabel: Label;
     @observable public selectedLabels: ObservableSet<Label>;
 
     // Current selected class.
@@ -49,7 +48,6 @@ export class LabelingUiStore {
 
         this.signalsViewMode = SignalsViewMode.TIMESERIES;
 
-        this.hoveringLabel = null;
         this.selectedLabels = new ObservableSet<Label>(
             lab => lab.className + ':' + lab.timestampStart + '-' + lab.timestampEnd);
 
@@ -84,12 +82,6 @@ export class LabelingUiStore {
         return this._suggestionConfidenceHistogram;
     }
 
-
-    @action public hoverLabel(label: Label): void {
-        if (this.hoveringLabel !== label) {
-            this.hoveringLabel = label;
-        }
-    }
 
     @action public selectLabel(label: Label, ctrlSelect: boolean = false, shiftSelect: boolean = false): void {
         const previous_selected_labels: Label[] = [];
@@ -178,13 +170,11 @@ export class LabelingUiStore {
     public getLabelsInRange(timestampStart: number, timestampEnd: number): Label[] {
         // FIXME: I think all these filters accomplish nothing.
         const labels = labelingStore.getLabelsInRange(timestampStart, timestampEnd);
-        return labels.filter(l => l !== this.hoveringLabel && !this.selectedLabels.has(l)).concat(
-            labels.filter(l => l !== this.hoveringLabel && this.selectedLabels.has(l))).concat(
-            labels.filter(l => l === this.hoveringLabel));
-    }
-
-    public isLabelHovered(label: Label): boolean {
-        return this.hoveringLabel === label;
+        return labels.filter(l => !this.selectedLabels.has(l)).concat(
+            labels.filter(l => this.selectedLabels.has(l)));
+        // return labels.filter(l => l !== this.hoveringLabel && !this.selectedLabels.has(l)).concat(
+        //     labels.filter(l => l !== this.hoveringLabel && this.selectedLabels.has(l))).concat(
+        //     labels.filter(l => l === this.hoveringLabel));
     }
 
     public isLabelSelected(label: Label): boolean {
