@@ -100,14 +100,14 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
         const x0 = event.clientX;
         let moved = false;
         const panZoom = stores.alignmentUiStore.getPanZoomParameters(track);
-        const referenceRangeStart = stores.projectUiStore.referenceViewStart;
+        const referenceRangeStart = stores.projectUiStore.referencePanZoom.rangeStart;
         startDragging(
             mouseEvent => {
                 const x1 = mouseEvent.clientX;
                 if (moved || Math.abs(x1 - x0) >= 3) {
                     moved = true;
                     if (track.isAlignedToReferenceTrack) {
-                        const dt = (x1 - x0) / stores.projectUiStore.referenceViewPPS;
+                        const dt = (x1 - x0) / stores.projectUiStore.referencePanZoom.pixelsPerSecond;
                         stores.projectUiStore.setReferenceTrackPanZoom(referenceRangeStart - dt, null);
                     } else {
                         const dt = (x1 - x0) / pps;

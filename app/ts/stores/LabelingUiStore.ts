@@ -2,9 +2,9 @@
 // Labeling selection and hovering states.
 // Options for labeling and suggestions (move to elsewhere?)
 
-import { Label, PartialLabel, SignalsViewMode } from '../stores/dataStructures/labeling';
-import { ObservableSet } from '../stores/dataStructures/ObservableSet';
 import { getLabelingSuggestionLogic, LabelingSuggestionLogic, LabelingSuggestionLogicType } from '../suggestion/LabelingSuggestionLogic';
+import { Label, PartialLabel, SignalsViewMode, TimeRange } from './dataStructures/labeling';
+import { ObservableSet } from './dataStructures/ObservableSet';
 import { LabelingStore } from './LabelingStore';
 import { labelingStore } from './stores';
 import { action, computed, observable } from 'mobx';
@@ -119,13 +119,13 @@ export class LabelingUiStore {
         suggesting: boolean,
         timestampStart: number,
         timestampCompleted: number,
-        timestampEnd: number,
+        endTime: number,
         confidenceHistogram?: number[]): void {
 
         this._isSuggesting = suggesting;
         this._suggestionTimestampStart = timestampStart;
         this._suggestionTimestampCompleted = timestampCompleted;
-        this._suggestionTimestampEnd = timestampEnd;
+        this._suggestionTimestampEnd = endTime;
         if (confidenceHistogram) {
             this._suggestionConfidenceHistogram = confidenceHistogram;
         }
@@ -175,9 +175,9 @@ export class LabelingUiStore {
     //     });
     // }
 
-    public getLabelsInRange(timestampStart: number, timestampEnd: number): Label[] {
+    public getLabelsInRange(timeRange: TimeRange): Label[] {
         // FIXME: I think all these filters accomplish nothing.
-        const labels = labelingStore.getLabelsInRange(timestampStart, timestampEnd);
+        const labels = labelingStore.getLabelsInRange(timeRange);
         return labels.filter(l => l !== this.hoveringLabel && !this.selectedLabels.has(l)).concat(
             labels.filter(l => l !== this.hoveringLabel && this.selectedLabels.has(l))).concat(
             labels.filter(l => l === this.hoveringLabel));

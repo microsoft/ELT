@@ -1,22 +1,12 @@
 // UI states for alignment.
 
 import { Marker, MarkerCorrespondence, Track } from '../stores/dataStructures/alignment';
-import {AlignmentStore} from './AlignmentStore';
-import {ProjectUiStore} from './ProjectUiStore';
+import { AlignmentStore } from './AlignmentStore';
+import { PanZoomParameters, ProjectUiStore } from './ProjectUiStore';
 import { alignmentStore, projectStore, projectUiStore } from './stores';
 import * as d3 from 'd3';
 import { action, observable, ObservableMap, reaction } from 'mobx';
 
-
-
-export class PanZoomParameters {
-    // rangeStart and pixelsPerSecond in the timeSeries's time.
-    public readonly rangeStart: number;
-    public readonly pixelsPerSecond: number;
-    // Only used when undo/redo.
-    public referenceStart?: number;
-    public referenceEnd?: number;
-}
 
 
 
@@ -41,7 +31,7 @@ export class AlignmentUiStore {
         this.getTimeCursor = this.getTimeCursor.bind(this);
 
         reaction(
-            () => observable([alignmentStore.trackBlocks, projectUiStore.referenceViewStart, projectUiStore.referenceViewEnd]),
+            () => observable([alignmentStore.trackBlocks, projectUiStore.referencePanZoom]),
             () => this.updatePanZoomBasedOnAlignment(),
             { name: 'AlignmentUiStore.updatePanZoomBasedOnAlignment' }
         );
@@ -85,10 +75,7 @@ export class AlignmentUiStore {
 
     public getPanZoomParameters(track: Track): PanZoomParameters {
         if (projectStore.isReferenceTrack(track)) {
-            return {
-                rangeStart: projectUiStore.referenceViewStart,
-                pixelsPerSecond: projectUiStore.referenceViewPPS
-            };
+            return projectUiStore.referencePanZoom;
         }
         if (!this._panZoomParameterMap.has(track.id)) {
             this.setPanZoomParameters(track, track.referenceStart, projectUiStore.viewWidth / track.duration);
@@ -98,7 +85,7 @@ export class AlignmentUiStore {
 
     @action public setPanZoomParameters(track: Track, rangeStart: number, pixelsPerSecond: number): void {
         if (!projectStore.isReferenceTrack(track)) {
-            this._panZoomParameterMap.set(track.id.toString(), { rangeStart, pixelsPerSecond });
+            this._panZoomParameterMap.set(track.id.toString(), new PanZoomParameters(rangeStart, pixelsPerSecond));
         }
     }
 
@@ -106,7 +93,7 @@ export class AlignmentUiStore {
         const block = alignmentStore.getConnectedTracks(track);
         block.forEach(trackInBlock => {
             this._panZoomParameterMap.set(
-                trackInBlock.id.toString(), { rangeStart, pixelsPerSecond });
+                trackInBlock.id.toString(), new PanZoomParameters(rangeStart, pixelsPerSecond));
         });
     }
 
@@ -122,7 +109,7 @@ export class AlignmentUiStore {
                 block.forEach(track => {
                     track.isAlignedToReferenceTrack = true;
                     this.setPanZoomParameters(
-                        track, projectUiStore.referenceViewStart, projectUiStore.referenceViewPPS);
+                        track, projectUiStore.referencePanZoom.rangeStart, projectUiStore.referencePanZoom.pixelsPerSecond);
                 });
             } else {
                 const ranges: [number, number][] = [];

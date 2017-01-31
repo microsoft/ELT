@@ -76,6 +76,10 @@ export class ProjectStore {
             : 100;
     }
 
+    @computed public get referenceTimeDuration(): number {
+        return this.referenceTimestampEnd - this.referenceTimestampStart;
+    }
+
 
     @action
     public loadReferenceTrack(fileName: string): void {
@@ -172,8 +176,8 @@ export class ProjectStore {
             labeling: labelingStore.saveState(),
             ui: {
                 currentTab: projectUiStore.currentTab,
-                referenceViewStart: projectUiStore.referenceViewStart,
-                referenceViewPPS: projectUiStore.referenceViewPPS
+                referenceViewStart: projectUiStore.referencePanZoom.rangeStart,
+                referenceViewPPS: projectUiStore.referencePanZoom.pixelsPerSecond
             }
         };
     }

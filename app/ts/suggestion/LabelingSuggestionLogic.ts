@@ -106,7 +106,8 @@ class CurrentView implements LabelingSuggestionLogic {
             deleteLabels: Label[]
         } {
         return {
-            deleteLabels: info.currentSuggestions.getRangesInRange(-1e10, info.suggestionProgress.timestampCompleted)
+            deleteLabels: info.currentSuggestions.getRangesInRange(
+                { timestampStart: -1e10, timestampEnd: info.suggestionProgress.timestampCompleted })
         };
     }
 
@@ -178,7 +179,10 @@ class Forward implements LabelingSuggestionLogic {
         } {
         return {
             deleteLabels: info.currentSuggestions.getRangesInRange(
-                info.suggestionProgress.timestampStart, info.suggestionProgress.timestampCompleted)
+                {
+                    timestampStart: info.suggestionProgress.timestampStart,
+                    timestampEnd: info.suggestionProgress.timestampCompleted
+                })
         };
     }
 
@@ -222,7 +226,8 @@ class ForwardConfirm extends Forward implements LabelingSuggestionLogic {
             deleteLabels: Label[]
         } {
         return {
-            confirmLabels: info.currentSuggestions.getRangesInRange(-1e10, d3.min(info.labelsConfirmed, l => l.timestampStart)),
+            confirmLabels: info.currentSuggestions.getRangesInRange(
+                { timestampStart: -1e10, timestampEnd: d3.min(info.labelsConfirmed, l => l.timestampStart) }),
             rejectLabels: [],
             deleteLabels: []
         };
@@ -250,7 +255,8 @@ class ForwardReject extends Forward implements LabelingSuggestionLogic {
         return {
             confirmLabels: [],
             rejectLabels: [],
-            deleteLabels: info.currentSuggestions.getRangesInRange(-1e10, d3.min(info.labelsConfirmed, l => l.timestampStart))
+            deleteLabels: info.currentSuggestions.getRangesInRange(
+                { timestampStart: -1e10, timestampEnd: d3.min(info.labelsConfirmed, l => l.timestampStart) })
         };
     };
 }

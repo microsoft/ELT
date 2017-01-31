@@ -36,9 +36,7 @@ export class ReferenceTrackDetail extends React.Component<ReferenceTrackDetailPr
 
     private onMouseMove(event: React.MouseEvent<Element>): void {
         const x = this.getRelativePosition(event)[0];
-        const start = stores.projectUiStore.referenceViewStart;
-        const end = stores.projectUiStore.referenceViewEnd;
-        const t = x / this.props.viewWidth * (end - start) + start;
+        const t = stores.projectUiStore.referencePanZoom.getTimeFromX(x);
         stores.projectUiStore.setReferenceTrackTimeCursor(t);
     }
 
@@ -53,13 +51,12 @@ export class ReferenceTrackDetail extends React.Component<ReferenceTrackDetailPr
 
     private onMouseDown(event: React.MouseEvent<Element>): void {
         const [x0, y0] = this.getRelativePosition(event);
-        const start = stores.projectUiStore.referenceViewStart;
-        const end = stores.projectUiStore.referenceViewEnd;
+        const range = stores.projectUiStore.referenceTimeRange;
         const scaleXToTime = d3.scaleLinear()
             .domain([0, this.props.viewWidth])
-            .range([start, end]);
-        const start0 = start;
-        const pps0 = stores.projectUiStore.referenceViewPPS;
+            .range([range.timestampStart, range.timestampEnd]);
+        const start0 = range.timestampStart;
+        const pps0 = stores.projectUiStore.referencePanZoom.pixelsPerSecond;
         const t0 = scaleXToTime(x0);
         let moved = false;
         startDragging(
@@ -82,11 +79,10 @@ export class ReferenceTrackDetail extends React.Component<ReferenceTrackDetailPr
     public render(): JSX.Element {
         if (!stores.projectStore.referenceTrack) { return (<g></g>); }
 
-        const start = stores.projectUiStore.referenceViewStart;
-        const end = stores.projectUiStore.referenceViewEnd;
-        const pps = stores.projectUiStore.referenceViewPPS;
+        const range = stores.projectUiStore.referenceTimeRange;
+        const pps = stores.projectUiStore.referencePanZoom.pixelsPerSecond;
         const scale = d3.scaleLinear()
-            .domain([start, end])
+            .domain([range.timestampStart, range.timestampEnd])
             .range([0, this.props.viewWidth]);
 
         return (
@@ -99,7 +95,7 @@ export class ReferenceTrackDetail extends React.Component<ReferenceTrackDetailPr
                         track={stores.projectStore.referenceTrack}
                         viewWidth={this.props.viewWidth}
                         viewHeight={this.props.viewHeight}
-                        zoomTransform={{ rangeStart: start, pixelsPerSecond: pps }}
+                        zoomTransform={{ rangeStart: range.timestampStart, pixelsPerSecond: pps }}
                         timeCursor={stores.projectUiStore.referenceViewTimeCursor}
                         useMipmap={true}
                         />

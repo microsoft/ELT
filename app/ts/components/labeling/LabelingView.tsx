@@ -70,7 +70,7 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
     }
 
     private getTimeFromX(x: number): number {
-        return x / stores.projectUiStore.referenceViewPPS + stores.projectUiStore.referenceViewStart;
+        return stores.projectUiStore.referencePanZoom.getTimeFromX(x);
     }
 
     private onDoubleClickChangePointDetection(event: React.MouseEvent<Element>): void {
@@ -143,7 +143,10 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
                 } else {
                     if (isInteractionRect && (upEvent as MouseEvent).shiftKey) {
                         const labels = stores.labelingStore.getLabelsInRange(
-                            stores.projectUiStore.referenceViewStart, t0);
+                            {
+                                timestampStart: stores.projectUiStore.referenceTimeRange.timestampStart,
+                                timestampEnd: t0
+                            });
                         if (labels.length > 0) {
                             // Get the one with largest timestampEnd.
                             labels.sort((a, b) => a.timestampEnd - b.timestampEnd);
@@ -193,8 +196,8 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
         const timeCursorY0 = timeAxisY1;
         const timeCursorY1 = labelAreaY1;
 
-        const start = stores.projectUiStore.referenceViewStart;
-        const pps = stores.projectUiStore.referenceViewPPS;
+        const start = stores.projectUiStore.referencePanZoom.rangeStart;
+        const pps = stores.projectUiStore.referencePanZoom.pixelsPerSecond;
         // The time scale.
         const scale = d3.scaleLinear()
             .domain([start, start + this.props.viewWidth / pps])
@@ -211,7 +214,7 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
                         y1={timeCursorY0}
                         x2={scale(timeCursor)}
                         y2={timeCursorY1}
-                        />
+                    />
                 </g>
             );
         }
@@ -226,7 +229,7 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
                         y={timeCursorY0}
                         width={scale(this.state.hint_t1) - scale(this.state.hint_t0)}
                         height={timeCursorY1 - timeCursorY0}
-                        />
+                    />
                 </g>
             );
         }
@@ -242,7 +245,7 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
                         width={scale(tCompleted) - scale(tStart)}
                         height={3}
                         style={{ fill: '#AAA' }}
-                        />
+                    />
                 </g>
             );
         }
@@ -265,12 +268,12 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
                     onWheel={event => this.onMouseWheel(event)}
                     onMouseDown={event => this.onMouseDownCreateLabel(event)}
                     onDoubleClick={event => this.onDoubleClickChangePointDetection(event)}
-                    >
+                >
 
                     <rect ref='interactionRect'
                         x={0} y={sensorAreaY0} width={this.props.viewWidth} height={sensorAreaY1 - sensorAreaY0}
                         style={{ fill: 'none', stroke: 'none', pointerEvents: 'all', cursor: 'crosshair' }}
-                        />
+                    />
 
                     {
                         stores.projectStore.tracks.map((track, index) => (
@@ -284,7 +287,7 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
                                     colorScale={LayoutParameters.seriesColorScale}
                                     useMipmap={true}
                                     signalsViewMode={signalsViewMode}
-                                    />
+                                />
                             </g>
                         ))
                     }
@@ -297,7 +300,7 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
                         width={this.props.viewWidth}
                         height={labelBandHeight}
                         style={{ stroke: 'none', fill: '#EEE', cursor: 'crosshair' }}
-                        />
+                    />
 
                     <g className='labels' transform={`translate(0, ${labelAreaY0})`}>
                         {
@@ -307,17 +310,16 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
                                     rangeStart={start}
                                     plotWidth={this.props.viewWidth}
                                     plotHeight={10}
-                                    />
+                                />
                             ) : null
                         }
                         <LabelsRangePlot
-                            pixelsPerSecond={pps}
-                            rangeStart={start}
+                            panZoom={stores.projectUiStore.referencePanZoom}
                             plotWidth={this.props.viewWidth}
                             plotHeight={labelAreaY1 - labelAreaY0}
                             labelKind={LabelKind.Detailed}
                             highlightLeastConfidentSuggestions={true}
-                            />
+                        />
                     </g>
 
                     {gHint}

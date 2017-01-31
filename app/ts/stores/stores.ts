@@ -8,7 +8,7 @@ import {ProjectStore} from './ProjectStore';
 import {ProjectUiStore} from './ProjectUiStore';
 
 export const projectStore = new ProjectStore();
-export const projectUiStore = new ProjectUiStore();
+export const projectUiStore = new ProjectUiStore(projectStore);
 export const alignmentStore = new AlignmentStore(projectStore, projectUiStore);
 export const alignmentUiStore = new AlignmentUiStore(alignmentStore, projectUiStore);
 export const labelingStore = new LabelingStore(alignmentStore);

@@ -1,10 +1,10 @@
-import { Track } from '../stores/dataStructures/alignment';
-import { Dataset, SensorTimeSeries } from '../stores/dataStructures/dataset';
-import { Label, LabelConfirmationState, PartialLabel } from '../stores/dataStructures/labeling';
-import { SavedLabelingState } from '../stores/dataStructures/project';
-import { resampleColumn } from '../stores/dataStructures/sampling';
-import { mergeTimeRangeArrays, TimeRangeIndex } from '../stores/dataStructures/TimeRangeIndex';
 import { AlignmentStore } from './AlignmentStore';
+import { Track } from './dataStructures/alignment';
+import { Dataset, SensorTimeSeries } from './dataStructures/dataset';
+import { Label, LabelConfirmationState, PartialLabel, TimeRange } from './dataStructures/labeling';
+import { SavedLabelingState } from './dataStructures/project';
+import { resampleColumn } from './dataStructures/sampling';
+import { mergeTimeRangeArrays, TimeRangeIndex } from './dataStructures/TimeRangeIndex';
 import { labelingUiStore, projectStore, projectUiStore } from './stores';
 import * as d3 from 'd3';
 import { action, computed, observable } from 'mobx';
@@ -65,10 +65,10 @@ export class LabelingStore {
         return this._suggestedLabelsIndex.items;
     }
 
-    public getLabelsInRange(tmin: number, tmax: number): Label[] {
+    public getLabelsInRange(timeRange: TimeRange): Label[] {
         return mergeTimeRangeArrays(
-            this._labelsIndex.getRangesInRange(tmin, tmax),
-            this._suggestedLabelsIndex.getRangesInRange(tmin, tmax));
+            this._labelsIndex.getRangesInRange(timeRange),
+            this._suggestedLabelsIndex.getRangesInRange(timeRange));
     }
 
 
@@ -164,8 +164,8 @@ export class LabelingStore {
         }
         labels.forEach(label => {
             const margin = (label.timestampEnd - label.timestampStart) * 0.15;
-            if (this._labelsIndex.getRangesWithinMargin(label.timestampStart, label.timestampEnd, margin).length === 0 &&
-                this._suggestedLabelsIndex.getRangesWithinMargin(label.timestampStart, label.timestampEnd, margin).length === 0) {
+            if (this._labelsIndex.getRangesWithinMargin(label, margin).length === 0 &&
+                this._suggestedLabelsIndex.getRangesWithinMargin(label, margin).length === 0) {
                 this._suggestedLabelsIndex.add(label);
                 labelsChanged = labelsChanged || true;
             }
@@ -245,8 +245,7 @@ export class LabelingStore {
         projectStore.labelingHistoryRecord();
         // Get visible suggestions.
         let visibleSuggestions = this._suggestedLabelsIndex.getRangesInRange(
-            projectUiStore.referenceViewStart,
-            projectUiStore.referenceViewEnd);
+            projectUiStore.referenceTimeRange);
         // Filter out rejected suggestions.
         visibleSuggestions = visibleSuggestions.filter(x => x.state !== LabelConfirmationState.REJECTED);
         visibleSuggestions.forEach(label => {

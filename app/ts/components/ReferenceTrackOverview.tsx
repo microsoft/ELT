@@ -51,9 +51,7 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
 
     private detailedViewCursorPosition(event: React.MouseEvent<Element>): void {
         const x = this.getRelativePosition(event)[0];
-        const start = stores.projectStore.referenceTimestampStart;
-        const end = stores.projectStore.referenceTimestampEnd;
-        const t = x / this.props.viewWidth * (end - start) + start;
+        const t = stores.projectUiStore.referencePanZoom.getTimeFromX(x);
         const timeWindow = stores.projectUiStore.referenceViewDuration;
         stores.projectUiStore.setReferenceTrackPanZoom(t - timeWindow / 2, null, true);
     }
@@ -81,9 +79,9 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
         const start = stores.projectStore.referenceTimestampStart;
         const end = stores.projectStore.referenceTimestampEnd;
         const scaling = (end - start) / this.props.viewWidth;
-        const start0 = stores.projectUiStore.referenceViewStart;
-        const end0 = stores.projectUiStore.referenceViewStart +
-            this.props.viewWidth / stores.projectUiStore.referenceViewPPS;
+        const start0 = stores.projectUiStore.referencePanZoom.rangeStart;
+        const end0 = stores.projectUiStore.referencePanZoom.rangeStart +
+            this.props.viewWidth / stores.projectUiStore.referencePanZoom.pixelsPerSecond;
         startDragging((mouseEvent: MouseEvent) => {
             const x1 = mouseEvent.screenX;
             let offset = (x1 - x0) * scaling;
@@ -117,9 +115,7 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
 
     private onMouseMove(event: React.MouseEvent<Element>): void {
         const x = this.getRelativePosition(event)[0];
-        const start = stores.projectStore.referenceTimestampStart;
-        const end = stores.projectStore.referenceTimestampEnd;
-        const t = x / this.props.viewWidth * (end - start) + start;
+        const t = stores.projectUiStore.referencePanZoom.getTimeFromX(x);
         stores.projectUiStore.setReferenceTrackTimeCursor(t);
     }
 
@@ -141,19 +137,11 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
         const labelsY0 = videoY1;
         const labelsY1 = viewHeight;
 
-        const rangeX0 = xScale(stores.projectUiStore.referenceViewStart);
-        const rangeX1 = xScale(stores.projectUiStore.referenceViewStart +
-            this.props.viewWidth / stores.projectUiStore.referenceViewPPS);
+        const rangeX0 = xScale(stores.projectUiStore.referencePanZoom.rangeStart);
+        const rangeX1 = xScale(stores.projectUiStore.referencePanZoom.rangeStart +
+            this.props.viewWidth / stores.projectUiStore.referencePanZoom.pixelsPerSecond);
 
-        const pathD = makePathDFromPoints([
-            [xScale.range()[0], this.props.viewHeight],
-            [rangeX0, this.props.viewHeight], [rangeX0, 0],
-            [rangeX1, 0], [rangeX1, this.props.viewHeight],
-            [xScale.range()[1], this.props.viewHeight]
-        ]);
-
-        const cursor = stores.projectUiStore.referenceViewTimeCursor;
-        const cursorX = xScale(cursor);
+        const cursorX = xScale(stores.projectUiStore.referenceViewTimeCursor);
         return (
             <g className='labeling-overview-view'>
                 <g className='labels' transform={`translate(0, ${videoY0})`}>
@@ -161,12 +149,9 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
                         track={stores.projectStore.referenceTrack}
                         viewWidth={this.props.viewWidth}
                         viewHeight={videoY1 - videoY0}
-                        zoomTransform={{
-                            rangeStart: start,
-                            pixelsPerSecond: this.props.viewWidth / (end - start)
-                        }}
+                        zoomTransform={stores.projectUiStore.referencePanZoom}
                         useMipmap={true}
-                        />
+                    />
                 </g>
                 <g className='labels' transform={`translate(0, ${labelsY0})`}>
                     {
@@ -179,27 +164,23 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
                                         track={track}
                                         viewWidth={this.props.viewWidth}
                                         viewHeight={labelsY1 - labelsY0}
-                                        zoomTransform={{
-                                            rangeStart: start,
-                                            pixelsPerSecond: this.props.viewWidth / (end - start)
-                                        }}
+                                        zoomTransform={stores.projectUiStore.referencePanZoom}
                                         useMipmap={true}
                                         colorScale={this.props.mode === 'labeling' ?
                                             LayoutParameters.seriesColorScale : null}
-                                        />
+                                    />
                                 );
                             })
                     }
                     {
                         this.props.mode === 'labeling' ? (
                             <LabelsRangePlot
-                                rangeStart={start}
-                                pixelsPerSecond={this.props.viewWidth / (end - start)}
+                                panZoom={stores.projectUiStore.referencePanZoom}
                                 plotWidth={this.props.viewWidth}
                                 plotHeight={labelsY1 - labelsY0}
                                 labelKind={LabelKind.Overview}
                                 highlightLeastConfidentSuggestions={false}
-                                />
+                            />
                         ) : null
                     }
                 </g>
@@ -209,11 +190,11 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
                 <g
                     onMouseMove={event => this.onMouseMove(event)}
                     onWheel={event => this.onMouseWheel(event)}
-                    >
+                >
                     <rect ref='interactionRect'
                         x={0} y={0} width={this.props.viewWidth} height={this.props.viewHeight}
                         style={{ fill: 'none', stroke: 'none', pointerEvents: 'all', cursor: 'crosshair' }}
-                        />
+                    />
                     <g className='track-cover' transform='translate(0, 0)'>
                         <rect x={0} y={0}
                             width={rangeX0}
@@ -236,18 +217,25 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
                         onMouseDown={event => this.onStartDragRanges(event, 'both')}
                         onMouseMove={event => this.onMouseMove(event)}
                         onWheel={event => this.onMouseWheel(event)}
-                        />
-                    <path d={pathD} className='frame-fg' />
+                    />
+                    <path
+                        d={makePathDFromPoints([
+                            [xScale.range()[0], this.props.viewHeight],
+                            [rangeX0, this.props.viewHeight], [rangeX0, 0],
+                            [rangeX1, 0], [rangeX1, this.props.viewHeight],
+                            [xScale.range()[1], this.props.viewHeight]
+                        ])}
+                        className='frame-fg' />
                     <path d={`M0,0 L0,${this.props.viewHeight}`} transform={`translate(${rangeX0},0)`}
                         onMouseDown={event => this.onStartDragRanges(event, 'start')}
                         onMouseMove={event => this.onMouseMove(event)}
                         onWheel={event => this.onMouseWheel(event)}
-                        />
+                    />
                     <path d={`M0,0 L0,${this.props.viewHeight}`} transform={`translate(${rangeX1},0)`}
                         onMouseDown={event => this.onStartDragRanges(event, 'end')}
                         onMouseMove={event => this.onMouseMove(event)}
                         onWheel={event => this.onMouseWheel(event)}
-                        />
+                    />
                 </g>
             </g>
         );
