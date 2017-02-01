@@ -133,23 +133,26 @@ export class ProjectUiStore {
     }
 
     @action
-    public referenceViewPanAndZoom(percentage: number, zoom: number, zoomCenter: 'cursor' | 'center' = 'cursor'): void {
+    public zoomReferenceTrack(zoom: number, zoomCenter: 'cursor' | 'center'): void {
+        if (zoom === 0) { throw 'bad zoom'; }
         const original = this.referencePanZoom;
-        if (zoom !== 0) {
-            const k = Math.exp(-zoom);
-            // Two rules to compute new zooming.
-            // 1. Time cursor should be preserved: (time_cursor - old_start) * old_pps = (time_cursor - new_start) * new_pps
-            // 2. Zoom factor should be applied: new_start = k * old_start
-            let timeCursor = this.referencePanZoom.rangeStart + this.referenceViewDuration / 2;
-            if (zoomCenter === 'cursor') { timeCursor = this.referenceViewTimeCursor; }
-            const newPPS = original.pixelsPerSecond * k;
-            const newStart = original.rangeStart / k + timeCursor * (1 - 1 / k);
-            this.setReferenceTrackPanZoom(newStart, newPPS, false);
-        }
-        if (percentage !== 0) {
-            const timeWidth = this.referenceViewDuration;
-            this.setReferenceTrackPanZoom(original.rangeStart + timeWidth * percentage, null, true);
-        }
+        const k = Math.exp(-zoom);
+        // Two rules to compute new zooming.
+        // 1. Time cursor should be preserved: (time_cursor - old_start) * old_pps = (time_cursor - new_start) * new_pps
+        // 2. Zoom factor should be applied: new_start = k * old_start
+        let timeCursor = this.referencePanZoom.rangeStart + this.referenceViewDuration / 2;
+        if (zoomCenter === 'cursor') { timeCursor = this.referenceViewTimeCursor; }
+        const newPPS = original.pixelsPerSecond * k;
+        const newStart = original.rangeStart / k + timeCursor * (1 - 1 / k);
+        this.setReferenceTrackPanZoom(newStart, newPPS, false);
+    }
+
+    @action
+    public zoomReferenceTrackByPercentage(percentage: number): void {
+        if (percentage <= 0) { throw 'bad percentage'; }
+        const original = this.referencePanZoom;
+        const timeWidth = this.referenceViewDuration;
+        this.setReferenceTrackPanZoom(original.rangeStart + timeWidth * percentage, null, true);
     }
 
     @action

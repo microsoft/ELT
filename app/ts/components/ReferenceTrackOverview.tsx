@@ -37,17 +37,17 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
     private onKeyDown(event: KeyboardEvent): void {
         if (event.srcElement === document.body) {
             if (event.keyCode === KeyCode.LEFT) {
-                stores.projectUiStore.referenceViewPanAndZoom(-0.6, 0);
+                stores.projectUiStore.zoomReferenceTrackByPercentage(-0.6);
             }
             if (event.keyCode === KeyCode.RIGHT) {
-                stores.projectUiStore.referenceViewPanAndZoom(+0.6, 0);
+                stores.projectUiStore.zoomReferenceTrackByPercentage(+0.6);
             }
         }
     }
 
     private onMouseWheel(event: React.WheelEvent<Element>): void {
         // Decide the zooming factor.
-        stores.projectUiStore.referenceViewPanAndZoom(0, event.deltaY / 1000, 'center');
+        stores.projectUiStore.zoomReferenceTrack(event.deltaY / 1000, 'center');
     }
 
     private detailedViewCursorPosition(event: React.MouseEvent<Element>): void {

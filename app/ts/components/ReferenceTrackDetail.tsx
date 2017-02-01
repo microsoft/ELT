@@ -25,7 +25,7 @@ export class ReferenceTrackDetail extends React.Component<ReferenceTrackDetailPr
 
     private onMouseWheel(event: React.WheelEvent<Element>): void {
         // Decide the zooming factor.
-        stores.projectUiStore.referenceViewPanAndZoom(0, event.deltaY / 1000, 'cursor');
+        stores.projectUiStore.zoomReferenceTrack(event.deltaY / 1000, 'cursor');
     }
 
     private getRelativePosition(event: { clientX: number; clientY: number; }): number[] {

@@ -170,7 +170,7 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
 
     private onMouseWheel(event: React.WheelEvent<Element>): void {
         // Decide the zooming factor.
-        stores.projectUiStore.referenceViewPanAndZoom(0, event.deltaY / 1000);
+        stores.projectUiStore.zoomReferenceTrack(event.deltaY / 1000, 'cursor');
     }
 
     public render(): JSX.Element {

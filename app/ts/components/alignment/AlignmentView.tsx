@@ -135,7 +135,7 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
     private onTrackWheel(
         event: React.WheelEvent<Element>, track: Track, _: number, pps: number, deltaY: number): void {
         if (stores.projectStore.isReferenceTrack(track) || track.isAlignedToReferenceTrack) {
-            stores.projectUiStore.referenceViewPanAndZoom(0, deltaY / 1000, 'cursor');
+            stores.projectUiStore.zoomReferenceTrack(deltaY / 1000, 'cursor');
         } else {
             const scale = d3.scaleLinear()
                 .domain([track.referenceStart, track.referenceEnd])

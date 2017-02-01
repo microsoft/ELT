@@ -91,16 +91,14 @@ export class AlignmentToolbar extends React.Component<AlignmentToolbarProps, {}>
                 {' '}
                 <button className='tbtn tbtn-l3' title='Zoom in'
                     onClick={() => {
-                        projectUiStore.referenceViewPanAndZoom(0, -0.2, 'center');
-                        //uiStore.referenceViewPanAndZoom(0, -0.2, 'center');
+                        projectUiStore.zoomReferenceTrack(-0.2, 'center');
                     } }>
                     <span className='glyphicon icon-only glyphicon-zoom-in'></span>
                 </button>
                 {' '}
                 <button className='tbtn tbtn-l3' title='Zoom out'
                     onClick={() => {
-                        projectUiStore.referenceViewPanAndZoom(0, +0.2, 'center');
-                        //uiStore.referenceViewPanAndZoom(0, +0.2, 'center');
+                        projectUiStore.zoomReferenceTrack(+0.2, 'center');
                     } }>
                     <span className='glyphicon icon-only glyphicon-zoom-out'></span>
                 </button>
@@ -109,32 +107,28 @@ export class AlignmentToolbar extends React.Component<AlignmentToolbarProps, {}>
                 {' '}
                 <button className='tbtn tbtn-l3' title='Go to the beginning'
                     onClick={() => {
-                        projectUiStore.referenceViewPanAndZoom(-1e10, 0);
-                        //uiStore.referenceViewPanAndZoom(-1e10, 0);
+                        projectUiStore.zoomReferenceTrackByPercentage(-1e10);
                     } }>
                     <span className='glyphicon icon-only glyphicon-fast-backward'></span>
                 </button>
                 {' '}
                 <button className='tbtn tbtn-l3' title='Go to the previous page'
                     onClick={() => {
-                        projectUiStore.referenceViewPanAndZoom(-0.6, 0);
-                        //uiStore.referenceViewPanAndZoom(-0.6, 0);
+                        projectUiStore.zoomReferenceTrackByPercentage(-0.6);
                     } }>
                     <span className='glyphicon icon-only glyphicon-backward'></span>
                 </button>
                 {' '}
                 <button className='tbtn tbtn-l3' title='Go to the next page'
                     onClick={() => {
-                        projectUiStore.referenceViewPanAndZoom(+0.6, 0);
-                        //uiStore.referenceViewPanAndZoom(+0.6, 0);
+                        projectUiStore.zoomReferenceTrackByPercentage(+0.6);
                     } }>
                     <span className='glyphicon icon-only glyphicon-forward'></span>
                 </button>
                 {' '}
                 <button className='tbtn tbtn-l3' title='Go to the end'
                     onClick={() => {
-                        projectUiStore.referenceViewPanAndZoom(+1e10, 0);
-                        //uiStore.referenceViewPanAndZoom(+1e10, 0)
+                        projectUiStore.zoomReferenceTrackByPercentage(+1e10);
                     } }>
                     <span className='glyphicon icon-only glyphicon-fast-forward'></span>
                 </button>
