@@ -1,41 +1,22 @@
-// LabelingUIStore
-// Labeling selection and hovering states.
-// Options for labeling and suggestions (move to elsewhere?)
-
 import { getLabelingSuggestionLogic, LabelingSuggestionLogic, LabelingSuggestionLogicType } from '../suggestion/LabelingSuggestionLogic';
-import { Label, PartialLabel, SignalsViewMode, TimeRange } from './dataStructures/labeling';
+import { Label, SignalsViewMode, TimeRange } from './dataStructures/labeling';
 import { ObservableSet } from './dataStructures/ObservableSet';
 import { LabelingStore } from './LabelingStore';
 import { labelingStore } from './stores';
 import { action, computed, observable } from 'mobx';
 
 
-// LabelingUIStore
-// Labeling selection and hovering states.
-// Options for labeling and suggestions (move to elsewhere?)
-
 export class LabelingUiStore {
-    // Label hover and selection.
     @observable public selectedLabels: ObservableSet<Label>;
-
-    // Current selected class.
     @observable public currentClass: string;
-
-    // Display settings.
     @observable public signalsViewMode: SignalsViewMode;
 
-    // // Playback control.
-    // private _isPlaying: boolean;
-    // private _playingTimer: NodeJS.Timer;
-
-    // Suggestion status.
     private _isSuggesting: boolean;
     private _suggestionTimestampStart: number;
     private _suggestionTimestampCompleted: number;
     private _suggestionTimestampEnd: number;
     private _suggestionConfidenceHistogram: number[];
 
-    // Suggestion settings.
     @observable public suggestionEnabled: boolean;
     @observable public suggestionConfidenceThreshold: number;
     private _changePointsEnabled: boolean;
@@ -68,7 +49,6 @@ export class LabelingUiStore {
         this._microAdjusterType = 'frame-drag';
     }
 
-
     @computed public get suggestionProgress(): number[] {
         if (!this._isSuggesting) { return null; }
         return [this._suggestionTimestampStart, this._suggestionTimestampCompleted, this._suggestionTimestampEnd];
@@ -77,7 +57,6 @@ export class LabelingUiStore {
     @computed public get suggestionConfidenceHistogram(): number[] {
         return this._suggestionConfidenceHistogram;
     }
-
 
     @action public selectLabel(label: Label, ctrlSelect: boolean = false, shiftSelect: boolean = false): void {
         const previous_selected_labels: Label[] = [];
@@ -133,14 +112,6 @@ export class LabelingUiStore {
 
     @action public setSignalsViewMode(mode: SignalsViewMode): void {
         this.signalsViewMode = mode;
-    }
-
-    @action public updateLabel(label: Label, newLabel: PartialLabel): void {
-        labelingStore.updateLabel(label, newLabel);
-    }
-
-    @action public removeLabel(label: Label): void {
-        labelingStore.removeLabel(label);
     }
 
     public getLabelsInRange(timeRange: TimeRange): Label[] {

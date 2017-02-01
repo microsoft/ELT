@@ -68,7 +68,7 @@ export class LabelPlot extends React.Component<LabelPlotProps, LabelPlotState> {
                     } else if (label.state === LabelConfirmationState.CONFIRMED_END) {
                         newState = LabelConfirmationState.CONFIRMED_BOTH;
                     }
-                    stores.labelingUiStore.updateLabel(label, {
+                    stores.labelingStore.updateLabel(label, {
                         timestampStart: newTimestampStart,
                         timestampEnd: newTimestampEnd,
                         state: newState
@@ -87,7 +87,7 @@ export class LabelPlot extends React.Component<LabelPlotProps, LabelPlotState> {
                     } else if (label.state === LabelConfirmationState.CONFIRMED_START) {
                         newState = LabelConfirmationState.CONFIRMED_BOTH;
                     }
-                    stores.labelingUiStore.updateLabel(label, {
+                    stores.labelingStore.updateLabel(label, {
                         timestampStart: newTimestampStart,
                         timestampEnd: newTimestampEnd,
                         state: newState
@@ -109,11 +109,11 @@ export class LabelPlot extends React.Component<LabelPlotProps, LabelPlotState> {
     }
 
     private onMouseEnterLabel(): void {
-        this.setState({isHovering: true});
+        this.setState({ isHovering: true });
     }
 
     private onMouseLeaveLabel(): void {
-        this.setState({isHovering: false});
+        this.setState({ isHovering: false });
     }
 
     private isLabelConfirmed(): boolean {
@@ -144,7 +144,7 @@ export class LabelPlot extends React.Component<LabelPlotProps, LabelPlotState> {
                     width={x2 - x1}
                     height={5}
                     style={{ fill: this.props.classColormap[label.className] }}
-                    />
+                />
             );
         }
         return (
@@ -159,7 +159,7 @@ export class LabelPlot extends React.Component<LabelPlotProps, LabelPlotState> {
                         fill: this.props.classColormap[label.className],
                         opacity: 0.1 + this.getSuggestionConfidenceOrOne() * 0.3
                     }}
-                    />
+                />
             </g>
         );
     }
@@ -175,7 +175,7 @@ export class LabelPlot extends React.Component<LabelPlotProps, LabelPlotState> {
             additionalClasses.push('selected');
         }
         let uiElements = null;
-        if(this.state.isHovering) {
+        if (this.state.isHovering) {
             additionalClasses.push('hovered');
             uiElements = (
                 <g className='label-controls' transform={`translate(${x1}, 0)`}>
@@ -183,9 +183,9 @@ export class LabelPlot extends React.Component<LabelPlotProps, LabelPlotState> {
                         x={Math.max(0, x2 - x1 - 24)} y={0} width={24} height={24} text='remove'
                         onMouseDown={e => {
                             e.stopPropagation();
-                            stores.labelingUiStore.removeLabel(this.props.label);
-                        } }
-                        />
+                            stores.labelingStore.removeLabel(this.props.label);
+                        }}
+                    />
                 </g>
             );
         }
@@ -200,7 +200,7 @@ export class LabelPlot extends React.Component<LabelPlotProps, LabelPlotState> {
                     width={x2 - x1}
                     height={20}
                     style={{ fill: this.props.classColormap[label.className] }}
-                    />
+                />
             );
         }
 
@@ -218,7 +218,7 @@ export class LabelPlot extends React.Component<LabelPlotProps, LabelPlotState> {
             <g className={`label-container ${additionalClasses.join(' ')}`}
                 onMouseEnter={this.onMouseEnterLabel}
                 onMouseLeave={this.onMouseLeaveLabel}
-                >
+            >
                 {topBand}
                 <rect
                     className='range'
@@ -230,17 +230,17 @@ export class LabelPlot extends React.Component<LabelPlotProps, LabelPlotState> {
                         fill: this.props.classColormap[label.className],
                         opacity: 0.1 + this.getSuggestionConfidenceOrOne() * 0.3
                     }}
-                    />
+                />
                 <line
                     className='border'
                     x1={x1} x2={x1} y1={lineY0} y2={this.props.height}
                     style={{ stroke: borderColor }}
-                    />
+                />
                 <line
                     className='border'
                     x1={x2} x2={x2} y1={lineY0} y2={this.props.height}
                     style={{ stroke: borderColor }}
-                    />
+                />
                 {highlightMarker}
                 <rect
                     className='middle-handler'
@@ -249,17 +249,17 @@ export class LabelPlot extends React.Component<LabelPlotProps, LabelPlotState> {
                     width={x2 - x1}
                     height={this.props.height}
                     onMouseDown={event => this.onDragLabel(event, 'both')}
-                    />
+                />
                 <rect
                     className='handler'
                     x={x1 - 3} width={6} y={0} height={this.props.height}
                     onMouseDown={event => this.onDragLabel(event, 'start')}
-                    />
+                />
                 <rect
                     className='handler'
                     x={x2 - 3} width={6} y={0} height={this.props.height}
                     onMouseDown={event => this.onDragLabel(event, 'end')}
-                    />
+                />
                 {uiElements}
             </g>
         );
