@@ -107,7 +107,6 @@ export class ProjectUiStore {
     @action
     public setReferenceTrackPanZoom(referenceViewStart: number, referenceViewPPS: number = null, animate: boolean = false): void {
         const panZoom = this.referencePanZoom.constrain(referenceViewStart, referenceViewPPS);
-        // Change current class to label's class.
         if (this.referencePanZoom.rangeStart !== panZoom.rangeStart ||
             this.referencePanZoom.pixelsPerSecond !== panZoom.pixelsPerSecond) {
             if (!animate) {

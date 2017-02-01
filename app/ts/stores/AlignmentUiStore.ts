@@ -12,9 +12,9 @@ import { action, observable, ObservableMap, reaction } from 'mobx';
 
 export class AlignmentUiStore {
 
-    // Individually stores current time cursor for timeSeries.
+    // Individually stores current time cursor for track.
     // The timeCursors should be in the series's own timestamps.
-    @observable private _seriesTimeCursor: ObservableMap<number>;
+    @observable private _trackTimeCursor: ObservableMap<number>;
 
     @observable private _panZoomParameterMap: ObservableMap<PanZoomParameters>;
 
@@ -23,7 +23,7 @@ export class AlignmentUiStore {
     @observable public selectedCorrespondence: MarkerCorrespondence;
 
     constructor(alignmentStore: AlignmentStore, projectUiStore: ProjectUiStore) {
-        this._seriesTimeCursor = observable.map<number>();
+        this._trackTimeCursor = observable.map<number>();
         this._panZoomParameterMap = observable.map<PanZoomParameters>();
         this.selectedMarker = null;
         this.selectedCorrespondence = null;
@@ -37,26 +37,12 @@ export class AlignmentUiStore {
         );
     }
 
-    @action public setReferenceViewTimeCursor(timeCursor: number): void {
-        const blocks = alignmentStore.trackBlocks;
-        blocks.forEach(block => {
-            if (this.blockHasReferenceTrack(block)) {
-                block.forEach(track => {
-                    const scale = d3.scaleLinear()
-                        .domain([track.referenceStart, track.referenceEnd])
-                        .range([track.timeSeries[0].timestampStart, track.timeSeries[0].timestampEnd]);
-                    this._seriesTimeCursor.set(track.id.toString(), scale(timeCursor));
-                });
-            }
-        });
-    }
-
     @action public setTimeCursor(track: Track, timeCursor: number): void {
-        this._seriesTimeCursor.set(track.id.toString(), timeCursor);
+        this._trackTimeCursor.set(track.id.toString(), timeCursor);
     }
 
     public getTimeCursor(track: Track): number {
-        return this._seriesTimeCursor.get(track.id.toString());
+        return this._trackTimeCursor.get(track.id.toString());
     }
 
     @action public selectMarker(marker: Marker): void {

@@ -80,7 +80,6 @@ export class ReferenceTrackDetail extends React.Component<ReferenceTrackDetailPr
         if (!stores.projectStore.referenceTrack) { return (<g></g>); }
 
         const range = stores.projectUiStore.referenceTimeRange;
-        const pps = stores.projectUiStore.referencePanZoom.pixelsPerSecond;
         const scale = d3.scaleLinear()
             .domain([range.timestampStart, range.timestampEnd])
             .range([0, this.props.viewWidth]);
@@ -95,7 +94,7 @@ export class ReferenceTrackDetail extends React.Component<ReferenceTrackDetailPr
                         track={stores.projectStore.referenceTrack}
                         viewWidth={this.props.viewWidth}
                         viewHeight={this.props.viewHeight}
-                        zoomTransform={{ rangeStart: range.timestampStart, pixelsPerSecond: pps }}
+                        zoomTransform={stores.projectUiStore.referencePanZoom}
                         timeCursor={stores.projectUiStore.referenceViewTimeCursor}
                         useMipmap={true}
                         />

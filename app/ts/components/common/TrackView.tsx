@@ -3,6 +3,7 @@
 import { Track } from '../../stores/dataStructures/alignment';
 import { SensorTimeSeries, TimeSeriesKind, VideoTimeSeries } from '../../stores/dataStructures/dataset';
 import { SignalsViewMode } from '../../stores/dataStructures/labeling';
+import { PanZoomParameters } from '../../stores/ProjectUiStore';
 import { AutocorrelogramPlot } from '../common/AutocorrelogramPlot';
 import { SensorRangePlot } from '../common/SensorPlot';
 import { VideoFrame, VideoRangePlot } from '../common/VideoPlot';
@@ -15,7 +16,7 @@ export interface TrackViewProps {
     track: Track;
     viewWidth: number;
     viewHeight: number;
-    zoomTransform: { rangeStart: number, pixelsPerSecond: number };
+    zoomTransform: PanZoomParameters;
     signalsViewMode?: SignalsViewMode;
     colorScale?: any;
     useMipmap?: boolean;
@@ -76,7 +77,7 @@ export class TrackView extends React.Component<TrackViewProps, {}> {
         const zooming = this.props.zoomTransform;
         // scale: Reference -> Pixel.
         const sReferenceToPixel = d3.scaleLinear()
-            .domain([zooming.rangeStart, zooming.rangeStart + this.props.viewWidth / zooming.pixelsPerSecond])
+            .domain([zooming.rangeStart, zooming.getTimeFromX(this.props.viewWidth)])
             .range([0, this.props.viewWidth]);
 
         return (
@@ -86,7 +87,7 @@ export class TrackView extends React.Component<TrackViewProps, {}> {
                     x={0} y={0}
                     width={this.props.viewWidth}
                     height={this.props.viewHeight}
-                    />
+                />
                 {
                     track.timeSeries.map((timeSeries, t) => {
                         // scale: Signal -> Reference.
@@ -137,12 +138,12 @@ export class TrackView extends React.Component<TrackViewProps, {}> {
                                     y={0}
                                     width={xEnd - xStart}
                                     height={chunkHeight}
-                                    onMouseDown={event => { this.onMouseDown(event, track, getTime(event), pps); } }
-                                    onMouseMove={event => { this.onMouseMove(event, track, getTime(event), pps); } }
-                                    onMouseEnter={event => { this.onMouseEnter(event, track, getTime(event), pps); } }
-                                    onMouseLeave={event => { this.onMouseLeave(event, track, getTime(event), pps); } }
-                                    onWheel={event => { this.onWheel(event, track, getTime(event), pps, event.deltaY); } }
-                                    />
+                                    onMouseDown={event => { this.onMouseDown(event, track, getTime(event), pps); }}
+                                    onMouseMove={event => { this.onMouseMove(event, track, getTime(event), pps); }}
+                                    onMouseEnter={event => { this.onMouseEnter(event, track, getTime(event), pps); }}
+                                    onMouseLeave={event => { this.onMouseLeave(event, track, getTime(event), pps); }}
+                                    onWheel={event => { this.onWheel(event, track, getTime(event), pps, event.deltaY); }}
+                                />
                                 {
                                     timeCursor != null ? (
                                         <line
@@ -151,7 +152,7 @@ export class TrackView extends React.Component<TrackViewProps, {}> {
                                             y1={0}
                                             y2={chunkHeight}
                                             style={{ stroke: 'black', pointerEvents: 'none' }}
-                                            />
+                                        />
                                     ) : (null)
                                 }
                             </g>
@@ -175,7 +176,7 @@ export class TrackView extends React.Component<TrackViewProps, {}> {
                                             height={this.props.viewHeight}
                                             timeCursor={timeCursor}
                                             timeSeries={video}
-                                            />
+                                        />
                                     </g>
                                 );
                             } else {
@@ -188,7 +189,7 @@ export class TrackView extends React.Component<TrackViewProps, {}> {
                                                 pixelsPerSecond={pps}
                                                 plotWidth={xEnd - xStart}
                                                 plotHeight={this.props.viewHeight}
-                                                />
+                                            />
                                         </g>
                                         {interactionRect}
                                     </g>
@@ -206,7 +207,7 @@ export class TrackView extends React.Component<TrackViewProps, {}> {
                                                 pixelsPerSecond={pps}
                                                 plotWidth={xEnd - xStart}
                                                 plotHeight={chunkHeight}
-                                                />
+                                            />
                                             {interactionRect}
                                         </g>
                                     );
@@ -219,7 +220,7 @@ export class TrackView extends React.Component<TrackViewProps, {}> {
                                                 pixelsPerSecond={pps}
                                                 plotWidth={xEnd - xStart}
                                                 plotHeight={chunkHeight}
-                                                />
+                                            />
                                             <SensorRangePlot
                                                 timeSeries={timeSeries as SensorTimeSeries}
                                                 rangeStart={tStart}
@@ -228,7 +229,7 @@ export class TrackView extends React.Component<TrackViewProps, {}> {
                                                 plotHeight={chunkHeight}
                                                 useMipmap={this.props.useMipmap}
                                                 colorScale={this.props.colorScale}
-                                                />
+                                            />
                                             {interactionRect}
                                         </g>
                                     );
@@ -244,7 +245,7 @@ export class TrackView extends React.Component<TrackViewProps, {}> {
                                                 plotHeight={chunkHeight}
                                                 useMipmap={this.props.useMipmap}
                                                 colorScale={this.props.colorScale}
-                                                />
+                                            />
                                             {interactionRect}
                                         </g>
                                     );

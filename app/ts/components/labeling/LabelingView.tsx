@@ -281,7 +281,7 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
                                 transform={`translate(0, ${sensorAreaY0 + tracksViewTrackSpacing * index})`}>
                                 <TrackView
                                     track={track}
-                                    zoomTransform={{ rangeStart: start, pixelsPerSecond: pps }}
+                                    zoomTransform={stores.projectUiStore.referencePanZoom}
                                     viewHeight={trackViewTrackHeight}
                                     viewWidth={this.props.viewWidth}
                                     colorScale={LayoutParameters.seriesColorScale}

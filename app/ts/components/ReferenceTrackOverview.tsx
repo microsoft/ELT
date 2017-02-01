@@ -2,6 +2,7 @@
 
 import { LayoutParameters } from '../stores/dataStructures/LayoutParameters';
 import { KeyCode } from '../stores/dataStructures/types';
+import { PanZoomParameters } from '../stores/ProjectUiStore';
 import * as stores from '../stores/stores';
 import { makePathDFromPoints, startDragging } from '../stores/utils';
 import { TimeAxis } from './common/TimeAxis';
@@ -51,7 +52,8 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
 
     private detailedViewCursorPosition(event: React.MouseEvent<Element>): void {
         const x = this.getRelativePosition(event)[0];
-        const t = stores.projectUiStore.referencePanZoom.getTimeFromX(x);
+        const t = x / this.props.viewWidth * (stores.projectStore.referenceTimestampEnd - stores.projectStore.referenceTimestampStart) +
+            stores.projectStore.referenceTimestampStart;
         const timeWindow = stores.projectUiStore.referenceViewDuration;
         stores.projectUiStore.setReferenceTrackPanZoom(t - timeWindow / 2, null, true);
     }
@@ -115,7 +117,8 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
 
     private onMouseMove(event: React.MouseEvent<Element>): void {
         const x = this.getRelativePosition(event)[0];
-        const t = stores.projectUiStore.referencePanZoom.getTimeFromX(x);
+        const t = x / this.props.viewWidth * (stores.projectStore.referenceTimestampEnd - stores.projectStore.referenceTimestampStart) +
+            stores.projectStore.referenceTimestampStart;
         stores.projectUiStore.setReferenceTrackTimeCursor(t);
     }
 
@@ -142,6 +145,7 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
             this.props.viewWidth / stores.projectUiStore.referencePanZoom.pixelsPerSecond);
 
         const cursorX = xScale(stores.projectUiStore.referenceViewTimeCursor);
+        const globalPanZoom = new PanZoomParameters(0, this.props.viewWidth / (end - start));
         return (
             <g className='labeling-overview-view'>
                 <g className='labels' transform={`translate(0, ${videoY0})`}>
@@ -149,7 +153,7 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
                         track={stores.projectStore.referenceTrack}
                         viewWidth={this.props.viewWidth}
                         viewHeight={videoY1 - videoY0}
-                        zoomTransform={stores.projectUiStore.referencePanZoom}
+                        zoomTransform={globalPanZoom}
                         useMipmap={true}
                     />
                 </g>
@@ -164,7 +168,7 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
                                         track={track}
                                         viewWidth={this.props.viewWidth}
                                         viewHeight={labelsY1 - labelsY0}
-                                        zoomTransform={stores.projectUiStore.referencePanZoom}
+                                        zoomTransform={globalPanZoom}
                                         useMipmap={true}
                                         colorScale={this.props.mode === 'labeling' ?
                                             LayoutParameters.seriesColorScale : null}
@@ -175,7 +179,7 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
                     {
                         this.props.mode === 'labeling' ? (
                             <LabelsRangePlot
-                                panZoom={stores.projectUiStore.referencePanZoom}
+                                panZoom={globalPanZoom}
                                 plotWidth={this.props.viewWidth}
                                 plotHeight={labelsY1 - labelsY0}
                                 labelKind={LabelKind.Overview}

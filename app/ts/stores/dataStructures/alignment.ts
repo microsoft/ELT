@@ -90,7 +90,8 @@ export class Track {
         });
 
         // Find the translation and scale for correspondences.
-        const [k, b] = leastSquares(tCorrespondences);
+        let [k, b] = leastSquares(tCorrespondences);
+        if (isNaN(k) || isNaN(b)) { k = 1; b = 0; } // Is this the right thing to do?
         const project = x => k * x + b;
 
         this.referenceStart = project(this.timeSeries[0].timestampStart);

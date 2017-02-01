@@ -164,23 +164,10 @@ export class AlignmentStore {
     public alignAllTracks(animate: boolean = false): void {
         if (this.correspondences.length === 0) { return; }
         this.stopAnimation();
-        const snapshot0 = new TimeSeriesStateSnapshot();
         projectStore.tracks.forEach(track => {
             track.align(this.correspondences);
         });
         alignmentUiStore.updatePanZoomBasedOnAlignment();
-        if (animate) {
-            const snapshot1 = new TimeSeriesStateSnapshot();
-            snapshot0.apply();
-            this._alignmentTransitionController = new TransitionController(
-                100, 'linear',
-                action('alignAllTracks animation', (t, finish) => {
-                    snapshot0.applyInterpolate(snapshot1, t);
-                    if (finish) {
-                        snapshot1.apply();
-                    }
-                }));
-        }
     }
 
     // Save the alignment state.

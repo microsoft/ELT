@@ -96,7 +96,6 @@ export class LabelingUiStore {
         this.selectedLabels.forEach(lab => { previous_selected_labels.push(lab); });
         this.selectedLabels.clear();
         this.selectedLabels.add(label);
-        // Change current class to label's class.
         this.currentClass = label.className;
     }
 
@@ -107,7 +106,6 @@ export class LabelingUiStore {
     }
 
     @action public selectClass(className: string): void {
-        // Change current class to label's class.
         if (this.currentClass !== className) {
             if (labelingStore.classes.indexOf(className) >= 0) {
                 this.currentClass = className;
