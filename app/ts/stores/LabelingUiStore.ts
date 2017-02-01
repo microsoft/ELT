@@ -16,7 +16,6 @@ import { action, computed, observable } from 'mobx';
 
 export class LabelingUiStore {
     // Label hover and selection.
-    @observable public hoveringLabel: Label;
     @observable public selectedLabels: ObservableSet<Label>;
 
     // Current selected class.
@@ -49,7 +48,6 @@ export class LabelingUiStore {
 
         this.signalsViewMode = SignalsViewMode.TIMESERIES;
 
-        this.hoveringLabel = null;
         this.selectedLabels = new ObservableSet<Label>(
             lab => lab.className + ':' + lab.timestampStart + '-' + lab.timestampEnd);
 
@@ -68,10 +66,6 @@ export class LabelingUiStore {
         this._suggestionTimestampEnd = null;
 
         this._microAdjusterType = 'frame-drag';
-
-        // // NOTICE THAT THIS STORES PARENT IS A LABELING STORE??
-        // labelingStore.classesChanged.on(this.onClassesChanged.bind(this));
-        // labelingStore.labelsArrayChanged.on(this.onLabelsArrayChanged.bind(this));
     }
 
 
@@ -84,12 +78,6 @@ export class LabelingUiStore {
         return this._suggestionConfidenceHistogram;
     }
 
-
-    @action public hoverLabel(label: Label): void {
-        if (this.hoveringLabel !== label) {
-            this.hoveringLabel = label;
-        }
-    }
 
     @action public selectLabel(label: Label, ctrlSelect: boolean = false, shiftSelect: boolean = false): void {
         const previous_selected_labels: Label[] = [];
@@ -155,34 +143,10 @@ export class LabelingUiStore {
         labelingStore.removeLabel(label);
     }
 
-
-    // private onClassesChanged(): void {
-    //     if (labelingStore.classes.indexOf(this.currentClass) < 0) {
-    //         this.currentClass = labelingStore.classes.length > 0 ? labelingStore.classes[0] : null;
-    //     }
-    // }
-
-    // private onLabelsArrayChanged(): void {
-    //     // Remove labels from selection if deleted.
-    //     let deleted_labels = false;
-    //     this.selectedLabels.forEach(label => {
-    //         if (labelingStore.labels.indexOf(label) < 0) {
-    //             this.selectedLabels.remove(label);
-    //             deleted_labels = true;
-    //         }
-    //     });
-    // }
-
     public getLabelsInRange(timeRange: TimeRange): Label[] {
-        // FIXME: I think all these filters accomplish nothing.
         const labels = labelingStore.getLabelsInRange(timeRange);
-        return labels.filter(l => l !== this.hoveringLabel && !this.selectedLabels.has(l)).concat(
-            labels.filter(l => l !== this.hoveringLabel && this.selectedLabels.has(l))).concat(
-            labels.filter(l => l === this.hoveringLabel));
-    }
-
-    public isLabelHovered(label: Label): boolean {
-        return this.hoveringLabel === label;
+        return labels.filter(l => !this.selectedLabels.has(l)).concat(
+            labels.filter(l => this.selectedLabels.has(l)));
     }
 
     public isLabelSelected(label: Label): boolean {
