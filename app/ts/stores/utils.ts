@@ -85,11 +85,11 @@ export class TransitionController {
     private _timeStart: number;
 
     private onTick(): void {
-        const t = (new Date().getTime() - this._timeStart) / this._duration;
-        if (t > 1) {
+        const fraction = (new Date().getTime() - this._timeStart) / this._duration;
+        if (fraction > 1) {
             this.terminate();
         } else {
-            if (this._onProgress) { this._onProgress(t, false); }
+            if (this._onProgress) { this._onProgress(fraction, false); }
         }
     }
 
@@ -101,7 +101,7 @@ export class TransitionController {
         }
     }
 
-    constructor(duration: number, easing: string, on_progress?: (t: number, finish?: boolean) => void) {
+    constructor(duration: number, easing: string, on_progress?: (fraction: number, finish?: boolean) => void) {
         this._timeStart = new Date().getTime();
         this._onProgress = on_progress;
         this._duration = duration;

@@ -15,6 +15,11 @@ export class PanZoomParameters {
         this.pixelsPerSecond = pixelsPerSecond;
     }
 
+    public equals(that: PanZoomParameters): boolean {
+        return this.rangeStart === that.rangeStart &&
+            this.pixelsPerSecond === that.pixelsPerSecond;
+    }
+
     public constrain(rangeStart?: number, pixelsPerSecond?: number): PanZoomParameters {
         rangeStart = rangeStart || this.rangeStart;
         pixelsPerSecond = pixelsPerSecond || this.pixelsPerSecond;
@@ -34,6 +39,12 @@ export class PanZoomParameters {
 
     public getTimeRangeToX(x: number): TimeRange {
         return { timestampStart: this.rangeStart, timestampEnd: this.getTimeFromX(x) };
+    }
+
+    public interpolate(that: PanZoomParameters, fraction: number): PanZoomParameters {
+        return new PanZoomParameters(
+            this.rangeStart + (that.rangeStart - this.rangeStart) * fraction,
+            this.pixelsPerSecond + (that.pixelsPerSecond - this.pixelsPerSecond) * fraction);
     }
 
 }
@@ -106,29 +117,25 @@ export class ProjectUiStore {
 
     @action
     public setReferenceTrackPanZoom(referenceViewStart: number, referenceViewPPS: number = null, animate: boolean = false): void {
-        const panZoom = this.referencePanZoom.constrain(referenceViewStart, referenceViewPPS);
-        if (this.referencePanZoom.rangeStart !== panZoom.rangeStart ||
-            this.referencePanZoom.pixelsPerSecond !== panZoom.pixelsPerSecond) {
-            if (!animate) {
-                if (this._referenceViewTransition) {
-                    this._referenceViewTransition.terminate();
-                    this._referenceViewTransition = null;
-                }
-                this.referencePanZoom = panZoom;
-            } else {
-                if (this._referenceViewTransition) {
-                    this._referenceViewTransition.terminate();
-                    this._referenceViewTransition = null;
-                }
-                const panZoom0 = this.referencePanZoom;
-                this._referenceViewTransition = new TransitionController(
-                    100, 'linear',
-                    action('setReferenceTrackPanZoom animation', (t: number) => {
-                        this.referencePanZoom = new PanZoomParameters(
-                            panZoom0.rangeStart + (panZoom.rangeStart - panZoom0.rangeStart) * t,
-                            1 / (1 / panZoom0.pixelsPerSecond + (1 / panZoom.pixelsPerSecond - 1 / panZoom0.pixelsPerSecond) * t));
-                    }));
+        const target = this.referencePanZoom.constrain(referenceViewStart, referenceViewPPS);
+        if (this.referencePanZoom.equals(target)) { return; }
+        if (animate) {
+            if (this._referenceViewTransition) {
+                this._referenceViewTransition.terminate();
+                this._referenceViewTransition = null;
             }
+            const original = this.referencePanZoom;
+            this._referenceViewTransition = new TransitionController(
+                100, 'linear',
+                action('setReferenceTrackPanZoom animation', (fraction: number) => {
+                    this.referencePanZoom = original.interpolate(target, fraction);
+                }));
+        } else {
+            if (this._referenceViewTransition) {
+                this._referenceViewTransition.terminate();
+                this._referenceViewTransition = null;
+            }
+            this.referencePanZoom = target;
         }
     }
 
@@ -149,7 +156,6 @@ export class ProjectUiStore {
 
     @action
     public zoomReferenceTrackByPercentage(percentage: number): void {
-        if (percentage <= 0) { throw 'bad percentage'; }
         const original = this.referencePanZoom;
         const timeWidth = this.referenceViewDuration;
         this.setReferenceTrackPanZoom(original.rangeStart + timeWidth * percentage, null, true);
