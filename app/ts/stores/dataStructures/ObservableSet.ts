@@ -1,8 +1,9 @@
 import { action, computed, observable, ObservableMap } from 'mobx';
+import * as Map from 'es6-map';
 
-
+// FIXME: this class requires the es6-map polyfill for Map. Consider changing the implementation to avoid this.
 export class ObservableSet<T> {
-    private map: ObservableMap<boolean>;
+    private map: ObservableMap<boolean>; //Observable<string,boolean>
     private keyMap: Map<string, T>;
 
     constructor(private getKey: (item: T) => string) {
@@ -18,7 +19,7 @@ export class ObservableSet<T> {
     }
 
     public has(item: T): boolean {
-        return this.keyMap.has(this.getKey(item));
+        return this.map.has(this.getKey(item));
     }
 
     @action public remove(item: T): ObservableSet<T> {

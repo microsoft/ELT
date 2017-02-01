@@ -7,12 +7,6 @@ import { alignmentUiStore, projectStore } from './stores';
 import { TransitionController } from './utils';
 import { action, computed, observable, reaction } from 'mobx';
 
-
-
-
-
-
-
 // Store alignment markers and correspondences (connections between markers).
 export class AlignmentStore {
 

@@ -1,6 +1,5 @@
 import { alignmentUiStore, projectStore } from '../stores';
 
-
 // Take a snapshot from the alignmentStore, isolate all current rendering parameters.
 interface TimeSeriesStateSnapshotInfo {
     referenceStart: number;
