@@ -50,21 +50,6 @@ export class LabelingSuggestionGenerator {
             () => this.scheduleRunSuggestions(),
             { name: 'LabelingSuggestionGenerator.scheduleRunSuggestions' });
 
-        // Per-label confirmation logic: If a label remains selected for 200 ms, confirm it.
-        autorun('LabelingSuggestionGenerator label loop', () => {
-            labelingUiStore.selectedLabels.forEach(
-                label => delayAction('LabelingSuggestionGenerator delay', 200, () => {
-                    if (labelingUiStore.selectedLabels.has(label)) {
-                        if (label.state === LabelConfirmationState.UNCONFIRMED ||
-                            label.state === LabelConfirmationState.CONFIRMED_START ||
-                            label.state === LabelConfirmationState.CONFIRMED_END) {
-                            labelingStore.updateLabel(label, { state: LabelConfirmationState.CONFIRMED_BOTH });
-                        }
-                    }
-                }),
-            );
-        });
-
     }
 
     @action public removeAllSuggestions(): void {

@@ -103,6 +103,11 @@ export class LabelPlot extends React.Component<LabelPlotProps, LabelPlotState> {
                 if (mode === 'both' && upEvent.target === eventTarget && !isSelected) {
                     stores.labelingUiStore.selectLabel(label);
                     isSelected = true;
+                    if (label.state === LabelConfirmationState.UNCONFIRMED ||
+                            label.state === LabelConfirmationState.CONFIRMED_START ||
+                            label.state === LabelConfirmationState.CONFIRMED_END) {
+                            stores.labelingStore.updateLabel(label, { state: LabelConfirmationState.CONFIRMED_BOTH });
+                    }    
                 }
             }
         );
