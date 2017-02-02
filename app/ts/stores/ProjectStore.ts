@@ -109,7 +109,7 @@ export class ProjectStore {
 
     @action public deleteTrack(track: Track): void {
         this.alignmentHistoryRecord();
-        const index = this.tracks.indexOf(track);
+        const index = this.tracks.map(t => t.id).indexOf(track.id);
         this.tracks.splice(index, 1);
     }
 

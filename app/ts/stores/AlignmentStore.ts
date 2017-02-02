@@ -43,42 +43,20 @@ export class AlignmentStore {
         const index = this.markers.indexOf(marker);
         if (index >= 0) {
             this.markers.splice(index, 1);
-            this.correspondences = this.correspondences.filter(c => {
-                return c.marker1 !== marker && c.marker2 !== marker;
-            });
+            this.correspondences = this.correspondences.filter(c =>
+                c.marker1.equals(marker) && c.marker2.equals(marker));
             this.alignAllTracks(true);
         }
     }
 
     @action public addMarkerCorrespondence(marker1: Marker, marker2: Marker): MarkerCorrespondence {
         projectStore.alignmentHistoryRecord();
+        const newCorr = new MarkerCorrespondence(marker1, marker2);
         // Remove all conflicting correspondence.
-        this.correspondences = this.correspondences.filter(c => {
-            // Multiple connections.
-            if (c.marker1 === marker1 && c.marker2.track === marker2.track) { return false; }
-            if (c.marker1 === marker2 && c.marker2.track === marker1.track) { return false; }
-            if (c.marker2 === marker1 && c.marker1.track === marker2.track) { return false; }
-            if (c.marker2 === marker2 && c.marker1.track === marker1.track) { return false; }
-            // Crossings.
-            if (c.marker1.track === marker1.track && c.marker2.track === marker2.track) {
-                if ((c.marker1.localTimestamp - marker1.localTimestamp) *
-                    (c.marker2.localTimestamp - marker2.localTimestamp) < 0) {
-                    return false;
-                }
-            }
-            if (c.marker1.track === marker2.track && c.marker2.track === marker1.track) {
-                if ((c.marker1.localTimestamp - marker2.localTimestamp) *
-                    (c.marker2.localTimestamp - marker1.localTimestamp) < 0) {
-                    return false;
-                }
-            }
-            return true;
-        });
-
-        const corr = { marker1: marker1, marker2: marker2 };
-        this.correspondences.push(corr);
+        this.correspondences = this.correspondences.filter(c => c.compatibleWith(newCorr));
+        this.correspondences.push(newCorr);
         this.alignAllTracks(true);
-        return corr;
+        return newCorr;
     }
 
     @action public deleteMarkerCorrespondence(correspondence: MarkerCorrespondence): void {
@@ -96,7 +74,8 @@ export class AlignmentStore {
             return projectStore.getTrackByID(m.track.id) !== null;
         });
         this.correspondences = this.correspondences.filter(c => {
-            return this.markers.indexOf(c.marker1) >= 0 && this.markers.indexOf(c.marker2) >= 0;
+            return this.markers.some(m => m.equals(c.marker1)) &&
+                this.markers.some(m => m.equals(c.marker2));
         });
         this.alignAllTracks(true);
     }
@@ -177,10 +156,7 @@ export class AlignmentStore {
 
         const markerID2Marker = new Map<string, Marker>();
         for (const marker of state.markers) {
-            const newMarker = {
-                track: projectStore.getTrackByID(marker.trackId),
-                localTimestamp: marker.localTimestamp
-            };
+            const newMarker = new Marker(marker.localTimestamp, projectStore.getTrackByID(marker.trackId));
             this.markers.push(newMarker);
             markerID2Marker.set(marker.id, newMarker);
         }

@@ -20,14 +20,40 @@ const trackIdFactory = uniqueIdFactory('track');
 
 
 export class Marker {
-    public localTimestamp: number;          // The timestamp in the timeseries's time.
-    public track: Track;   // The timeseries of the marker.
+    constructor(
+        public localTimestamp: number,
+        public track: Track
+    ) { }
+
+    public equals(that: Marker): boolean {
+        return this.localTimestamp === that.localTimestamp &&
+            this.track.id === that.track.id;
+    }
 }
 
 
 export class MarkerCorrespondence {
-    public marker1: Marker;
-    public marker2: Marker;
+    constructor(public marker1: Marker, public marker2: Marker) { }
+
+    public compatibleWith(that: MarkerCorrespondence): boolean {
+        // Multiple connections.
+        if (this.marker1.equals(that.marker1) && this.marker2.track.id === that.marker2.track.id) { return false; }
+        if (this.marker1.equals(that.marker2) && this.marker2.track.id === that.marker1.track.id) { return false; }
+        if (this.marker2.equals(that.marker1) && this.marker1.track.id === that.marker2.track.id) { return false; }
+        if (this.marker2.equals(that.marker2) && this.marker1.track.id === that.marker1.track.id) { return false; }
+        // Crossings.
+        if (this.marker1.track.id === that.marker1.track.id && this.marker2.track.id === that.marker2.track.id &&
+            (this.marker1.localTimestamp - that.marker1.localTimestamp) *
+            (this.marker2.localTimestamp - that.marker2.localTimestamp) < 0) {
+            return false;
+        }
+        if (this.marker1.track.id === that.marker2.track.id && this.marker2.track.id === that.marker1.track.id &&
+            (this.marker1.localTimestamp - that.marker2.localTimestamp) *
+            (this.marker2.localTimestamp - that.marker1.localTimestamp) < 0) {
+            return false;
+        }
+        return true;
+    }
 }
 
 
@@ -82,7 +108,6 @@ export class Track {
                 [thisMarker, otherMarker] = [correspondence.marker2, correspondence.marker1];
             }
             if (!otherMarker) { return; } // not on this timeseries.
-            // if (tTrackIndex - 1 !== tracks.indexOf(otherMarker.timeSeries.track)) { return; } // must be the previous track.
             const otherScale = d3.scaleLinear()
                 .domain([otherMarker.track.timeSeries[0].timestampStart, otherMarker.track.timeSeries[0].timestampEnd])
                 .range([otherMarker.track.referenceStart, otherMarker.track.referenceEnd]);

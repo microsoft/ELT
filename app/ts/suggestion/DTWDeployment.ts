@@ -210,7 +210,7 @@ basic.forever(() => {
 `;
 
 
-//TODO: marked for removal
+//Deprecated: marked for removal
 export function generateArduinoCodeForDtwModel(sampleRate: number, arduinoSampleRate: number, references: ReferenceLabel[]): string {
     let index = 1;
     const lines = [];

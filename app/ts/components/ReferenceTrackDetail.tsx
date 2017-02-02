@@ -1,3 +1,4 @@
+import { Marker } from '../stores/dataStructures/alignment';
 import { PanZoomParameters } from '../stores/dataStructures/PanZoomParameters';
 import * as stores from '../stores/stores';
 import { startDragging } from '../stores/utils';
@@ -41,10 +42,7 @@ export class ReferenceTrackDetail extends React.Component<ReferenceTrackDetailPr
 
     private onClickTrack(t: number): void {
         if (this.props.mode === 'alignment') {
-            const marker = {
-                track: stores.projectStore.referenceTrack,
-                localTimestamp: t
-            };
+            const marker = new Marker(t, stores.projectStore.referenceTrack);
             stores.alignmentStore.addMarker(marker);
             stores.projectUiStore.selectMarker(marker);
         }
