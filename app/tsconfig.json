@@ -5,7 +5,7 @@
         "outDir": "js",
         "module": "commonjs",
         "moduleResolution": "node",
-        "target": "es5",
+        "target": "es5", // Note that ideally we should support es6, but this doesn't currently work with browserify. Revisit later.'
         "noImplicitAny": false,
         "jsx": "react",
         "sourceMap": true,
