@@ -245,7 +245,7 @@ export class LabelingStore {
         projectStore.labelingHistoryRecord();
         // Get visible suggestions.
         let visibleSuggestions = this._suggestedLabelsIndex.getRangesInRange(
-            projectUiStore.referenceTimeRange);
+            projectUiStore.referenceTrackTimeRange);
         // Filter out rejected suggestions.
         visibleSuggestions = visibleSuggestions.filter(x => x.state !== LabelConfirmationState.REJECTED);
         visibleSuggestions.forEach(label => {

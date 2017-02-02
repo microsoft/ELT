@@ -1,5 +1,4 @@
-// The video track in the app.
-
+import { PanZoomParameters } from '../stores/dataStructures/PanZoomParameters';
 import * as stores from '../stores/stores';
 import { startDragging } from '../stores/utils';
 import { TimeAxis } from './common/TimeAxis';
@@ -36,27 +35,29 @@ export class ReferenceTrackDetail extends React.Component<ReferenceTrackDetailPr
 
     private onMouseMove(event: React.MouseEvent<Element>): void {
         const x = this.getRelativePosition(event)[0];
-        const t = stores.projectUiStore.referencePanZoom.getTimeFromX(x);
+        const t = stores.projectUiStore.referenceTrackPanZoom.getTimeFromX(x);
         stores.projectUiStore.setReferenceTrackTimeCursor(t);
     }
 
     private onClickTrack(t: number): void {
         if (this.props.mode === 'alignment') {
-            stores.alignmentStore.addMarker({
+            const marker = {
                 track: stores.projectStore.referenceTrack,
                 localTimestamp: t
-            });
+            };
+            stores.alignmentStore.addMarker(marker);
+            stores.projectUiStore.selectMarker(marker);
         }
     }
 
     private onMouseDown(event: React.MouseEvent<Element>): void {
         const [x0, y0] = this.getRelativePosition(event);
-        const range = stores.projectUiStore.referenceTimeRange;
+        const range = stores.projectUiStore.referenceTrackTimeRange;
         const scaleXToTime = d3.scaleLinear()
             .domain([0, this.props.viewWidth])
             .range([range.timestampStart, range.timestampEnd]);
         const start0 = range.timestampStart;
-        const pps0 = stores.projectUiStore.referencePanZoom.pixelsPerSecond;
+        const pps0 = stores.projectUiStore.referenceTrackPanZoom.pixelsPerSecond;
         const t0 = scaleXToTime(x0);
         let moved = false;
         startDragging(
@@ -65,7 +66,8 @@ export class ReferenceTrackDetail extends React.Component<ReferenceTrackDetailPr
                 if (moved || Math.abs(y1 - y0) >= 3 || Math.abs(x1 - x0) >= 3) {
                     const t1 = scaleXToTime(x1);
                     const dt = t1 - t0;
-                    stores.projectUiStore.setReferenceTrackPanZoom(start0 - dt, pps0);
+                    stores.projectUiStore.setReferenceTrackPanZoom(
+                        new PanZoomParameters(start0 - dt, pps0));
                     moved = true;
                 }
             },
@@ -79,7 +81,7 @@ export class ReferenceTrackDetail extends React.Component<ReferenceTrackDetailPr
     public render(): JSX.Element {
         if (!stores.projectStore.referenceTrack) { return (<g></g>); }
 
-        const range = stores.projectUiStore.referenceTimeRange;
+        const range = stores.projectUiStore.referenceTrackTimeRange;
         const scale = d3.scaleLinear()
             .domain([range.timestampStart, range.timestampEnd])
             .range([0, this.props.viewWidth]);
@@ -94,17 +96,17 @@ export class ReferenceTrackDetail extends React.Component<ReferenceTrackDetailPr
                         track={stores.projectStore.referenceTrack}
                         viewWidth={this.props.viewWidth}
                         viewHeight={this.props.viewHeight}
-                        zoomTransform={stores.projectUiStore.referencePanZoom}
-                        timeCursor={stores.projectUiStore.referenceViewTimeCursor}
+                        zoomTransform={stores.projectUiStore.referenceTrackPanZoom}
+                        timeCursor={stores.projectUiStore.referenceTrackTimeCursor}
                         useMipmap={true}
-                        />
+                    />
                 </g>
 
                 <g
                     onMouseMove={event => this.onMouseMove(event)}
                     onMouseDown={event => this.onMouseDown(event)}
                     onWheel={event => this.onMouseWheel(event)}
-                    >
+                >
                     <rect ref='interactionRect'
                         x={0} y={0} width={this.props.viewWidth} height={this.props.viewHeight}
                         style={{
@@ -113,7 +115,7 @@ export class ReferenceTrackDetail extends React.Component<ReferenceTrackDetailPr
                             pointerEvents: 'all',
                             cursor: this.props.mode === 'labeling' ? '-webkit-grab' : 'crosshair'
                         }}
-                        />
+                    />
                 </g>
             </g>
         );

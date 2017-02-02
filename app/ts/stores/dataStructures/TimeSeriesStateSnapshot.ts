@@ -1,4 +1,4 @@
-import { alignmentUiStore, projectStore } from '../stores';
+import { projectStore, projectUiStore } from '../stores';
 
 
 // Take a snapshot from the alignmentStore, isolate all current rendering parameters.
@@ -17,7 +17,7 @@ export class TimeSeriesStateSnapshot {
         this.data = new Map<string, TimeSeriesStateSnapshotInfo>();
         // Take the snapshot.
         projectStore.tracks.forEach(track => {
-            const state = alignmentUiStore.getPanZoomParameters(track);
+            const state = projectUiStore.getTrackPanZoom(track);
             this.data.set(track.id, {
                 referenceStart: track.referenceStart,
                 referenceEnd: track.referenceEnd,

@@ -4,6 +4,7 @@
 
 import { Marker, Track } from '../../stores/dataStructures/alignment';
 import { LayoutParameters } from '../../stores/dataStructures/LayoutParameters';
+import { PanZoomParameters } from '../../stores/dataStructures/PanZoomParameters';
 import { KeyCode } from '../../stores/dataStructures/types';
 import * as stores from '../../stores/stores';
 import { startDragging } from '../../stores/utils';
@@ -66,10 +67,10 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
     private onKeyDown(event: KeyboardEvent): void {
         if (event.srcElement === document.body) {
             if (event.keyCode === KeyCode.BACKSPACE || event.keyCode === KeyCode.DELETE) {
-                if (stores.alignmentUiStore.selectedMarker) {
-                    stores.alignmentStore.deleteMarker(stores.alignmentUiStore.selectedMarker);
-                } else if (stores.alignmentUiStore.selectedCorrespondence) {
-                    stores.alignmentStore.deleteMarkerCorrespondence(stores.alignmentUiStore.selectedCorrespondence);
+                if (stores.projectUiStore.selectedMarker) {
+                    stores.alignmentStore.deleteMarker(stores.projectUiStore.selectedMarker);
+                } else if (stores.projectUiStore.selectedCorrespondence) {
+                    stores.alignmentStore.deleteMarkerCorrespondence(stores.projectUiStore.selectedCorrespondence);
                 }
             }
         }
@@ -90,7 +91,7 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
                 .range([track.timeSeries[0].timestampStart, track.timeSeries[0].timestampEnd]);
             stores.projectUiStore.setReferenceTrackTimeCursor(scale.invert(t));
         } else {
-            stores.alignmentUiStore.setTimeCursor(track, t);
+            stores.projectUiStore.setTimeCursor(track, t);
         }
     }
 
@@ -99,19 +100,20 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
         if (t < track.timeSeries[0].timestampStart || t > track.timeSeries[0].timestampEnd) { return; }
         const x0 = event.clientX;
         let moved = false;
-        const panZoom = stores.alignmentUiStore.getPanZoomParameters(track);
-        const referenceRangeStart = stores.projectUiStore.referencePanZoom.rangeStart;
+        const rangeStart = stores.projectUiStore.getTrackPanZoom(track).rangeStart;
+        const referenceRangeStart = stores.projectUiStore.referenceTrackPanZoom.rangeStart;
         startDragging(
             mouseEvent => {
                 const x1 = mouseEvent.clientX;
                 if (moved || Math.abs(x1 - x0) >= 3) {
                     moved = true;
                     if (track.isAlignedToReferenceTrack) {
-                        const dt = (x1 - x0) / stores.projectUiStore.referencePanZoom.pixelsPerSecond;
-                        stores.projectUiStore.setReferenceTrackPanZoom(referenceRangeStart - dt, null);
+                        const dt = (x1 - x0) / stores.projectUiStore.referenceTrackPanZoom.pixelsPerSecond;
+                        stores.projectUiStore.setReferenceTrackPanZoom(
+                            new PanZoomParameters(referenceRangeStart - dt, null));
                     } else {
                         const dt = (x1 - x0) / pps;
-                        stores.alignmentUiStore.setBlockPanZoom(track, panZoom.rangeStart - dt, panZoom.pixelsPerSecond);
+                        stores.projectUiStore.setTrackPanZoom(track, new PanZoomParameters(rangeStart - dt, pps));
                     }
                 }
             },
@@ -119,16 +121,17 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
                 if (!moved) {
                     const marker: Marker = { track: track, localTimestamp: t };
                     stores.alignmentStore.addMarker(marker);
+                    stores.projectUiStore.selectMarker(marker);
                 }
             });
     }
 
     private onTrackMouseLeave(event: React.MouseEvent<Element>, track: Track, t: number, pps: number): void {
-        stores.alignmentUiStore.setTimeCursor(track, null);
+        stores.projectUiStore.setTimeCursor(track, null);
     }
 
     private onTrackMouseEnter(event: React.MouseEvent<Element>, track: Track, t: number, pps: number): void {
-        stores.alignmentUiStore.setTimeCursor(track, t);
+        stores.projectUiStore.setTimeCursor(track, t);
     }
 
 
@@ -140,14 +143,14 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
             const scale = d3.scaleLinear()
                 .domain([track.referenceStart, track.referenceEnd])
                 .range([track.timeSeries[0].timestampStart, track.timeSeries[0].timestampEnd]);
-            const t = stores.alignmentUiStore.getTimeCursor(track);
+            const t = stores.projectUiStore.getTimeCursor(track);
             if (t === null) { return; }
             const { rangeStart: oldStart, pixelsPerSecond: oldPPS } =
-                stores.alignmentUiStore.getPanZoomParameters(track);
+                stores.projectUiStore.getTrackPanZoom(track);
             const k = Math.exp(-deltaY / 1000);
             const newPPS = oldPPS * k;
             const newStart = oldStart / k + scale.invert(t) * (1 - 1 / k);
-            stores.alignmentUiStore.setBlockPanZoom(track, newStart, newPPS);
+            stores.projectUiStore.setTrackPanZoom(track, new PanZoomParameters(newStart, newPPS));
         }
     }
 
@@ -175,7 +178,7 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
 
     private startCreatingCorrespondence(marker: Marker, knob: 'top' | 'bottom', event: React.MouseEvent<Element>): void {
         // Select the marker first.
-        stores.alignmentUiStore.selectMarker(marker);
+        stores.projectUiStore.selectMarker(marker);
         // Enter start creating correspondence state.
         this.setState({
             isCreatingCorrespondence: true,
@@ -223,7 +226,8 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
                 });
 
                 if (lastCandidate !== marker && lastCandidate !== null) {
-                    stores.alignmentStore.addMarkerCorrespondence(marker, lastCandidate);
+                    const corr = stores.alignmentStore.addMarkerCorrespondence(marker, lastCandidate);
+                    stores.projectUiStore.selectMarkerCorrespondence(corr);
                 }
             });
     }
@@ -240,7 +244,7 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
         const track = marker.track;
         const trackLayout = layoutMap.get(track.id);
         if (!trackLayout) { return null; }
-        const alignmentState = stores.alignmentUiStore.getPanZoomParameters(track);
+        const alignmentState = stores.projectUiStore.getTrackPanZoom(track);
         const [rangeStart, pixelsPerSecond] = [alignmentState.rangeStart, alignmentState.pixelsPerSecond];
         // scale: Reference -> Pixel.
         const sReferenceToPixel = d3.scaleLinear()
@@ -298,7 +302,7 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
             const trackLayout = layoutMap.get(track.id);
             if (!trackLayout) { return null; }
             let timeAxis = null;
-            const zoom = stores.alignmentUiStore.getPanZoomParameters(track);
+            const zoom = stores.projectUiStore.getTrackPanZoom(track);
             if (!track.isAlignedToReferenceTrack) {
                 const scale = d3.scaleLinear()
                     .domain([zoom.rangeStart, zoom.rangeStart + this.props.viewWidth / zoom.pixelsPerSecond])
@@ -314,7 +318,7 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
                         track={track}
                         viewWidth={this.props.viewWidth}
                         viewHeight={trackLayout.height}
-                        timeCursor={stores.alignmentUiStore.getTimeCursor(track)}
+                        timeCursor={stores.projectUiStore.getTimeCursor(track)}
                         onMouseMove={this.onTrackMouseMove}
                         onMouseDown={this.onTrackMouseDown}
                         onMouseEnter={this.onTrackMouseEnter}
@@ -336,7 +340,7 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
                             width={20} height={20}
                             text={track.minimized ? 'plus' : 'minus'}
                             onClick={event =>
-                                stores.alignmentUiStore.setTrackMinimized(track, !track.minimized)} />
+                                stores.projectUiStore.setTrackMinimized(track, !track.minimized)} />
                     </g>
                 </g>
             );
@@ -351,7 +355,7 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
             if (!l1 || !l2) { return; }
             const y1 = l1.y1 < l2.y0 ? l1.y1 : l1.y0;
             const y2 = l1.y1 < l2.y0 ? l2.y0 : l2.y1;
-            const isSelected = stores.alignmentUiStore.selectedCorrespondence === correspondence;
+            const isSelected = stores.projectUiStore.selectedCorrespondence === correspondence;
             return (
                 <g className={`marker-correspondence ${isSelected ? 'selected' : ''}`} key={`correspondence-${index}`}>
                     <line key={`correspondence-${index}`}
@@ -361,7 +365,7 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
                         key={`correspondence-handler-${index}`}
                         x1={l1.x} x2={l2.x} y1={y1} y2={y2}
                         onClick={() =>
-                            stores.alignmentUiStore.selectMarkerCorrespondence(correspondence)}
+                            stores.projectUiStore.selectMarkerCorrespondence(correspondence)}
                     />
                 </g>
             );
@@ -379,7 +383,7 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
             const layout = this.getMarkerLayout(marker, layoutMap);
             if (!layout) { return; }
             const { x, y0, y1, pps } = layout;
-            const isSelected = stores.alignmentUiStore.selectedMarker === marker;
+            const isSelected = stores.projectUiStore.selectedMarker === marker;
             markers.push((
                 <g
                     key={`marker-${markerIndex}`}
@@ -404,11 +408,11 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
                             if (stores.projectStore.isReferenceTrack(marker.track)) {
                                 stores.projectUiStore.setReferenceTrackTimeCursor(marker.localTimestamp);
                             } else {
-                                stores.alignmentUiStore.setTimeCursor(marker.track, marker.localTimestamp);
+                                stores.projectUiStore.setTimeCursor(marker.track, marker.localTimestamp);
                             }
                         }}
                         onMouseDown={event => {
-                            stores.alignmentUiStore.selectMarker(marker);
+                            stores.projectUiStore.selectMarker(marker);
                             let isFirstUpdate = true;
                             startDragging(
                                 (moveEvent: MouseEvent) => {
@@ -419,7 +423,7 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
                                     if (stores.projectStore.isReferenceTrack(marker.track)) {
                                         stores.projectUiStore.setReferenceTrackTimeCursor(newT);
                                     } else {
-                                        stores.alignmentUiStore.setTimeCursor(marker.track, newT);
+                                        stores.projectUiStore.setTimeCursor(marker.track, newT);
                                     }
                                 },
                                 () => { stores.alignmentStore.updateMarker(marker, marker.localTimestamp, true, false); }

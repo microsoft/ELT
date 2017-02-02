@@ -6,6 +6,7 @@ import { loadMultipleSensorTimeSeriesFromFile, loadRawSensorTimeSeriesFromFile, 
     from './dataStructures/dataset';
 import { DeferredCallbacks } from './dataStructures/DeferredCallbacks';
 import { HistoryTracker } from './dataStructures/HistoryTracker';
+import { PanZoomParameters } from './dataStructures/PanZoomParameters';
 import { SavedAlignmentSnapshot, SavedLabelingSnapshot, SavedProject, SavedTrack }
     from './dataStructures/project';
 import { alignmentStore, labelingStore, projectUiStore } from './stores';
@@ -176,8 +177,8 @@ export class ProjectStore {
             labeling: labelingStore.saveState(),
             ui: {
                 currentTab: projectUiStore.currentTab,
-                referenceViewStart: projectUiStore.referencePanZoom.rangeStart,
-                referenceViewPPS: projectUiStore.referencePanZoom.pixelsPerSecond
+                referenceViewStart: projectUiStore.referenceTrackPanZoom.rangeStart,
+                referenceViewPPS: projectUiStore.referenceTrackPanZoom.pixelsPerSecond
             }
         };
     }
@@ -282,7 +283,8 @@ export class ProjectStore {
                 alignmentStore.loadState(project.alignment);
                 labelingStore.loadState(project.labeling);
 
-                projectUiStore.setProjectReferenceViewZooming(project.ui.referenceViewStart, project.ui.referenceViewPPS);
+                projectUiStore.setReferenceTrackPanZoom(
+                    new PanZoomParameters(project.ui.referenceViewStart, project.ui.referenceViewPPS));
                 if (project.ui.currentTab === 'file') {
                     projectUiStore.currentTab = 'alignment';
                 } else {
@@ -300,7 +302,7 @@ export class ProjectStore {
         this.tracks = [];
         alignmentStore.reset();
         labelingStore.reset();
-        projectUiStore.setProjectReferenceViewZooming(0, 1);
+        projectUiStore.setReferenceTrackPanZoom(new PanZoomParameters(0, 1));
         projectUiStore.currentTab = 'alignment';
     }
 

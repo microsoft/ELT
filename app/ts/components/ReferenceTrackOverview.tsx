@@ -1,8 +1,8 @@
 // The 'Overview' view that is shared by both alignment and labeling.
 
 import { LayoutParameters } from '../stores/dataStructures/LayoutParameters';
+import { PanZoomParameters } from '../stores/dataStructures/PanZoomParameters';
 import { KeyCode } from '../stores/dataStructures/types';
-import { PanZoomParameters } from '../stores/ProjectUiStore';
 import * as stores from '../stores/stores';
 import { makePathDFromPoints, startDragging } from '../stores/utils';
 import { TimeAxis } from './common/TimeAxis';
@@ -54,8 +54,9 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
         const x = this.getRelativePosition(event)[0];
         const t = x / this.props.viewWidth * (stores.projectStore.referenceTimestampEnd - stores.projectStore.referenceTimestampStart) +
             stores.projectStore.referenceTimestampStart;
-        const timeWindow = stores.projectUiStore.referenceViewDuration;
-        stores.projectUiStore.setReferenceTrackPanZoom(t - timeWindow / 2, null, true);
+        const timeWindow = stores.projectUiStore.referenceTrackDuration;
+        stores.projectUiStore.setReferenceTrackPanZoom(
+            new PanZoomParameters(t - timeWindow / 2, null), true);
     }
 
     public componentDidMount(): void {
@@ -70,9 +71,11 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
         const newStart = Math.min(t0, t1);
         const newEnd = Math.max(t0, t1);
         if (mode === 'start' || mode === 'end') {
-            stores.projectUiStore.setReferenceTrackPanZoom(newStart, this.props.viewWidth / (newEnd - newStart));
+            stores.projectUiStore.setReferenceTrackPanZoom(
+                new PanZoomParameters(newStart, this.props.viewWidth / (newEnd - newStart)));
         } else {
-            stores.projectUiStore.setReferenceTrackPanZoom(newStart);
+            stores.projectUiStore.setReferenceTrackPanZoom(
+                new PanZoomParameters(newStart, 0));
         }
     }
 
@@ -81,9 +84,9 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
         const start = stores.projectStore.referenceTimestampStart;
         const end = stores.projectStore.referenceTimestampEnd;
         const scaling = (end - start) / this.props.viewWidth;
-        const start0 = stores.projectUiStore.referencePanZoom.rangeStart;
-        const end0 = stores.projectUiStore.referencePanZoom.rangeStart +
-            this.props.viewWidth / stores.projectUiStore.referencePanZoom.pixelsPerSecond;
+        const start0 = stores.projectUiStore.referenceTrackPanZoom.rangeStart;
+        const end0 = stores.projectUiStore.referenceTrackPanZoom.rangeStart +
+            this.props.viewWidth / stores.projectUiStore.referenceTrackPanZoom.pixelsPerSecond;
         startDragging((mouseEvent: MouseEvent) => {
             const x1 = mouseEvent.screenX;
             let offset = (x1 - x0) * scaling;
@@ -140,11 +143,11 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
         const labelsY0 = videoY1;
         const labelsY1 = viewHeight;
 
-        const rangeX0 = xScale(stores.projectUiStore.referencePanZoom.rangeStart);
-        const rangeX1 = xScale(stores.projectUiStore.referencePanZoom.rangeStart +
-            this.props.viewWidth / stores.projectUiStore.referencePanZoom.pixelsPerSecond);
+        const panZoom = stores.projectUiStore.referenceTrackPanZoom;
+        const rangeX0 = xScale(panZoom.rangeStart);
+        const rangeX1 = xScale(panZoom.rangeStart + this.props.viewWidth / panZoom.pixelsPerSecond);
 
-        const cursorX = xScale(stores.projectUiStore.referenceViewTimeCursor);
+        const cursorX = xScale(stores.projectUiStore.referenceTrackTimeCursor);
         const globalPanZoom = new PanZoomParameters(0, this.props.viewWidth / (end - start));
         return (
             <g className='labeling-overview-view'>

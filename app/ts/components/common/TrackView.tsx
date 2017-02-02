@@ -3,7 +3,7 @@
 import { Track } from '../../stores/dataStructures/alignment';
 import { SensorTimeSeries, TimeSeriesKind, VideoTimeSeries } from '../../stores/dataStructures/dataset';
 import { SignalsViewMode } from '../../stores/dataStructures/labeling';
-import { PanZoomParameters } from '../../stores/ProjectUiStore';
+import { PanZoomParameters } from '../../stores/dataStructures/PanZoomParameters';
 import { AutocorrelogramPlot } from '../common/AutocorrelogramPlot';
 import { SensorRangePlot } from '../common/SensorPlot';
 import { VideoFrame, VideoRangePlot } from '../common/VideoPlot';

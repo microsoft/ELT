@@ -1,9 +1,7 @@
 import { Marker, MarkerCorrespondence, Track } from './dataStructures/alignment';
 import { SavedAlignmentState, SavedMarker, SavedMarkerCorrespondence } from './dataStructures/project';
 import { TimeSeriesStateSnapshot } from './dataStructures/TimeSeriesStateSnapshot';
-import { ProjectStore } from './ProjectStore';
-import { ProjectUiStore } from './ProjectUiStore';
-import { alignmentUiStore, projectStore } from './stores';
+import { projectStore } from './stores';
 import { action, computed, observable, reaction } from 'mobx';
 
 
@@ -21,7 +19,7 @@ export class AlignmentStore {
     // Correspondences between markers.
     @observable public correspondences: MarkerCorrespondence[];
 
-    constructor(alignmentLabelingStore: ProjectStore, alignmentLabelingUiStore: ProjectUiStore) {
+    constructor() {
         this.markers = [];
         this.correspondences = [];
 
@@ -34,7 +32,6 @@ export class AlignmentStore {
     @action public addMarker(marker: Marker): void {
         projectStore.alignmentHistoryRecord();
         this.markers.push(marker);
-        alignmentUiStore.selectedMarker = marker;
     }
 
     @action public updateMarker(marker: Marker, newLocalTimestamp: number, recompute: boolean = true, recordState: boolean = true): void {
@@ -59,7 +56,7 @@ export class AlignmentStore {
         }
     }
 
-    @action public addMarkerCorrespondence(marker1: Marker, marker2: Marker): void {
+    @action public addMarkerCorrespondence(marker1: Marker, marker2: Marker): MarkerCorrespondence {
         projectStore.alignmentHistoryRecord();
         // Remove all conflicting correspondence.
         this.correspondences = this.correspondences.filter(c => {
@@ -86,8 +83,8 @@ export class AlignmentStore {
 
         const corr = { marker1: marker1, marker2: marker2 };
         this.correspondences.push(corr);
-        alignmentUiStore.selectedCorrespondence = corr;
         this.alignAllTracks(true);
+        return corr;
     }
 
     @action public deleteMarkerCorrespondence(correspondence: MarkerCorrespondence): void {
@@ -149,7 +146,6 @@ export class AlignmentStore {
         projectStore.tracks.forEach(track => {
             track.align(this.correspondences);
         });
-        alignmentUiStore.updatePanZoomBasedOnAlignment(animate);
     }
 
     // Save the alignment state.

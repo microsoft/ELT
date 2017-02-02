@@ -23,7 +23,7 @@ export class LabelingToolbar extends React.Component<LabelingToolbarProps, {}> {
     };
 
     public render(): JSX.Element {
-        const timeCursor = stores.projectUiStore.referenceViewTimeCursor;
+        const timeCursor = stores.projectUiStore.referenceTrackTimeCursor;
         return (
             <div className='labeling-toolbar-view' style={{
                 position: 'absolute',

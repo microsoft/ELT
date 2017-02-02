@@ -70,7 +70,7 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
     }
 
     private getTimeFromX(x: number): number {
-        return stores.projectUiStore.referencePanZoom.getTimeFromX(x);
+        return stores.projectUiStore.referenceTrackPanZoom.getTimeFromX(x);
     }
 
     private onDoubleClickChangePointDetection(event: React.MouseEvent<Element>): void {
@@ -144,7 +144,7 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
                     if (isInteractionRect && (upEvent as MouseEvent).shiftKey) {
                         const labels = stores.labelingStore.getLabelsInRange(
                             {
-                                timestampStart: stores.projectUiStore.referenceTimeRange.timestampStart,
+                                timestampStart: stores.projectUiStore.referenceTrackTimeRange.timestampStart,
                                 timestampEnd: t0
                             });
                         if (labels.length > 0) {
@@ -196,8 +196,8 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
         const timeCursorY0 = timeAxisY1;
         const timeCursorY1 = labelAreaY1;
 
-        const start = stores.projectUiStore.referencePanZoom.rangeStart;
-        const pps = stores.projectUiStore.referencePanZoom.pixelsPerSecond;
+        const start = stores.projectUiStore.referenceTrackPanZoom.rangeStart;
+        const pps = stores.projectUiStore.referenceTrackPanZoom.pixelsPerSecond;
         // The time scale.
         const scale = d3.scaleLinear()
             .domain([start, start + this.props.viewWidth / pps])
@@ -205,7 +205,7 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
 
         // Cursor
         let gCursor = null;
-        const timeCursor = stores.projectUiStore.referenceViewTimeCursor;
+        const timeCursor = stores.projectUiStore.referenceTrackTimeCursor;
         if (timeCursor) {
             gCursor = (
                 <g className='time-cursor'>
@@ -281,7 +281,7 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
                                 transform={`translate(0, ${sensorAreaY0 + tracksViewTrackSpacing * index})`}>
                                 <TrackView
                                     track={track}
-                                    zoomTransform={stores.projectUiStore.referencePanZoom}
+                                    zoomTransform={stores.projectUiStore.referenceTrackPanZoom}
                                     viewHeight={trackViewTrackHeight}
                                     viewWidth={this.props.viewWidth}
                                     colorScale={LayoutParameters.seriesColorScale}
@@ -314,7 +314,7 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
                             ) : null
                         }
                         <LabelsRangePlot
-                            panZoom={stores.projectUiStore.referencePanZoom}
+                            panZoom={stores.projectUiStore.referenceTrackPanZoom}
                             plotWidth={this.props.viewWidth}
                             plotHeight={labelAreaY1 - labelAreaY0}
                             labelKind={LabelKind.Detailed}
