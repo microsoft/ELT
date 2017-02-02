@@ -8,9 +8,6 @@ import { DtwAlgorithm } from './worker/DtwAlgorithm';
 import { EventEmitter } from 'events';
 
 
-
-
-
 export abstract class LabelingSuggestionModelBuilder {
     public abstract buildModelAsync(
         dataset: Dataset,

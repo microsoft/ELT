@@ -4,12 +4,6 @@ import { TimeSeriesStateSnapshot } from './dataStructures/TimeSeriesStateSnapsho
 import { projectStore } from './stores';
 import { action, computed, observable, reaction } from 'mobx';
 
-
-
-
-
-
-
 // Store alignment markers and correspondences (connections between markers).
 export class AlignmentStore {
 

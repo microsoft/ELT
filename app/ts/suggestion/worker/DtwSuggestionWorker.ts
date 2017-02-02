@@ -8,7 +8,6 @@ import { DtwAlgorithm } from '../../suggestion/worker/DtwAlgorithm';
 import { ModelBuildMessage, ModelMessage, SetDatasetMessage } from './SuggestionWorkerMessage';
 import { EventEmitter } from 'events';
 
-
 export class DtwSuggestionWorker extends EventEmitter {
     private _dataset: Dataset;
     private _currentModelID: number;

@@ -15,7 +15,6 @@ import * as d3 from 'd3';
 import { observer } from 'mobx-react';
 import * as React from 'react';
 
-
 export interface TrackLayout {
     y0: number;
     y1: number;
