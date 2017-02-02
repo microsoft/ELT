@@ -1,10 +1,7 @@
 import { Marker, MarkerCorrespondence, Track } from './dataStructures/alignment';
 import { SavedAlignmentState, SavedMarker, SavedMarkerCorrespondence } from './dataStructures/project';
 import { TimeSeriesStateSnapshot } from './dataStructures/TimeSeriesStateSnapshot';
-import { ProjectStore } from './ProjectStore';
-import { ProjectUiStore } from './ProjectUiStore';
-import { alignmentUiStore, projectStore } from './stores';
-import { TransitionController } from './utils';
+import { projectStore } from './stores';
 import { action, computed, observable, reaction } from 'mobx';
 
 // Store alignment markers and correspondences (connections between markers).
@@ -16,14 +13,9 @@ export class AlignmentStore {
     // Correspondences between markers.
     @observable public correspondences: MarkerCorrespondence[];
 
-    // Manages alignment transitions:
-    // IDEA: move the transition handling to the view, handle transition for track add/remove.
-    private _alignmentTransitionController: TransitionController;
-
-    constructor(alignmentLabelingStore: ProjectStore, alignmentLabelingUiStore: ProjectUiStore) {
+    constructor() {
         this.markers = [];
         this.correspondences = [];
-        this._alignmentTransitionController = null;
 
         reaction(
             () => projectStore.tracks,
@@ -34,7 +26,6 @@ export class AlignmentStore {
     @action public addMarker(marker: Marker): void {
         projectStore.alignmentHistoryRecord();
         this.markers.push(marker);
-        alignmentUiStore.selectedMarker = marker;
     }
 
     @action public updateMarker(marker: Marker, newLocalTimestamp: number, recompute: boolean = true, recordState: boolean = true): void {
@@ -59,7 +50,7 @@ export class AlignmentStore {
         }
     }
 
-    @action public addMarkerCorrespondence(marker1: Marker, marker2: Marker): void {
+    @action public addMarkerCorrespondence(marker1: Marker, marker2: Marker): MarkerCorrespondence {
         projectStore.alignmentHistoryRecord();
         // Remove all conflicting correspondence.
         this.correspondences = this.correspondences.filter(c => {
@@ -86,8 +77,8 @@ export class AlignmentStore {
 
         const corr = { marker1: marker1, marker2: marker2 };
         this.correspondences.push(corr);
-        alignmentUiStore.selectedCorrespondence = corr;
         this.alignAllTracks(true);
+        return corr;
     }
 
     @action public deleteMarkerCorrespondence(correspondence: MarkerCorrespondence): void {
@@ -101,15 +92,12 @@ export class AlignmentStore {
 
     // On tracks changed.
     private onTracksChanged(): void {
-        this.stopAnimation();
-
         this.markers = this.markers.filter(m => {
             return projectStore.getTrackByID(m.track.id) !== null;
         });
         this.correspondences = this.correspondences.filter(c => {
             return this.markers.indexOf(c.marker1) >= 0 && this.markers.indexOf(c.marker2) >= 0;
         });
-
         this.alignAllTracks(true);
     }
 
@@ -147,21 +135,11 @@ export class AlignmentStore {
     }
 
 
-    // Terminate current animation.
-    public stopAnimation(): void {
-        if (this._alignmentTransitionController) {
-            this._alignmentTransitionController.terminate();
-            this._alignmentTransitionController = null;
-        }
-    }
-
     public alignAllTracks(animate: boolean = false): void {
         if (this.correspondences.length === 0) { return; }
-        this.stopAnimation();
         projectStore.tracks.forEach(track => {
             track.align(this.correspondences);
         });
-        alignmentUiStore.updatePanZoomBasedOnAlignment();
     }
 
     // Save the alignment state.
@@ -194,8 +172,6 @@ export class AlignmentStore {
 
     // Load from a saved alignment state.
     public loadState(state: SavedAlignmentState): void {
-        this.stopAnimation();
-
         this.markers = [];
         this.correspondences = [];
 
@@ -224,11 +200,8 @@ export class AlignmentStore {
     }
 
     public reset(): void {
-        this.stopAnimation();
-
         this.markers = [];
         this.correspondences = [];
-
         this.alignAllTracks(false);
     }
 }

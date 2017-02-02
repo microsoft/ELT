@@ -38,7 +38,7 @@ export class LabelingSuggestionGenerator {
             () => this.onLabelsChanged(),
             { name: 'LabelingSuggestionGenerator.onLabelsChanged' });
         reaction(
-            () => alignmentLabelingUiStore.referencePanZoom,
+            () => alignmentLabelingUiStore.referenceTrackPanZoom,
             () => this.runSuggestionsZoomChanged(),
             { name: 'LabelingSuggestionGenerator.runSuggestionsZoomChanged' });
         reaction(
@@ -133,7 +133,7 @@ export class LabelingSuggestionGenerator {
         const suggestionRange = labelingUiStore.suggestionLogic.calculateSuggestionRange({
             dataset: null /* TODO */,
             labels: labelingStore.labels,
-            detailedViewRange: projectUiStore.referenceTimeRange
+            detailedViewRange: projectUiStore.referenceTrackTimeRange
         });
 
         // Start computing suggestions.

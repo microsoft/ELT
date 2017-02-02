@@ -1,7 +1,7 @@
 // LabelsRangePlot: Render labels efficiently.
 
 import { Label, LabelConfirmationState } from '../../stores/dataStructures/labeling';
-import { PanZoomParameters } from '../../stores/ProjectUiStore';
+import { PanZoomParameters } from '../../stores/dataStructures/PanZoomParameters';
 import * as stores from '../../stores/stores';
 import { getUniqueIDForObject } from '../../stores/utils';
 import { LabelKind, LabelPlot } from './LabelPlot';
