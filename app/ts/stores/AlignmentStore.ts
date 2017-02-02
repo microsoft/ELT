@@ -102,7 +102,7 @@ export class AlignmentStore {
     }
 
     // Find all tracks that are connected with other tracks (including the reference track).
-    public getConnectedTracks(track: Track): Set<Track> {
+    public getTrackBlock(track: Track): Set<Track> {
         const connected = new Set<Track>();
         connected.add(track);
         let added = true;
@@ -126,7 +126,7 @@ export class AlignmentStore {
         const visitedSeries = new Set<Track>();
         for (const track of projectStore.tracks) {
             if (!visitedSeries.has(track)) {
-                const block = this.getConnectedTracks(track);
+                const block = this.getTrackBlock(track);
                 blocks.push(block);
                 block.forEach(s => visitedSeries.add(s));
             }
