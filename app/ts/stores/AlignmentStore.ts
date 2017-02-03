@@ -44,7 +44,7 @@ export class AlignmentStore {
         if (index >= 0) {
             this.markers.splice(index, 1);
             this.correspondences = this.correspondences.filter(c =>
-                c.marker1.equals(marker) && c.marker2.equals(marker));
+                !c.marker1.equals(marker) && !c.marker2.equals(marker));
             this.alignAllTracks(true);
         }
     }
