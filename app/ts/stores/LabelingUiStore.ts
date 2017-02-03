@@ -11,19 +11,15 @@ export class LabelingUiStore {
     @observable public currentClass: string;
     @observable public signalsViewMode: SignalsViewMode;
 
-    private _isSuggesting: boolean;
-    private _suggestionTimestampStart: number;
-    private _suggestionTimestampCompleted: number;
-    private _suggestionTimestampEnd: number;
-    private _suggestionConfidenceHistogram: number[];
+    @observable public isSuggesting: boolean;
+    @observable public suggestionTimestampStart: number;
+    @observable public suggestionTimestampCompleted: number;
+    @observable public suggestionConfidenceHistogram: number[];
 
     @observable public suggestionEnabled: boolean;
     @observable public suggestionConfidenceThreshold: number;
-    private _changePointsEnabled: boolean;
-
     @observable public suggestionLogic: LabelingSuggestionLogic;
 
-    private _microAdjusterType: string;
 
     constructor(labelingStore: LabelingStore) {
 
@@ -34,29 +30,18 @@ export class LabelingUiStore {
 
         this.suggestionEnabled = true;
         this.suggestionLogic = getLabelingSuggestionLogic(LabelingSuggestionLogicType.CURRENT_VIEW);
-        this._changePointsEnabled = true;
         this.suggestionConfidenceThreshold = 0.2;
-        this._suggestionConfidenceHistogram = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        this.suggestionConfidenceHistogram = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
         const nonIgnoreClases = labelingStore.classes.filter(x => x !== 'IGNORE');
         this.currentClass = nonIgnoreClases.length > 0 ? nonIgnoreClases[0] : null;
 
-        this._isSuggesting = false;
-        this._suggestionTimestampStart = null;
-        this._suggestionTimestampCompleted = null;
-        this._suggestionTimestampEnd = null;
+        this.isSuggesting = false;
+        this.suggestionTimestampStart = null;
+        this.suggestionTimestampCompleted = null;
 
-        this._microAdjusterType = 'frame-drag';
     }
 
-    @computed public get suggestionProgress(): number[] {
-        if (!this._isSuggesting) { return null; }
-        return [this._suggestionTimestampStart, this._suggestionTimestampCompleted, this._suggestionTimestampEnd];
-    }
-
-    @computed public get suggestionConfidenceHistogram(): number[] {
-        return this._suggestionConfidenceHistogram;
-    }
 
     @action public selectLabel(label: Label, ctrlSelect: boolean = false, shiftSelect: boolean = false): void {
         const previous_selected_labels: Label[] = [];
@@ -87,12 +72,11 @@ export class LabelingUiStore {
         endTime: number,
         confidenceHistogram?: number[]): void {
 
-        this._isSuggesting = suggesting;
-        this._suggestionTimestampStart = timestampStart;
-        this._suggestionTimestampCompleted = timestampCompleted;
-        this._suggestionTimestampEnd = endTime;
+        this.isSuggesting = suggesting;
+        this.suggestionTimestampStart = timestampStart;
+        this.suggestionTimestampCompleted = timestampCompleted;
         if (confidenceHistogram) {
-            this._suggestionConfidenceHistogram = confidenceHistogram;
+            this.suggestionConfidenceHistogram = confidenceHistogram;
         }
     }
 

@@ -235,14 +235,13 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
         }
 
         let suggestionProgress = null;
-        if (stores.labelingUiStore.suggestionProgress) {
-            const [tStart, tCompleted] = stores.labelingUiStore.suggestionProgress;
+        if (stores.labelingUiStore.isSuggesting) {
             suggestionProgress = (
                 <g>
                     <rect
-                        x={scale(tStart)}
+                        x={scale(stores.labelingUiStore.suggestionTimestampStart)}
                         y={timeAxisY1 - 3}
-                        width={scale(tCompleted) - scale(tStart)}
+                        width={scale(stores.labelingUiStore.suggestionTimestampCompleted) - scale(stores.labelingUiStore.suggestionTimestampStart)}
                         height={3}
                         style={{ fill: '#AAA' }}
                     />
