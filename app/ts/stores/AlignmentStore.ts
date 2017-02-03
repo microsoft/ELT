@@ -161,10 +161,10 @@ export class AlignmentStore {
             markerID2Marker.set(marker.id, newMarker);
         }
         for (const c of state.correspondences) {
-            this.correspondences.push({
-                marker1: markerID2Marker.get(c.marker1ID),
-                marker2: markerID2Marker.get(c.marker2ID)
-            });
+            this.correspondences.push(new MarkerCorrespondence(
+                markerID2Marker.get(c.marker1ID),
+                markerID2Marker.get(c.marker2ID)
+            ));
         }
         Object.keys(state.timeSeriesStates).forEach(id => {
             const tsState = state.timeSeriesStates[id];
