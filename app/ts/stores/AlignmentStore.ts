@@ -44,7 +44,7 @@ export class AlignmentStore {
         if (index >= 0) {
             this.markers.splice(index, 1);
             this.correspondences = this.correspondences.filter(c =>
-                c.marker1.equals(marker) && c.marker2.equals(marker));
+                !c.marker1.equals(marker) && !c.marker2.equals(marker));
             this.alignAllTracks(true);
         }
     }
@@ -161,10 +161,10 @@ export class AlignmentStore {
             markerID2Marker.set(marker.id, newMarker);
         }
         for (const c of state.correspondences) {
-            this.correspondences.push({
-                marker1: markerID2Marker.get(c.marker1ID),
-                marker2: markerID2Marker.get(c.marker2ID)
-            });
+            this.correspondences.push(new MarkerCorrespondence(
+                markerID2Marker.get(c.marker1ID),
+                markerID2Marker.get(c.marker2ID)
+            ));
         }
         Object.keys(state.timeSeriesStates).forEach(id => {
             const tsState = state.timeSeriesStates[id];
