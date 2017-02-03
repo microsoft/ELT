@@ -124,6 +124,13 @@ export class ProjectUiStore {
     @action
     public setReferenceTrackTimeCursor(timeCursor: number): void {
         this.setTimeCursor(projectStore.referenceTrack, timeCursor);
+        const block = alignmentStore.getTrackBlock(projectStore.referenceTrack);
+        block.forEach(track => {
+            const scale = d3.scaleLinear()
+                .domain([track.referenceStart, track.referenceEnd])
+                .range([track.timeSeries[0].timestampStart, track.timeSeries[0].timestampEnd]);
+            this.setTimeCursor(track, scale(timeCursor));
+        });
     }
 
     public getTimeCursor(track: Track): number {
@@ -155,7 +162,7 @@ export class ProjectUiStore {
     }
 
     @action public setTrackPanZoom(track: Track, panZoom: PanZoomParameters): void {
-        const block = alignmentStore.getConnectedTracks(track);
+        const block = alignmentStore.getTrackBlock(track);
         this.setBlockPanZoom(block, panZoom);
     }
 

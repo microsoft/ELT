@@ -60,7 +60,7 @@
     "requirejs": "^2.2.0",
     "serialport": "^2.1.2",
     "tslint-microsoft-contrib": "^2.0.13",
-    "typescript": "^2.1.4",
+    "typescript": "^2.1.5",
     "typescript-require": "^0.2.9-1",
     "underscore": "^1.8.3"
   }

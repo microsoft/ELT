@@ -118,7 +118,7 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
             },
             upEvent => {
                 if (!moved) {
-                    const marker: Marker = { track: track, localTimestamp: t };
+                    const marker = new Marker(t, track);
                     stores.alignmentStore.addMarker(marker);
                     stores.projectUiStore.selectMarker(marker);
                 }
