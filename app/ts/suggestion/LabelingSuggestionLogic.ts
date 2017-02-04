@@ -56,10 +56,6 @@ export interface LabelingSuggestionLogic {
             deleteLabels: Label[]
         };
 
-    // What labels should be highlighted (to attract the user's attention).
-    calculateHighlightedLabels(info: {
-        suggestionsInView: Label[]
-    }): Label[];
 }
 
 
@@ -127,13 +123,7 @@ class CurrentView implements LabelingSuggestionLogic {
         };
     }
 
-    public calculateHighlightedLabels(info: {
-        suggestionsInView: Label[]
-    }): Label[] {
-        const candidates = info.suggestionsInView.slice();
-        candidates.sort((a, b) => a.suggestionConfidence - b.suggestionConfidence);
-        return candidates.slice(0, 3);
-    }
+   
 }
 
 
@@ -202,9 +192,7 @@ class Forward implements LabelingSuggestionLogic {
         };
     }
 
-    public calculateHighlightedLabels(info: {
-        suggestionsInView: Label[]
-    }): Label[] { return []; }
+  
 }
 
 

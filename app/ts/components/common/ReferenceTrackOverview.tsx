@@ -185,8 +185,7 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
                                 panZoom={globalPanZoom}
                                 plotWidth={this.props.viewWidth}
                                 plotHeight={labelsY1 - labelsY0}
-                                labelKind={LabelType.Overview}
-                                highlightLeastConfidentSuggestions={false}
+                                labelType={LabelType.Overview}
                             />
                         ) : null
                     }

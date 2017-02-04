@@ -316,8 +316,7 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
                             panZoom={stores.projectUiStore.referenceTrackPanZoom}
                             plotWidth={this.props.viewWidth}
                             plotHeight={labelAreaY1 - labelAreaY0}
-                            labelKind={LabelType.Detailed}
-                            highlightLeastConfidentSuggestions={true}
+                            labelType={LabelType.Detailed}
                         />
                     </g>
 

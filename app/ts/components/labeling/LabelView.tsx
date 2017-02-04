@@ -18,9 +18,8 @@ interface LabelViewProps {
     pixelsPerSecond: number;
     // Height of the rendered label.
     height: number;
-    isLeastConfidentSuggestion: boolean;
     classColormap: { [name: string]: string };
-    labelKind: LabelType;
+    labelType: LabelType;
 }
 
 interface LabelViewState {
@@ -212,10 +211,6 @@ export class LabelView extends React.Component<LabelViewProps, LabelViewState> {
             this.props.classColormap[label.className];
         const lineY0 = topBand ? -20 : 0;
 
-        let highlightMarker = null;
-        if (this.props.isLeastConfidentSuggestion) {
-            highlightMarker = (<text x={x1 + 3} y={14} style={{ fill: 'black', fontSize: 12 }}>?</text>);
-        }
 
         return (
             <g className={`label-container ${additionalClasses.join(' ')}`}
@@ -244,7 +239,6 @@ export class LabelView extends React.Component<LabelViewProps, LabelViewState> {
                     x1={x2} x2={x2} y1={lineY0} y2={this.props.height}
                     style={{ stroke: borderColor }}
                 />
-                {highlightMarker}
                 <rect
                     className='middle-handler'
                     x={x1}
@@ -273,7 +267,7 @@ export class LabelView extends React.Component<LabelViewProps, LabelViewState> {
         if (this.props.label.state === LabelConfirmationState.REJECTED) {
             return <g></g>;
         } else {
-            switch (this.props.labelKind) {
+            switch (this.props.labelType) {
                 case LabelType.Detailed: return this.renderLabelDetailed();
                 case LabelType.Overview: return this.renderLabelOverview();
                 default: throw 'missing case';
