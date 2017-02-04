@@ -1,9 +1,9 @@
-import { Marker } from '../stores/dataStructures/alignment';
-import { PanZoomParameters } from '../stores/dataStructures/PanZoomParameters';
-import * as stores from '../stores/stores';
-import { startDragging } from '../stores/utils';
-import { TimeAxis } from './common/TimeAxis';
-import { TrackView } from './common/TrackView';
+import { Marker } from '../../stores/dataStructures/alignment';
+import { PanZoomParameters } from '../../stores/dataStructures/PanZoomParameters';
+import * as stores from '../../stores/stores';
+import { startDragging } from '../../stores/utils';
+import { TimeAxis } from './TimeAxis';
+import { TrackView } from './TrackView';
 import * as d3 from 'd3';
 import { observer } from 'mobx-react';
 import * as React from 'react';

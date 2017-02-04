@@ -367,7 +367,6 @@ export class LabelingStore {
         for (const label of state.labels) {
             this._labelsIndex.add(label);
         }
-        // this.updateAlignedDataset(true);
 
         // Update the current class.
         const nonIgnoreClases = this.classes.filter(x => x !== 'IGNORE');

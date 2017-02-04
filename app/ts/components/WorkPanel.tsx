@@ -7,8 +7,8 @@ import {AlignmentToolbar} from './alignment/AlignmentToolbar';
 import {AlignmentView} from './alignment/AlignmentView';
 import {LabelingToolbar} from './labeling/LabelingToolbar';
 import {LabelingView} from './labeling/LabelingView';
-import {ReferenceTrackDetail} from './ReferenceTrackDetail';
-import {ReferenceTrackOverview} from './ReferenceTrackOverview';
+import {ReferenceTrackDetail} from './common/ReferenceTrackDetail';
+import {ReferenceTrackOverview} from './common/ReferenceTrackOverview';
 import * as React from 'react';
 
 
