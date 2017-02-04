@@ -7,12 +7,12 @@ import * as stores from '../../stores/stores';
 import { startDragging } from '../../stores/utils';
 import { TrackView } from '../common/TrackView';
 import { ChangePointRangePlot } from './ChangePointPlot';
-import { LabelType } from './LabelView';
+import { LabelType, LabelView } from './LabelView';
 import { LabelsRangePlot } from './LabelsRangePlot';
 import * as d3 from 'd3';
 import { observer } from 'mobx-react';
 import * as React from 'react';
-
+import { getUniqueIDForObject } from '../../stores/utils';
 
 export interface LabelingViewProps {
     // Viewport size.
@@ -249,6 +249,23 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
             );
         }
 
+        const labels = stores.labelingUiStore.getLabelsInRange(stores.projectUiStore.referenceTrackPanZoom.getTimeRangeToX(this.props.viewWidth));
+        let labelsView = (
+                <g transform={`translate(${-stores.projectUiStore.referenceTrackPanZoom.pixelsPerSecond * stores.projectUiStore.referenceTrackPanZoom.rangeStart},0)`}>
+                    {labels.map(label =>
+                        <LabelView
+                            key={`label-${getUniqueIDForObject(label)}`}
+                            label={label}
+                            pixelsPerSecond={stores.projectUiStore.referenceTrackPanZoom.pixelsPerSecond}
+                            height={labelAreaY1 - labelAreaY0}
+                            classColormap={stores.labelingStore.classColormap}
+                            labelType={LabelType.Detailed}
+                        />
+                    )}
+                </g>
+            );
+
+        
         const signalsViewMode = stores.labelingUiStore.signalsViewMode;
         const maxOverlapFactor = signalsViewMode === SignalsViewMode.TIMESERIES ? 0.4 : 0;
         const tracksViewHeight = sensorAreaY1 - sensorAreaY0;
@@ -259,6 +276,7 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
             trackViewTrackHeight = tracksViewHeight / (n - n * maxOverlapFactor + maxOverlapFactor);
             tracksViewTrackSpacing = trackViewTrackHeight * (1 - maxOverlapFactor);
         }
+
 
         return (
             <g className='labeling-detailed-view'>
@@ -312,12 +330,7 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
                                 />
                             ) : null
                         }
-                        <LabelsRangePlot
-                            panZoom={stores.projectUiStore.referenceTrackPanZoom}
-                            plotWidth={this.props.viewWidth}
-                            plotHeight={labelAreaY1 - labelAreaY0}
-                            labelType={LabelType.Detailed}
-                        />
+                        {labelsView}
                     </g>
 
                     {gHint}
