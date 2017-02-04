@@ -23,18 +23,14 @@ const d3category20 = [
 ];
 
 
-
-
-
 export class LabelingStore {
-    @observable private _labelsIndex: TimeRangeIndex<Label>;
-    @observable private _windowLabelsIndex: TimeRangeIndex<Label>;
-    @observable private _windowAccuracyLabelsIndex: TimeRangeIndex<Label>;
-    @observable private _suggestedLabelsIndex: TimeRangeIndex<Label>;
+    private _labelsIndex: TimeRangeIndex<Label>;
+    private _windowLabelsIndex: TimeRangeIndex<Label>;
+    private _windowAccuracyLabelsIndex: TimeRangeIndex<Label>;
+    private _suggestedLabelsIndex: TimeRangeIndex<Label>;
 
-    @observable private _windowLabelIndexHistory: TimeRangeIndex<Label>[];
-    @observable private _windowLabelsHistory: Label[][];
-
+    private _windowLabelIndexHistory: TimeRangeIndex<Label>[];
+    
     @observable public changePoints: number[];
     @observable public classes: string[];
     @observable public classColors: string[];
@@ -48,7 +44,6 @@ export class LabelingStore {
         this._windowAccuracyLabelsIndex = new TimeRangeIndex<Label>();
 
         this._windowLabelIndexHistory = [];
-        this._windowLabelsHistory = [];
 
         this.classes = ['IGNORE', 'Positive'];
         this.updateColors();
@@ -170,10 +165,6 @@ export class LabelingStore {
                 labelsChanged = labelsChanged || true;
             }
         });
-    }
-
-    @action public suggestChangePoints(changePoints: number[]): void {
-        this.changePoints = changePoints;
     }
 
     @action public removeAllSuggestions(): void {

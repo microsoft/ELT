@@ -36,11 +36,11 @@ export class LabelingSettingsView extends React.Component<{}, {}> {
     }
 
     private turnOnSuggestions(): void {
-        stores.labelingUiStore.setSuggestionEnabled(true);
+        stores.labelingUiStore.suggestionEnabled = true;
     }
 
     private turnOffSuggestions(): void {
-        stores.labelingUiStore.setSuggestionEnabled(false);
+        stores.labelingUiStore.suggestionEnabled = false;
         stores.labelingStore.removeAllSuggestions();
         labelingSuggestionGenerator.removeAllSuggestions();
     }

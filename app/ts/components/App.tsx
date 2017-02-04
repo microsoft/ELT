@@ -71,7 +71,7 @@ export class App extends React.Component<{}, {}> {
                 <DevTools />
                 <NavigationColumn selected={stores.projectUiStore.currentTab} onSelect={
                     tab => {
-                        stores.projectUiStore.switchTab(tab as TabID);
+                        stores.projectUiStore.currentTab = tab as TabID;
                     }
                 }>
                     <NavigationColumnItem title='Home' name='file' iconClass='glyphicon glyphicon-home'>

@@ -86,10 +86,6 @@ export class LabelingUiStore {
         }
     }
 
-    @action public setSuggestionEnabled(enabled: boolean): void {
-        this.suggestionEnabled = enabled;
-    }
-
     @action public setSuggestionLogic(logic: LabelingSuggestionLogicType): void {
         this.suggestionLogic = getLabelingSuggestionLogic(logic);
     }
