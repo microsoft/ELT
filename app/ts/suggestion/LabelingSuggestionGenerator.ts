@@ -178,6 +178,6 @@ export class LabelingChangePointSuggestionGenerator extends EventEmitter {
         const sampleRate = (dataset.timestampEnd - dataset.timestampStart) / (n - 1);
         const pts = pelt(data, 20 * Math.log(n), Math.ceil(3 / sampleRate));
         const timestamps = pts.map(p => (p / (n - 1)) * (dataset.timestampEnd - dataset.timestampStart) + dataset.timestampStart);
-        labelingStore.changePoints = timestamps;
+        //labelingStore.changePoints = timestamps;
     }
 }

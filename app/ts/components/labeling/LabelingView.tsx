@@ -6,7 +6,6 @@ import { KeyCode } from '../../stores/dataStructures/types';
 import * as stores from '../../stores/stores';
 import { startDragging } from '../../stores/utils';
 import { TrackView } from '../common/TrackView';
-import { ChangePointRangePlot } from './ChangePointPlot';
 import { LabelType, LabelView } from './LabelView';
 import { LabelsRangePlot } from './LabelsRangePlot';
 import * as d3 from 'd3';
@@ -73,36 +72,7 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
         return stores.projectUiStore.referenceTrackPanZoom.getTimeFromX(x);
     }
 
-    private onDoubleClickChangePointDetection(event: React.MouseEvent<Element>): void {
-        const isInteractionRect = event.target === this.refs.interactionRect;
-        const t0 = this.getTimeFromX(this.getRelativePosition(event)[0]);
-        if (isInteractionRect) {
-            const cps = stores.labelingStore.changePoints;
-            let p0 = null;
-            let p1 = null;
-            cps.forEach(d => {
-                if (d < t0) {
-                    if (p0 === null || p0 < d) { p0 = d; }
-                }
-                if (d > t0) {
-                    if (p1 === null || p1 > d) { p1 = d; }
-                }
-            });
-            if (p0 && p1 && p0 !== p1) {
-                if (stores.labelingUiStore.currentClass) {
-                    const newLabel = {
-                        timestampStart: p0,
-                        timestampEnd: p1,
-                        className: stores.labelingUiStore.currentClass,
-                        state: LabelConfirmationState.UNCONFIRMED
-                    };
-                    stores.labelingStore.addLabel(newLabel);
-                    stores.labelingUiStore.selectLabel(newLabel);
-                }
-            }
-        }
-    }
-
+   
     private onMouseDownCreateLabel(event: React.MouseEvent<Element>): void {
         const t0 = this.getTimeFromX(this.getRelativePosition(event)[0]);
         let t1 = null;
@@ -264,8 +234,7 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
                     )}
                 </g>
             );
-
-        
+ 
         const signalsViewMode = stores.labelingUiStore.signalsViewMode;
         const maxOverlapFactor = signalsViewMode === SignalsViewMode.TIMESERIES ? 0.4 : 0;
         const tracksViewHeight = sensorAreaY1 - sensorAreaY0;
@@ -284,7 +253,6 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
                     onMouseMove={event => this.onMouseMove(event)}
                     onWheel={event => this.onMouseWheel(event)}
                     onMouseDown={event => this.onMouseDownCreateLabel(event)}
-                    onDoubleClick={event => this.onDoubleClickChangePointDetection(event)}
                 >
 
                     <rect ref='interactionRect'
@@ -320,16 +288,6 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
                     />
 
                     <g className='labels' transform={`translate(0, ${labelAreaY0})`}>
-                        {
-                            stores.labelingUiStore.suggestionEnabled ? (
-                                <ChangePointRangePlot
-                                    pixelsPerSecond={pps}
-                                    rangeStart={start}
-                                    plotWidth={this.props.viewWidth}
-                                    plotHeight={10}
-                                />
-                            ) : null
-                        }
                         {labelsView}
                     </g>
 

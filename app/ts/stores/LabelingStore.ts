@@ -31,7 +31,6 @@ export class LabelingStore {
 
     private _windowLabelIndexHistory: TimeRangeIndex<Label>[];
     
-    @observable public changePoints: number[];
     @observable public classes: string[];
     @observable public classColors: string[];
     @observable public classColormap: { [name: string]: string };
@@ -49,7 +48,6 @@ export class LabelingStore {
         this.updateColors();
         this.timestampConfirmed = null;
 
-        this.changePoints = [];
     }
 
     @computed public get labels(): Label[] {
@@ -378,7 +376,6 @@ export class LabelingStore {
         this._suggestedLabelsIndex.clear();
         this.classes = ['IGNORE', 'Positive'];
         this.updateColors();
-        this.changePoints = [];
         const nonIgnoreClases = this.classes.filter(x => x !== 'IGNORE');
         labelingUiStore.currentClass = nonIgnoreClases.length > 0 ? nonIgnoreClases[0] : null;
     }
