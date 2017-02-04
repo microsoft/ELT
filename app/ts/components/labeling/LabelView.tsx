@@ -7,13 +7,11 @@ import { observer } from 'mobx-react';
 import * as React from 'react';
 
 
-// LabelPlot: Renders a single label.
+// LabelView: Renders a single label.
 
+export enum LabelType { Detailed, Overview }
 
-export enum LabelKind { Detailed, Overview }
-
-
-interface LabelPlotProps {
+interface LabelViewProps {
     // The label to render.
     label: Label;
     // Zooming factor.
@@ -22,18 +20,18 @@ interface LabelPlotProps {
     height: number;
     isLeastConfidentSuggestion: boolean;
     classColormap: { [name: string]: string };
-    labelKind: LabelKind;
+    labelKind: LabelType;
 }
 
-interface LabelPlotState {
+interface LabelViewState {
     isHovering: boolean;
 }
 
 
 @observer
-export class LabelPlot extends React.Component<LabelPlotProps, LabelPlotState> {
+export class LabelView extends React.Component<LabelViewProps, LabelViewState> {
 
-    constructor(props: LabelPlotProps, context: any) {
+    constructor(props: LabelViewProps, context: any) {
         super(props, context);
         this.state = {
             isHovering: false
@@ -276,8 +274,8 @@ export class LabelPlot extends React.Component<LabelPlotProps, LabelPlotState> {
             return <g></g>;
         } else {
             switch (this.props.labelKind) {
-                case LabelKind.Detailed: return this.renderLabelDetailed();
-                case LabelKind.Overview: return this.renderLabelOverview();
+                case LabelType.Detailed: return this.renderLabelDetailed();
+                case LabelType.Overview: return this.renderLabelOverview();
                 default: throw 'missing case';
             }
         }

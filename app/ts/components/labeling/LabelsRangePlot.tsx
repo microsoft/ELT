@@ -4,7 +4,7 @@ import { Label, LabelConfirmationState } from '../../stores/dataStructures/label
 import { PanZoomParameters } from '../../stores/dataStructures/PanZoomParameters';
 import * as stores from '../../stores/stores';
 import { getUniqueIDForObject } from '../../stores/utils';
-import { LabelKind, LabelPlot } from './LabelPlot';
+import { LabelType, LabelView } from './LabelView';
 import { observer } from 'mobx-react';
 import * as React from 'react';
 
@@ -14,7 +14,7 @@ export interface LabelsRangePlotProps {
     plotWidth: number;
     plotHeight: number;
     highlightLeastConfidentSuggestions: boolean;
-    labelKind: LabelKind;
+    labelKind: LabelType;
 }
 
 
@@ -34,7 +34,7 @@ export class LabelsRangePlot extends React.Component<LabelsRangePlotProps, {}> {
         return (
             <g transform={`translate(${-this.props.panZoom.pixelsPerSecond * this.props.panZoom.rangeStart},0)`}>
                 {labels.map(label =>
-                    <LabelPlot
+                    <LabelView
                         key={`label-${getUniqueIDForObject(label)}`}
                         label={label}
                         pixelsPerSecond={this.props.panZoom.pixelsPerSecond}

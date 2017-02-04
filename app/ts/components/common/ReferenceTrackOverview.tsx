@@ -7,7 +7,7 @@ import * as stores from '../../stores/stores';
 import { makePathDFromPoints, startDragging } from '../../stores/utils';
 import { TimeAxis } from './TimeAxis';
 import { TrackView } from './TrackView';
-import { LabelKind } from '../labeling/LabelPlot';
+import { LabelType } from '../labeling/LabelView';
 import { LabelsRangePlot } from '../labeling/LabelsRangePlot';
 import * as d3 from 'd3';
 import { observer } from 'mobx-react';
@@ -185,7 +185,7 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
                                 panZoom={globalPanZoom}
                                 plotWidth={this.props.viewWidth}
                                 plotHeight={labelsY1 - labelsY0}
-                                labelKind={LabelKind.Overview}
+                                labelKind={LabelType.Overview}
                                 highlightLeastConfidentSuggestions={false}
                             />
                         ) : null

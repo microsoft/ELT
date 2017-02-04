@@ -50,7 +50,7 @@ interface AlignmentLabelingViewLayout {
 }
 
 // LabelingView class.
-export class WorkPanel extends React.Component<AlignmentLabelingViewProps, AlignmentLabelingViewState> {
+export class TabPane extends React.Component<AlignmentLabelingViewProps, AlignmentLabelingViewState> {
     public refs: {
         [key: string]: Element,
         container: Element,

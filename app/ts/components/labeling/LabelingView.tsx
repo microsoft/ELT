@@ -7,7 +7,7 @@ import * as stores from '../../stores/stores';
 import { startDragging } from '../../stores/utils';
 import { TrackView } from '../common/TrackView';
 import { ChangePointRangePlot } from './ChangePointPlot';
-import { LabelKind } from './LabelPlot';
+import { LabelType } from './LabelView';
 import { LabelsRangePlot } from './LabelsRangePlot';
 import * as d3 from 'd3';
 import { observer } from 'mobx-react';
@@ -316,7 +316,7 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
                             panZoom={stores.projectUiStore.referenceTrackPanZoom}
                             plotWidth={this.props.viewWidth}
                             plotHeight={labelAreaY1 - labelAreaY0}
-                            labelKind={LabelKind.Detailed}
+                            labelKind={LabelType.Detailed}
                             highlightLeastConfidentSuggestions={true}
                         />
                     </g>

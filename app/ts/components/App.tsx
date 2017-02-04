@@ -6,7 +6,7 @@ import { NavigationColumn, NavigationColumnItem } from './common/NavigationColum
 import { DeploymentPanel } from './deployment/DeploymentPanel';
 import { HomeMenu } from './menus/HomeMenu';
 import { OptionsMenu } from './menus/OptionsMenu';
-import { WorkPanel } from './WorkPanel';
+import { TabPane } from './TabPane';
 import { remote } from 'electron';
 import { observer } from 'mobx-react';
 // tslint:disable-next-line:import-name
@@ -78,10 +78,10 @@ export class App extends React.Component<{}, {}> {
                         <HomeMenu />
                     </NavigationColumnItem>
                     <NavigationColumnItem title='Alignment' name='alignment' showButton={true} iconClass={'glyphicon glyphicon-time'}>
-                        <WorkPanel mode='alignment' />
+                        <TabPane mode='alignment' />
                     </NavigationColumnItem>
                     <NavigationColumnItem title='Labeling' name='labeling' showButton={true} iconClass={'glyphicon glyphicon-tags'}>
-                        <WorkPanel mode='labeling' />
+                        <TabPane mode='labeling' />
                     </NavigationColumnItem>
                     <NavigationColumnItem title='Deployment' name='deploying' iconClass='glyphicon glyphicon-export'>
                         <DeploymentPanel />
