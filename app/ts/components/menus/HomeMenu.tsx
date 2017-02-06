@@ -111,7 +111,7 @@ export class HomeMenu extends React.Component<{}, {}> {
             // New Project.
             stores.projectStore.newProject();
             // Goto alignment tab.
-            stores.projectUiStore.switchTab('alignment');
+            stores.projectUiStore.currentTab = 'alignment';
         });
     }
 

@@ -23,19 +23,14 @@ const d3category20 = [
 ];
 
 
-
-
-
 export class LabelingStore {
-    @observable private _labelsIndex: TimeRangeIndex<Label>;
-    @observable private _windowLabelsIndex: TimeRangeIndex<Label>;
-    @observable private _windowAccuracyLabelsIndex: TimeRangeIndex<Label>;
-    @observable private _suggestedLabelsIndex: TimeRangeIndex<Label>;
+    private _labelsIndex: TimeRangeIndex<Label>;
+    private _windowLabelsIndex: TimeRangeIndex<Label>;
+    private _windowAccuracyLabelsIndex: TimeRangeIndex<Label>;
+    private _suggestedLabelsIndex: TimeRangeIndex<Label>;
 
-    @observable private _windowLabelIndexHistory: TimeRangeIndex<Label>[];
-    @observable private _windowLabelsHistory: Label[][];
-
-    @observable public changePoints: number[];
+    private _windowLabelIndexHistory: TimeRangeIndex<Label>[];
+    
     @observable public classes: string[];
     @observable public classColors: string[];
     @observable public classColormap: { [name: string]: string };
@@ -48,13 +43,11 @@ export class LabelingStore {
         this._windowAccuracyLabelsIndex = new TimeRangeIndex<Label>();
 
         this._windowLabelIndexHistory = [];
-        this._windowLabelsHistory = [];
 
         this.classes = ['IGNORE', 'Positive'];
         this.updateColors();
         this.timestampConfirmed = null;
 
-        this.changePoints = [];
     }
 
     @computed public get labels(): Label[] {
@@ -170,10 +163,6 @@ export class LabelingStore {
                 labelsChanged = labelsChanged || true;
             }
         });
-    }
-
-    @action public suggestChangePoints(changePoints: number[]): void {
-        this.changePoints = changePoints;
     }
 
     @action public removeAllSuggestions(): void {
@@ -376,7 +365,6 @@ export class LabelingStore {
         for (const label of state.labels) {
             this._labelsIndex.add(label);
         }
-        // this.updateAlignedDataset(true);
 
         // Update the current class.
         const nonIgnoreClases = this.classes.filter(x => x !== 'IGNORE');
@@ -388,7 +376,6 @@ export class LabelingStore {
         this._suggestedLabelsIndex.clear();
         this.classes = ['IGNORE', 'Positive'];
         this.updateColors();
-        this.changePoints = [];
         const nonIgnoreClases = this.classes.filter(x => x !== 'IGNORE');
         labelingUiStore.currentClass = nonIgnoreClases.length > 0 ? nonIgnoreClases[0] : null;
     }

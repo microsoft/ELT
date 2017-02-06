@@ -7,33 +7,30 @@ import { observer } from 'mobx-react';
 import * as React from 'react';
 
 
-// LabelPlot: Renders a single label.
+// LabelView: Renders a single label.
 
+export enum LabelType { Detailed, Overview }
 
-export enum LabelKind { Detailed, Overview }
-
-
-interface LabelPlotProps {
+interface LabelViewProps {
     // The label to render.
     label: Label;
     // Zooming factor.
     pixelsPerSecond: number;
     // Height of the rendered label.
     height: number;
-    isLeastConfidentSuggestion: boolean;
     classColormap: { [name: string]: string };
-    labelKind: LabelKind;
+    labelType: LabelType;
 }
 
-interface LabelPlotState {
+interface LabelViewState {
     isHovering: boolean;
 }
 
 
 @observer
-export class LabelPlot extends React.Component<LabelPlotProps, LabelPlotState> {
+export class LabelView extends React.Component<LabelViewProps, LabelViewState> {
 
-    constructor(props: LabelPlotProps, context: any) {
+    constructor(props: LabelViewProps, context: any) {
         super(props, context);
         this.state = {
             isHovering: false
@@ -103,6 +100,11 @@ export class LabelPlot extends React.Component<LabelPlotProps, LabelPlotState> {
                 if (mode === 'both' && upEvent.target === eventTarget && !isSelected) {
                     stores.labelingUiStore.selectLabel(label);
                     isSelected = true;
+                    if (label.state === LabelConfirmationState.UNCONFIRMED ||
+                            label.state === LabelConfirmationState.CONFIRMED_START ||
+                            label.state === LabelConfirmationState.CONFIRMED_END) {
+                            stores.labelingStore.updateLabel(label, { state: LabelConfirmationState.CONFIRMED_BOTH });
+                    }    
                 }
             }
         );
@@ -209,10 +211,6 @@ export class LabelPlot extends React.Component<LabelPlotProps, LabelPlotState> {
             this.props.classColormap[label.className];
         const lineY0 = topBand ? -20 : 0;
 
-        let highlightMarker = null;
-        if (this.props.isLeastConfidentSuggestion) {
-            highlightMarker = (<text x={x1 + 3} y={14} style={{ fill: 'black', fontSize: 12 }}>?</text>);
-        }
 
         return (
             <g className={`label-container ${additionalClasses.join(' ')}`}
@@ -241,7 +239,6 @@ export class LabelPlot extends React.Component<LabelPlotProps, LabelPlotState> {
                     x1={x2} x2={x2} y1={lineY0} y2={this.props.height}
                     style={{ stroke: borderColor }}
                 />
-                {highlightMarker}
                 <rect
                     className='middle-handler'
                     x={x1}
@@ -270,9 +267,9 @@ export class LabelPlot extends React.Component<LabelPlotProps, LabelPlotState> {
         if (this.props.label.state === LabelConfirmationState.REJECTED) {
             return <g></g>;
         } else {
-            switch (this.props.labelKind) {
-                case LabelKind.Detailed: return this.renderLabelDetailed();
-                case LabelKind.Overview: return this.renderLabelOverview();
+            switch (this.props.labelType) {
+                case LabelType.Detailed: return this.renderLabelDetailed();
+                case LabelType.Overview: return this.renderLabelOverview();
                 default: throw 'missing case';
             }
         }

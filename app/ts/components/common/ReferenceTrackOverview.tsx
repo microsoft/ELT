@@ -1,14 +1,14 @@
 // The 'Overview' view that is shared by both alignment and labeling.
 
-import { LayoutParameters } from '../stores/dataStructures/LayoutParameters';
-import { PanZoomParameters } from '../stores/dataStructures/PanZoomParameters';
-import { KeyCode } from '../stores/dataStructures/types';
-import * as stores from '../stores/stores';
-import { makePathDFromPoints, startDragging } from '../stores/utils';
-import { TimeAxis } from './common/TimeAxis';
-import { TrackView } from './common/TrackView';
-import { LabelKind } from './labeling/LabelPlot';
-import { LabelsRangePlot } from './labeling/LabelsRangePlot';
+import { LayoutParameters } from '../../stores/dataStructures/LayoutParameters';
+import { PanZoomParameters } from '../../stores/dataStructures/PanZoomParameters';
+import { KeyCode } from '../../stores/dataStructures/types';
+import * as stores from '../../stores/stores';
+import { makePathDFromPoints, startDragging } from '../../stores/utils';
+import { TimeAxis } from './TimeAxis';
+import { TrackView } from './TrackView';
+import { LabelType } from '../labeling/LabelView';
+import { LabelsRangePlot } from '../labeling/LabelsRangePlot';
 import * as d3 from 'd3';
 import { observer } from 'mobx-react';
 import * as React from 'react';
@@ -186,8 +186,7 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
                                 panZoom={globalPanZoom}
                                 plotWidth={this.props.viewWidth}
                                 plotHeight={labelsY1 - labelsY0}
-                                labelKind={LabelKind.Overview}
-                                highlightLeastConfidentSuggestions={false}
+                                labelType={LabelType.Overview}
                             />
                         ) : null
                     }

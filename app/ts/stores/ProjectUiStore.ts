@@ -20,9 +20,8 @@ export class ProjectUiStore {
 
     // Individually stores current time cursor for track.
     // The timeCursors should be in the series's own timestamps.
-    @observable private _trackTimeCursor: ObservableMap<number>;
-
-    @observable private _panZoomParameterMap: ObservableMap<PanZoomParameters>;
+    private _trackTimeCursor: ObservableMap<number>;
+    private _panZoomParameterMap: ObservableMap<PanZoomParameters>;
 
     // Currently selected markers OR correspondence (update one should cause the other to be null).
     @observable public selectedMarker: Marker;
@@ -47,11 +46,6 @@ export class ProjectUiStore {
             () => this.updatePanZoomBasedOnAlignment(),
             { name: 'ProjectUiStore.updatePanZoomBasedOnAlignment' }
         );
-    }
-
-    @action
-    public switchTab(tab: TabID): void {
-        this.currentTab = tab;
     }
 
     // On tracks changed, update zooming parameters so that the views don't overflow.

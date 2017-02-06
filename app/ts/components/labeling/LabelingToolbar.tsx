@@ -101,13 +101,13 @@ export class LabelingToolbar extends React.Component<LabelingToolbarProps, {}> {
                     <button
                         type='button'
                         className={`tbtn ${stores.labelingUiStore.suggestionEnabled ? 'tbtn-l1 active' : 'tbtn-l3'}`}
-                        onClick={() => stores.labelingUiStore.setSuggestionEnabled(true)}
+                        onClick={() => stores.labelingUiStore.suggestionEnabled = true}
                         >On</button>
                     <button
                         type='button'
                         className={`tbtn ${!stores.labelingUiStore.suggestionEnabled ? 'tbtn-l1 active' : 'tbtn-l3'}`}
                         onClick={() => {
-                            stores.labelingUiStore.setSuggestionEnabled(false);
+                            stores.labelingUiStore.suggestionEnabled = false;
                             stores.labelingStore.removeAllSuggestions();
                             labelingSuggestionGenerator.removeAllSuggestions();
                         } }

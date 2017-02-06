@@ -5,7 +5,7 @@
         "outDir": "js",
         "module": "commonjs",
         "moduleResolution": "node",
-        "target": "es5",
+        "target": "es5", // Note that ideally we should support es6, but typescript does not yet support it: https://typescript.codeplex.com/wikipage?title=ECMAScript%206%20Status&referringTitle=Roadmap. Revisit later.'
         "noImplicitAny": false,
         "jsx": "react",
         "sourceMap": true,

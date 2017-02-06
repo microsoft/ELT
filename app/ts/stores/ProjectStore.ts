@@ -14,8 +14,6 @@ import * as fs from 'fs';
 import { action, computed, observable, runInAction } from 'mobx';
 
 
-
-
 // Deep copy an object.
 function deepClone<Type>(obj: Type): Type {
     return JSON.parse(JSON.stringify(obj)); // Is there a better way?
@@ -31,10 +29,6 @@ class MappedLabel {
         this.timestampEnd = timestampEnd;
     }
 }
-
-
-
-
 
 // AlignmentLabelingStore: Stores the information about tracks and handles project load/save and undo/redo state saving.
 export class ProjectStore {

@@ -15,6 +15,7 @@ declare function nodeRequire(name: string);
 
 // Donghao: Set, Map, WeakSet, WeakMap are not declared for ES5 mode, declare them here?
 // From https://github.com/Microsoft/typescript-build2016-demos/blob/master/ng-reddit/node_modules/angular2/typings/es6-collections/es6-collections.d.ts
+// // Note that ideally we should support es6, but typescript does not yet support it: https://typescript.codeplex.com/wikipage?title=ECMAScript%206%20Status&referringTitle=Roadmap. Revisit later.'
 interface IteratorResult<T> {
     done: boolean;
     value?: T;
