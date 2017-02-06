@@ -158,6 +158,7 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
                         viewHeight={videoY1 - videoY0}
                         zoomTransform={globalPanZoom}
                         useMipmap={true}
+                        videoDetail={false}
                     />
                 </g>
                 <g className='labels' transform={`translate(0, ${labelsY0})`}>

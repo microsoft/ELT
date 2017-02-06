@@ -97,7 +97,6 @@ export class ProjectUiStore {
 
     @action
     public zoomReferenceTrack(zoom: number, zoomCenter: 'cursor' | 'center'): void {
-        if (zoom === 0) { throw 'bad zoom'; }
         const original = this.referenceTrackPanZoom;
         const k = Math.exp(-zoom);
         // Two rules to compute new zooming.
