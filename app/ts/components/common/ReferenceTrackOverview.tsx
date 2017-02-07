@@ -4,11 +4,10 @@ import { LayoutParameters } from '../../stores/dataStructures/LayoutParameters';
 import { PanZoomParameters } from '../../stores/dataStructures/PanZoomParameters';
 import { KeyCode } from '../../stores/dataStructures/types';
 import * as stores from '../../stores/stores';
-import { makePathDFromPoints, startDragging } from '../../stores/utils';
+import { getUniqueIDForObject, makePathDFromPoints, startDragging } from '../../stores/utils';
 import { TimeAxis } from './TimeAxis';
 import { TrackView } from './TrackView';
-import { LabelType } from '../labeling/LabelView';
-import { LabelsRangePlot } from '../labeling/LabelsRangePlot';
+import { LabelType, LabelView } from '../labeling/LabelView';
 import * as d3 from 'd3';
 import { observer } from 'mobx-react';
 import * as React from 'react';
@@ -149,6 +148,26 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
 
         const cursorX = xScale(stores.projectUiStore.referenceTrackTimeCursor);
         const globalPanZoom = new PanZoomParameters(0, this.props.viewWidth / (end - start));
+
+        const labels = stores.labelingUiStore.getLabelsInRange(globalPanZoom.getTimeRangeToX(this.props.viewWidth));
+        let labelsView = null;
+        if (this.props.mode === 'labeling') {
+            labelsView = (
+                <g transform={`translate(${-globalPanZoom.pixelsPerSecond * globalPanZoom.rangeStart},0)`}>
+                {labels.map(label =>
+                    <LabelView
+                        key={`label-${getUniqueIDForObject(label)}`}
+                        label={label}
+                        pixelsPerSecond={globalPanZoom.pixelsPerSecond}
+                        height={labelsY1 - labelsY0}
+                        classColormap={stores.labelingStore.classColormap}
+                        labelType={LabelType.Overview}
+                    />
+                )}
+            </g>
+            );
+        }
+
         return (
             <g className='labeling-overview-view'>
                 <g className='labels' transform={`translate(0, ${videoY0})`}>
@@ -180,16 +199,7 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
                                 );
                             })
                     }
-                    {
-                        this.props.mode === 'labeling' ? (
-                            <LabelsRangePlot
-                                panZoom={globalPanZoom}
-                                plotWidth={this.props.viewWidth}
-                                plotHeight={labelsY1 - labelsY0}
-                                labelType={LabelType.Overview}
-                            />
-                        ) : null
-                    }
+                    {labelsView}
                 </g>
 
                 <TimeAxis scale={xScale} transform='translate(0, 0)' />

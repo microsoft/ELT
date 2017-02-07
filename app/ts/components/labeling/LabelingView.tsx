@@ -4,14 +4,12 @@ import { LabelConfirmationState, SignalsViewMode } from '../../stores/dataStruct
 import { LayoutParameters } from '../../stores/dataStructures/LayoutParameters';
 import { KeyCode } from '../../stores/dataStructures/types';
 import * as stores from '../../stores/stores';
-import { startDragging } from '../../stores/utils';
+import { getUniqueIDForObject, startDragging } from '../../stores/utils';
 import { TrackView } from '../common/TrackView';
 import { LabelType, LabelView } from './LabelView';
-import { LabelsRangePlot } from './LabelsRangePlot';
 import * as d3 from 'd3';
 import { observer } from 'mobx-react';
 import * as React from 'react';
-import { getUniqueIDForObject } from '../../stores/utils';
 
 export interface LabelingViewProps {
     // Viewport size.
