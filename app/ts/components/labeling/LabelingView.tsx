@@ -173,22 +173,6 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
             .domain([start, start + this.props.viewWidth / pps])
             .range([0, this.props.viewWidth]);
 
-        // Cursor
-        let gCursor = null;
-        const timeCursor = stores.projectUiStore.referenceTrackTimeCursor;
-        if (timeCursor) {
-            gCursor = (
-                <g className='time-cursor'>
-                    <line
-                        x1={scale(timeCursor)}
-                        y1={timeCursorY0}
-                        x2={scale(timeCursor)}
-                        y2={timeCursorY1}
-                    />
-                </g>
-            );
-        }
-
         // Hint range.
         let gHint = null;
         if (this.state.hint_t0 && this.state.hint_t1) {
@@ -292,8 +276,6 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
                     </g>
 
                     {gHint}
-
-                    {gCursor}
                 </g>
             </g>
         );

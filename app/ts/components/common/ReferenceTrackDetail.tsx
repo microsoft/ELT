@@ -95,8 +95,8 @@ export class ReferenceTrackDetail extends React.Component<ReferenceTrackDetailPr
                         viewWidth={this.props.viewWidth}
                         viewHeight={this.props.viewHeight}
                         zoomTransform={stores.projectUiStore.referenceTrackPanZoom}
-                        timeCursor={stores.projectUiStore.referenceTrackTimeCursor}
                         useMipmap={true}
+                        videoDetail={true}
                     />
                 </g>
 
