@@ -9,6 +9,7 @@ import { HistoryTracker } from './dataStructures/HistoryTracker';
 import { PanZoomParameters } from './dataStructures/PanZoomParameters';
 import { SavedAlignmentSnapshot, SavedLabelingSnapshot, SavedProject, SavedTrack }
     from './dataStructures/project';
+import { convertToWebm, isWebm } from './dataStructures/video';
 import { alignmentStore, labelingStore, projectUiStore } from './stores';
 import * as fs from 'fs';
 import { action, computed, observable, runInAction } from 'mobx';
@@ -76,9 +77,13 @@ export class ProjectStore {
     }
 
 
-    @action
-    public loadReferenceTrack(fileName: string): void {
+    @action public loadReferenceTrack(fileName: string): void {
         this.alignmentHistoryRecord();
+        if (!isWebm(fileName)) {
+            convertToWebm(fileName, video => {
+                this.referenceTrack = Track.fromFile(fileName, [video]);
+            });
+        }
         loadVideoTimeSeriesFromFile(fileName, video => {
             this.referenceTrack = Track.fromFile(fileName, [video]);
         });

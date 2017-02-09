@@ -113,7 +113,7 @@ function getVideoMetadata(filename: string, callback: (width: number, height: nu
 
 export function loadVideoTimeSeriesFromFile(filename: string, callback: (video: VideoTimeSeries) => void): void {
     getVideoMetadata(filename, (width: number, height: number, duration: number) => {
-        const vts: VideoTimeSeries = {
+        callback({
             timestampStart: 0,
             timestampEnd: duration,
             width: width,
@@ -122,8 +122,7 @@ export function loadVideoTimeSeriesFromFile(filename: string, callback: (video: 
             filename: filename,
             kind: TimeSeriesKind.VIDEO,
             name: filename
-        };
-        callback(vts);
+        });
     });
 }
 
