@@ -53,7 +53,7 @@ export class ProjectStore {
         this.referenceTrack = null;
         this.tracks = [];
         this.projectFileLocation = null;
-        this.webmConversionStatus = "";
+        this.webmConversionStatus = '';
     }
 
 

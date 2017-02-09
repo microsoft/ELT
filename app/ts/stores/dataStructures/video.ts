@@ -5,7 +5,7 @@ import * as path from 'path';
 const ffmpegExe = 'ffmpeg/windows/ffmpeg.exe';
 
 export function isWebm(filename: string): boolean {
-    return path.extname(filename) === '.wemb';
+    return path.extname(filename).toLocaleLowerCase() === '.webm';
 }
 
 function parseOutput(line: string): number/*seconds*/ {

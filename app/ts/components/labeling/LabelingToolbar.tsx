@@ -2,6 +2,7 @@
 
 import * as stores from '../../stores/stores';
 import { labelingSuggestionGenerator } from '../../stores/stores';
+import { ReferenceVideoToolbar } from '../alignment/AlignmentToolbar';
 import { InlineClassesListView } from './ClassesListView';
 import { observer } from 'mobx-react';
 import * as React from 'react';
@@ -23,7 +24,6 @@ export class LabelingToolbar extends React.Component<LabelingToolbarProps, {}> {
     };
 
     public render(): JSX.Element {
-        const timeCursor = stores.projectUiStore.referenceTrackTimeCursor;
         return (
             <div className='labeling-toolbar-view' style={{
                 position: 'absolute',
@@ -32,46 +32,6 @@ export class LabelingToolbar extends React.Component<LabelingToolbarProps, {}> {
                 width: this.props.viewWidth + 'px',
                 height: this.props.viewHeight + 'px'
             }}>
-                <button className='tbtn tbtn-l3' title='Zoom in'
-                    onClick={() => {
-                        stores.projectUiStore.zoomReferenceTrack(-0.2, 'center');
-                    } }>
-                    <span className='glyphicon icon-only glyphicon-zoom-in'></span></button>
-                {' '}
-                <button className='tbtn tbtn-l3' title='Zoom out'
-                    onClick={() => {
-                        stores.projectUiStore.zoomReferenceTrack(+0.2, 'center');
-                    } }>
-                    <span className='glyphicon icon-only glyphicon-zoom-out'></span></button>
-                {' '}
-                <span className='sep' />
-                {' '}
-                <button className='tbtn tbtn-l3' title='Go to the beginning'
-                    onClick={() => {
-                        stores.projectUiStore.zoomReferenceTrackByPercentage(-1e10);
-                    } }>
-                    <span className='glyphicon icon-only glyphicon-fast-backward'></span></button>
-                {' '}
-                <button className='tbtn tbtn-l3' title='Go to the previous page'
-                    onClick={() => {
-                        stores.projectUiStore.zoomReferenceTrackByPercentage(-0.6);
-                    } }>
-                    <span className='glyphicon icon-only glyphicon-backward'></span></button>
-                {' '}
-                <button className='tbtn tbtn-l3' title='Go to the next page'
-                    onClick={() => {
-                        stores.projectUiStore.zoomReferenceTrackByPercentage(+0.6);
-                    } }>
-                    <span className='glyphicon icon-only glyphicon-forward'></span></button>
-                {' '}
-                <button className='tbtn tbtn-l3' title='Go to the end'
-                    onClick={() => {
-                        stores.projectUiStore.zoomReferenceTrackByPercentage(+1e10);
-                    } }>
-                    <span className='glyphicon icon-only glyphicon-fast-forward'></span></button>
-                {' '}
-                <span className='sep' />
-                {' '}
                 <InlineClassesListView />
                 {' '}
                 <span className='sep' />
@@ -83,15 +43,11 @@ export class LabelingToolbar extends React.Component<LabelingToolbarProps, {}> {
                         if (confirm('Are you sure to delete all labels?')) {
                             stores.labelingStore.removeAllLabels();
                         }
-                    } }>
+                    }}>
                     <span className='glyphicon icon-only glyphicon-trash'></span>
                 </button>
                 {' '}
                 <span className='sep' />
-                {' '}
-                <span style={{ minWidth: '10em', display: 'inline-block' }}>
-                    Cursor: {timeCursor ? timeCursor.toFixed(3) : 'null'}
-                </span>
                 {' '}
                 <span className='sep' />
                 {' '}
@@ -102,7 +58,7 @@ export class LabelingToolbar extends React.Component<LabelingToolbarProps, {}> {
                         type='button'
                         className={`tbtn ${stores.labelingUiStore.suggestionEnabled ? 'tbtn-l1 active' : 'tbtn-l3'}`}
                         onClick={() => stores.labelingUiStore.suggestionEnabled = true}
-                        >On</button>
+                    >On</button>
                     <button
                         type='button'
                         className={`tbtn ${!stores.labelingUiStore.suggestionEnabled ? 'tbtn-l1 active' : 'tbtn-l3'}`}
@@ -110,8 +66,8 @@ export class LabelingToolbar extends React.Component<LabelingToolbarProps, {}> {
                             stores.labelingUiStore.suggestionEnabled = false;
                             stores.labelingStore.removeAllSuggestions();
                             labelingSuggestionGenerator.removeAllSuggestions();
-                        } }
-                        >Off</button>
+                        }}
+                    >Off</button>
                 </span>
                 {' '}
                 <button
@@ -119,7 +75,8 @@ export class LabelingToolbar extends React.Component<LabelingToolbarProps, {}> {
                     className='tbtn tbtn-red'
                     title='Confirm all suggested labels'
                     onClick={() => stores.labelingStore.confirmVisibleSuggestions()}
-                    ><span className='glyphicon icon-only glyphicon-ok'></span></button>
+                ><span className='glyphicon icon-only glyphicon-ok'></span></button>
+                <ReferenceVideoToolbar />
             </div>
         );
     }
