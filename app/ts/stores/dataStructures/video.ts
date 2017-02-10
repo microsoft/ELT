@@ -53,6 +53,35 @@ export function convertToWebm(
     });
 }
 
-export function fadeBackground(filename: string): void {
-    throw 'not implemented';
+export function fadeBackground(
+    filename: string, duration: number,
+    progressCallback: (percentDone: number) => void,
+    callback: (video: VideoTimeSeries) => void): void {
+
+    const rootName = path.parse(filename).name;
+    const outName = rootName + '-nobg.webm';
+    const process = child_process.spawn(
+        ffmpegExe, [
+            '-y',               // force overwrite of existing file
+            '-i', filename,
+            '-c:v', 'vp8',      // WEBM codex
+            '-crf', '10',       // quality mode
+            '-b:v', '2000k',    // video bitrate
+            '-vf', 'backgroundsubtract',
+            outName]);
+    process.stderr.addListener('data', chunk => {
+        const lines = chunk.toString().split('\r');
+        if (lines.length > 1) {
+            const secondsConverted = parseOutput(lines[lines.length - 2]);
+            if (secondsConverted) {
+                const fractionDone = secondsConverted / duration;
+                progressCallback(fractionDone);
+            }
+        }
+    });
+    process.addListener('exit', code => {
+        if (code === 0) {
+            loadVideoTimeSeriesFromFile(outName, callback);
+        }
+    });
 }

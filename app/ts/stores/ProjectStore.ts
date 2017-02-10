@@ -41,7 +41,7 @@ export class ProjectStore {
     // The location of the saved/opened project.
     @observable public projectFileLocation: string;
 
-    @observable public webmConversionStatus: string;
+    @observable public statusMessage: string;
 
     // Stores alignment and labeling history (undo is implemented separately, you can't undo alignment from labeling or vice versa).
     private _alignmentHistory: HistoryTracker<SavedAlignmentSnapshot>;
@@ -53,7 +53,7 @@ export class ProjectStore {
         this.referenceTrack = null;
         this.tracks = [];
         this.projectFileLocation = null;
-        this.webmConversionStatus = '';
+        this.statusMessage = '';
     }
 
 
@@ -87,11 +87,11 @@ export class ProjectStore {
                 convertToWebm(
                     fileName, video.videoDuration,
                     pctDone => {
-                       this.webmConversionStatus = 'converting video: ' + (pctDone * 100).toFixed(0) + '%';
+                       this.statusMessage = 'converting video: ' + (pctDone * 100).toFixed(0) + '%';
                     },
                     webmVideo => {
                         this.referenceTrack = Track.fromFile(webmVideo.filename, [webmVideo]);
-                        this.webmConversionStatus = '';
+                        this.statusMessage = '';
                     });
             }
             this.referenceTrack = Track.fromFile(fileName, [video]);

@@ -1,7 +1,7 @@
 // Alignment toolbar view.
 // - Toolbar buttons for alignment.
 
-import { projectStore, projectUiStore } from '../../stores/stores';
+import { alignmentStore, projectStore, projectUiStore } from '../../stores/stores';
 import { remote } from 'electron';
 import { observer } from 'mobx-react';
 import * as React from 'react';
@@ -66,6 +66,10 @@ export class AlignmentToolbar extends React.Component<AlignmentToolbarProps, {}>
             });
     }
 
+    private changeFadeVideo(event: React.FormEvent<HTMLInputElement>): void {
+        alignmentStore.fadeBackground(event.currentTarget.checked);
+    }
+
     public render(): JSX.Element {
         return (
             <div className='labeling-toolbar-view' style={{
@@ -89,7 +93,16 @@ export class AlignmentToolbar extends React.Component<AlignmentToolbarProps, {}>
                 {' '}
                 <span className='sep' />
                 {' '}
-                <span className='message'>{projectStore.webmConversionStatus}</span>
+                <span style={{visibility: projectStore.referenceTrack ? 'visible' : 'hidden'}}>
+                    <input type='checkbox' style={{marginRight: '2pt'}}
+                        role='checkbox'
+                        aria-checked={alignmentStore.shouldFadeVideoBackground ? 'true' : 'false'}
+                        value={alignmentStore.shouldFadeVideoBackground ? 'true' : 'false'}
+                        onChange={this.changeFadeVideo} />
+                    Emphasize motion
+                </span>
+                {' '}
+                <span className='message'>{projectStore.statusMessage}</span>
                 {' '}
                 <ReferenceVideoToolbar />
             </div>
