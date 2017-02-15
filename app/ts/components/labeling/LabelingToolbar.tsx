@@ -2,7 +2,7 @@
 
 import * as stores from '../../stores/stores';
 import { labelingSuggestionGenerator } from '../../stores/stores';
-import { ReferenceVideoToolbar } from '../alignment/AlignmentToolbar';
+import { ReferenceVideoToolbar } from '../common/ReferenceVideoToolbar';
 import { InlineClassesListView } from './ClassesListView';
 import { observer } from 'mobx-react';
 import * as React from 'react';
@@ -33,11 +33,8 @@ export class LabelingToolbar extends React.Component<LabelingToolbarProps, {}> {
                 height: this.props.viewHeight + 'px'
             }}>
                 <InlineClassesListView />
-                {' '}
                 <span className='sep' />
-                {' '}
                 <span>{stores.labelingStore.labels.length} labels.</span>
-                {' '}
                 <button className='tbtn tbtn-red' title='Delete all labels'
                     onClick={() => {
                         if (confirm('Are you sure to delete all labels?')) {
@@ -46,13 +43,8 @@ export class LabelingToolbar extends React.Component<LabelingToolbarProps, {}> {
                     }}>
                     <span className='glyphicon icon-only glyphicon-trash'></span>
                 </button>
-                {' '}
                 <span className='sep' />
-                {' '}
-                <span className='sep' />
-                {' '}
                 Suggestions:
-                {' '}
                 <span className='tbtn-group'>
                     <button
                         type='button'
@@ -69,7 +61,6 @@ export class LabelingToolbar extends React.Component<LabelingToolbarProps, {}> {
                         }}
                     >Off</button>
                 </span>
-                {' '}
                 <button
                     type='button'
                     className='tbtn tbtn-red'

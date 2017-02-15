@@ -13,7 +13,7 @@ import * as React from 'react';
 
 
 interface AlignmentLabelingViewProps {
-    mode: 'alignment' | 'labeling' | 'featuring';
+    mode: 'alignment' | 'labeling';
 }
 
 
@@ -183,7 +183,7 @@ export class TabPane extends React.Component<AlignmentLabelingViewProps, Alignme
             <div className='labeling-view' ref='container'>
 
                 {
-                    this.props.mode === 'alignment' || this.props.mode === 'featuring' ? (
+                    this.props.mode === 'alignment' ? (
                         <AlignmentToolbar
                             top={layout.toolbarViewY0}
                             left={layout.toolbarViewX0}

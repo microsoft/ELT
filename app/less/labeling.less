@@ -143,31 +143,8 @@
     }
 }
 
-.labeling-panel-view {
-    position: absolute;
-    right: 0; top: 0;
-    background: white;
-    padding-left: 10px;
-    padding-right: 10px;
-    box-sizing: border-box;
-
-    overflow-y: scroll;
-    overflow-x: hidden;
-
-    video {
-        width: 100%;
-    }
-
-    h4 {
-        font-size: 16px;
-        font-weight: bold;
-        margin-top: 20px;
-    }
-}
-
 .classes-list-view {
     .list-group-item {
-
         cursor: pointer;
     }
 
@@ -187,9 +164,6 @@
                 outline: none;
                 box-shadow: 0 0 3px #2979FF;
             }
-        }
-        .tbtn {
-
         }
     }
 
@@ -283,41 +257,7 @@
     }
 }
 
-.video-local-view {
-    rect {
-        stroke: none; fill: none;
-        cursor: pointer;
-        pointer-events: all;
-        &:hover {
-            stroke: black;
-            stroke-width: 2px;
-        }
-    }
-}
-
-.microadjuster-framedrag {
-    path {
-        stroke: black;
-        stroke-linejoin: miter;
-        stroke-linecap: butt;
-        fill: none;
-    }
-    .overlay {
-        fill: rgba(255, 255, 255, 0.5);
-        stroke: none;
-    }
-    .frame {
-        cursor: -webkit-grab;
-    }
-}
-
-.changepoints {
-    line {
-        stroke: #DDD;
-        stroke-width: 1;
-    }
-}
-
+// FIXME (remove when we remove slider)
 .confidence-slider {
     rect.histogram-bin {
         fill: #CCC;
@@ -334,11 +274,12 @@
     }
 }
 
+// FIXME (shared toolbar)
 .labeling-toolbar-view {
     padding: 5px;
     background-color: #F8F8F8;
     white-space: nowrap;
-    .sep {
+    .sep { // FIXME (move to common)
         margin-left: 10px;
         padding-right: 11px;
         border-left: 1px solid #DDD;

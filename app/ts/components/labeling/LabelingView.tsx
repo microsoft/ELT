@@ -202,7 +202,7 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
         }
 
         const labels = stores.labelingUiStore.getLabelsInRange(stores.projectUiStore.referenceTrackPanZoom.getTimeRangeToX(this.props.viewWidth));
-        let labelsView = (
+        const labelsView = (
                 <g transform={`translate(${-stores.projectUiStore.referenceTrackPanZoom.pixelsPerSecond * stores.projectUiStore.referenceTrackPanZoom.rangeStart},0)`}>
                     {labels.map(label =>
                         <LabelView

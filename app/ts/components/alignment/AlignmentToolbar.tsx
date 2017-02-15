@@ -1,7 +1,8 @@
 // Alignment toolbar view.
 // - Toolbar buttons for alignment.
 
-import { alignmentStore, projectStore, projectUiStore } from '../../stores/stores';
+import { alignmentStore, projectStore} from '../../stores/stores';
+import { ReferenceVideoToolbar} from '../common/ReferenceVideoToolbar';
 import { remote } from 'electron';
 import { observer } from 'mobx-react';
 import * as React from 'react';
@@ -84,15 +85,12 @@ export class AlignmentToolbar extends React.Component<AlignmentToolbarProps, {}>
                     onClick={this.loadReferenceVideo}>
                     <span className='glyphicon glyphicon-folder-open'></span>Load Reference Video...
                 </button>
-                {' '}
                 <button className='tbtn tbtn-l1'
                     title='Load a sensor track from collected data'
                     onClick={this.loadDataOrVideo}>
                     <span className='glyphicon glyphicon-folder-open'></span>Load Video or Sensor...
                 </button>
-                {' '}
                 <span className='sep' />
-                {' '}
                 <span style={{visibility: projectStore.referenceTrack ? 'visible' : 'hidden'}}>
                     <input type='checkbox' style={{marginRight: '2pt'}}
                         role='checkbox'
@@ -101,65 +99,9 @@ export class AlignmentToolbar extends React.Component<AlignmentToolbarProps, {}>
                         onChange={this.changeFadeVideo} />
                     Emphasize motion
                 </span>
-                {' '}
                 <span className='message'>{projectStore.statusMessage}</span>
-                {' '}
                 <ReferenceVideoToolbar />
             </div>
-        );
-    }
-}
-
-
-@observer
-export class ReferenceVideoToolbar extends React.Component<{}, {}> {
-    public render(): JSX.Element {
-        return (
-            <span className='btn-group pull-right'>
-                <button className='tbtn tbtn-l3' title='Zoom in'
-                    onClick={() => {
-                        projectUiStore.zoomReferenceTrack(-0.2, 'center');
-                    }}>
-                    <span className='glyphicon icon-only glyphicon-zoom-in'></span>
-                </button>
-                {' '}
-                <button className='tbtn tbtn-l3' title='Zoom out'
-                    onClick={() => {
-                        projectUiStore.zoomReferenceTrack(+0.2, 'center');
-                    }}>
-                    <span className='glyphicon icon-only glyphicon-zoom-out'></span>
-                </button>
-                {' '}
-                <span className='sep' />
-                {' '}
-                <button className='tbtn tbtn-l3' title='Go to the beginning'
-                    onClick={() => {
-                        projectUiStore.zoomReferenceTrackByPercentage(-1e10);
-                    }}>
-                    <span className='glyphicon icon-only glyphicon-fast-backward'></span>
-                </button>
-                {' '}
-                <button className='tbtn tbtn-l3' title='Go to the previous page'
-                    onClick={() => {
-                        projectUiStore.zoomReferenceTrackByPercentage(-0.6);
-                    }}>
-                    <span className='glyphicon icon-only glyphicon-backward'></span>
-                </button>
-                {' '}
-                <button className='tbtn tbtn-l3' title='Go to the next page'
-                    onClick={() => {
-                        projectUiStore.zoomReferenceTrackByPercentage(+0.6);
-                    }}>
-                    <span className='glyphicon icon-only glyphicon-forward'></span>
-                </button>
-                {' '}
-                <button className='tbtn tbtn-l3' title='Go to the end'
-                    onClick={() => {
-                        projectUiStore.zoomReferenceTrackByPercentage(+1e10);
-                    }}>
-                    <span className='glyphicon icon-only glyphicon-fast-forward'></span>
-                </button>
-            </span>
         );
     }
 }

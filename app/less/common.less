@@ -28,6 +28,8 @@
     line-height: 1.5;
     background-color: #AAA;
     border-radius: 4px;
+    margin-left: 3px;
+    margin-right: 3px;
 }
 
 .tbtn {
@@ -67,10 +69,6 @@
 .tbtn-l1 {
     .tbtn-style-mixin(#444, white);
 }
-// Middle important buttons.
-.tbtn-l2 {
-    .tbtn-style-mixin(#666, white);
-}
 // Less important buttons.
 .tbtn-l3 {
     .tbtn-style-mixin(#ddd, black);
@@ -79,17 +77,7 @@
 .tbtn-red {
     .tbtn-style-mixin(#d9534f, white);
 }
-// Green buttons.
-.tbtn-green {
-    .tbtn-style-mixin(#5cb85c, white);
-}
 
-// Large buttons.
-.tbtn-large {
-    padding: 10px 20px;
-    font-size: 18px;
-    line-height: 1.5;
-}
 
 // Button groups.
 .tbtn-group {
@@ -98,7 +86,11 @@
     overflow: hidden;
     display: inline-block;
     vertical-align: top;
-    .tbtn { border-radius: 0; }
+    .tbtn { 
+        border-radius: 0; 
+        margin-left: 0px;
+        margin-right: 0px;
+    }
     .tbtn:not(:first-child) {
         margin-left: 1px;
         box-shadow: none;
@@ -154,7 +146,4 @@
 .toolOutputPanelCollapse {
     float: right;
 }
-.breathing-room {
-    margin-left: 3px;
-    margin-right: 3px;
-}
+
