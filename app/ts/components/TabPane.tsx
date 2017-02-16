@@ -1,6 +1,5 @@
 // The combined view class for Alignment and Labeling.
 
-import {LayoutParameters} from '../stores/dataStructures/LayoutParameters';
 import {KeyCode} from '../stores/dataStructures/types';
 import * as stores from '../stores/stores';
 import {AlignmentToolbar} from './alignment/AlignmentToolbar';
@@ -14,39 +13,39 @@ import * as React from 'react';
 
 interface AlignmentLabelingViewProps {
     mode: 'alignment' | 'labeling';
+    toolbarHeight: number;
 }
-
 
 interface AlignmentLabelingViewState {
     layout: AlignmentLabelingViewLayout;
 }
 
-
+// FIXME: why are these not state variables?
 interface AlignmentLabelingViewLayout {
     viewWidth: number;
     viewHeight: number;
-    toolbarViewY0: number;
-    toolbarViewY1: number;
-    SVGY0: number;
-    SVGY1: number;
-    SVGHeight: number;
-    referenceOverviewViewY0: number;
-    referenceOverviewViewY1: number;
-    referenceDetailedViewY0: number;
-    referenceDetailedViewY1: number;
-    detailedViewY0: number;
-    detailedViewY1: number;
-    SVGX0: number;
-    SVGX1: number;
-    SVGWidth: number;
-    referenceOverviewViewX0: number;
-    referenceOverviewViewX1: number;
-    referenceDetailedViewX0: number;
-    referenceDetailedViewX1: number;
-    detailedViewX0: number;
-    detailedViewX1: number;
     toolbarViewX0: number;
     toolbarViewX1: number;
+    toolbarViewY0: number;
+    toolbarViewY1: number;
+    SVGX0: number;
+    SVGY0: number;
+    SVGWidth: number;
+    SVGHeight: number;
+    referenceOverviewViewX0: number;
+    referenceOverviewViewX1: number;
+    referenceOverviewViewY0: number;
+    referenceOverviewViewY1: number;
+    timeAxisHeight: number;
+    referenceDetailedViewX0: number;
+    referenceDetailedViewX1: number;
+    referenceDetailedViewY0: number;
+    referenceDetailedViewY1: number;
+    referenceDetailedViewHeight: number;
+    detailedViewX0: number;
+    detailedViewX1: number;
+    detailedViewY0: number;
+    detailedViewY1: number;
 }
 
 // LabelingView class.
@@ -109,17 +108,18 @@ export class TabPane extends React.Component<AlignmentLabelingViewProps, Alignme
     }
 
     public computeLayoutAttributes(viewWidth: number, viewHeight: number, props: AlignmentLabelingViewProps): AlignmentLabelingViewLayout {
+        // FIXME: rename svgs
         // Layout parameters.
-        const overviewDetailsSVGXPadding1 = LayoutParameters.svgXPadding1;
-        const overviewDetailsSVGXPadding2 = LayoutParameters.svgXPadding2;
-        const overviewDetailsSVGYPadding1 = LayoutParameters.svgYPadding1;
-        const overviewDetailsSVGYPadding2 = LayoutParameters.svgYPadding2;
+        const overviewDetailsSVGXPadding1 = 8;
+        const overviewDetailsSVGXPadding2 = 8 + 20;
+        const overviewDetailsSVGYPadding1 = 25;
+        const overviewDetailsSVGYPadding2 = 8;
 
         // Compute layout.
 
         // Y-direction:
         const toolbarViewY0 = 0;
-        const toolbarViewY1 = toolbarViewY0 + LayoutParameters.toolbarViewHeight;
+        const toolbarViewY1 = toolbarViewY0 + this.props.toolbarHeight;
 
         const svgY0 = toolbarViewY1;
         const svgY1 = viewHeight;
@@ -127,12 +127,14 @@ export class TabPane extends React.Component<AlignmentLabelingViewProps, Alignme
 
         // these are related to the SVG, not globally:
         const referenceOverviewViewY0 = overviewDetailsSVGYPadding1;
-        const referenceOverviewViewY1 = referenceOverviewViewY0 + LayoutParameters.referenceOverviewViewHeight;
+        const referenceOverviewViewY1 = referenceOverviewViewY0 + 100;
+
+        const timeAxisHeight = 22;
+
+        const referenceDetailedViewHeight = 250;
         const referenceDetailedViewY0 = referenceOverviewViewY1 + 3;
-        const referenceDetailedViewY1 = referenceDetailedViewY0 +
-            (props.mode === 'labeling' ?
-                LayoutParameters.referenceDetailedViewHeightLabeling :
-                LayoutParameters.referenceDetailedViewHeightAlignment);
+        const referenceDetailedViewY1 = referenceDetailedViewY0 + referenceDetailedViewHeight;
+
         const detailedViewY0 = referenceDetailedViewY1;
         const detailedViewY1 = svgHeight - overviewDetailsSVGYPadding2;
 
@@ -151,28 +153,28 @@ export class TabPane extends React.Component<AlignmentLabelingViewProps, Alignme
         return {
             viewWidth: viewWidth,
             viewHeight: viewHeight,
+            toolbarViewX0: toolbarViewX0,
+            toolbarViewX1: toolbarViewX1,
             toolbarViewY0: toolbarViewY0,
             toolbarViewY1: toolbarViewY1,
-            SVGY0: svgY0,
-            SVGY1: svgY1,
-            SVGHeight: svgHeight,
-            referenceOverviewViewY0: referenceOverviewViewY0,
-            referenceOverviewViewY1: referenceOverviewViewY1,
-            referenceDetailedViewY0: referenceDetailedViewY0,
-            referenceDetailedViewY1: referenceDetailedViewY1,
-            detailedViewY0: detailedViewY0,
-            detailedViewY1: detailedViewY1,
             SVGX0: svg0,
-            SVGX1: svgX1,
+            SVGY0: svgY0,
             SVGWidth: svgWidth,
+            SVGHeight: svgHeight,
             referenceOverviewViewX0: overviewViewX0,
             referenceOverviewViewX1: overviewViewX1,
+            referenceOverviewViewY0: referenceOverviewViewY0,
+            referenceOverviewViewY1: referenceOverviewViewY1,
+            timeAxisHeight: timeAxisHeight,
             referenceDetailedViewX0: overviewViewX0,
             referenceDetailedViewX1: overviewViewX1,
+            referenceDetailedViewY0: referenceDetailedViewY0,
+            referenceDetailedViewY1: referenceDetailedViewY1,
+            referenceDetailedViewHeight: referenceDetailedViewHeight,
             detailedViewX0: overviewViewX0,
             detailedViewX1: overviewViewX1,
-            toolbarViewX0: toolbarViewX0,
-            toolbarViewX1: toolbarViewX1
+            detailedViewY0: detailedViewY0,
+            detailedViewY1: detailedViewY1
         };
     }
 
@@ -233,11 +235,18 @@ export class TabPane extends React.Component<AlignmentLabelingViewProps, Alignme
                                 <AlignmentView ref='alignmentView'
                                     viewWidth={layout.detailedViewX1 - layout.detailedViewX0}
                                     viewHeight={layout.detailedViewY1 - layout.detailedViewY0}
+                                    trackHeight={250} // FIXME: should this go in App?
+                                    trackGap={40} // FIXME: should this go in App?
+                                    referenceDetailedViewHeight={layout.referenceDetailedViewHeight}
+                                    timeAxisHeight={layout.timeAxisHeight}
                                     />
                                 : this.props.mode === 'labeling' ?
                                     <LabelingView ref='labelingView'
                                         viewWidth={layout.detailedViewX1 - layout.detailedViewX0}
                                         viewHeight={layout.detailedViewY1 - layout.detailedViewY0}
+                                        trackHeight={250}
+                                        trackGap={40}
+                                        timeAxisHeight={layout.timeAxisHeight}
                                         />
                                     : null
                         }

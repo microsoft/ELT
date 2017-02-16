@@ -86,14 +86,14 @@
 .labeling-detailed-view {
     position: absolute;
     top: 50px; left: 0;
-    .time-cursor {
+    .time-cursor { // FIXME: seems to only be used in referenceTrackOverview (why is this a class of labeling-detailed-view?
         line {
             stroke: black;
             fill: none;
         }
         pointer-events: none;
     }
-    .time-hint {
+    .new-label {
         rect {
             fill: rgba(0, 0, 0, 0.05);
             stroke: black;

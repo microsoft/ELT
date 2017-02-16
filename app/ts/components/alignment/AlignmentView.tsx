@@ -3,7 +3,6 @@
 // - Handles alignment keyboard events.
 
 import { Marker, Track } from '../../stores/dataStructures/alignment';
-import { LayoutParameters } from '../../stores/dataStructures/LayoutParameters';
 import { PanZoomParameters } from '../../stores/dataStructures/PanZoomParameters';
 import { KeyCode } from '../../stores/dataStructures/types';
 import * as stores from '../../stores/stores';
@@ -25,6 +24,10 @@ export interface AlignmentViewProps {
     // Viewport size.
     viewWidth: number;
     viewHeight: number;
+    trackHeight: number;
+    trackGap: number;
+    referenceDetailedViewHeight: number;
+    timeAxisHeight: number;
 }
 
 export interface AlignmentViewState {
@@ -223,29 +226,26 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
     private computeTrackLayout(): Map<string, TrackLayout> {
         const map = new Map<string, TrackLayout>();
 
-        const smallOffset = 0;
-        const axisOffset = 22;
-        let trackYCurrent = LayoutParameters.alignmentTrackYOffset;
-        const trackHeight = LayoutParameters.alignmentTrackHeight;
-        const trackMinimizedHeight = LayoutParameters.alignmentTrackMinimizedHeight;
-        const trackGap = LayoutParameters.alignmentTrackGap;
+        let trackYCurrent = 50;
+        const trackMinimizedHeight = 40; // FIXME: I don't think minimized is every used
+
         const referenceTrack = stores.projectStore.referenceTrack;
         if (referenceTrack) {
             map.set(referenceTrack.id, {
-                y0: axisOffset + smallOffset - LayoutParameters.referenceDetailedViewHeightAlignment,
-                y1: axisOffset + smallOffset,
-                height: LayoutParameters.referenceDetailedViewHeightAlignment
+                y0: this.props.timeAxisHeight - this.props.referenceDetailedViewHeight,
+                y1: this.props.timeAxisHeight,
+                height: this.props.referenceDetailedViewHeight
             });
         }
         stores.projectStore.tracks.forEach(track => {
             const trackY = trackYCurrent;
-            const height = track.minimized ? trackMinimizedHeight : trackHeight;
+            const height = track.minimized ? trackMinimizedHeight : this.props.trackHeight;
             map.set(track.id, {
                 y0: trackY,
                 y1: trackY + height,
                 height: height
             });
-            trackYCurrent += height + trackGap;
+            trackYCurrent += height + this.props.trackGap;
         });
         return map;
     }
