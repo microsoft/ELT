@@ -89,14 +89,6 @@ export class TrackView extends React.Component<TrackViewProps, {}> {
 
 
 
-
-
-
-
-
-
-
-
 export interface TimeSeriesViewProps {
     track: Track;
     timeSeries: TimeSeries;

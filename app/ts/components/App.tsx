@@ -65,6 +65,7 @@ export class App extends React.Component<{}, {}> {
         }
     }
 
+    // FIXME: TabPane just refers to alignment/labeling relocate or split like other tabs
     public render(): JSX.Element {
         return (
             <div className='app-container container-fluid'>
@@ -78,13 +79,13 @@ export class App extends React.Component<{}, {}> {
                         <HomeMenu />
                     </NavigationColumnItem>
                     <NavigationColumnItem title='Alignment' name='alignment' showButton={true} iconClass={'glyphicon glyphicon-time'}>
-                        <TabPane mode='alignment' />
+                        <TabPane mode='alignment' toolbarHeight={40}/>
                     </NavigationColumnItem>
                     <NavigationColumnItem title='Labeling' name='labeling' showButton={true} iconClass={'glyphicon glyphicon-tags'}>
-                        <TabPane mode='labeling' />
+                        <TabPane mode='labeling' toolbarHeight={40}/>
                     </NavigationColumnItem>
                     <NavigationColumnItem title='Deployment' name='deploying' iconClass='glyphicon glyphicon-export'>
-                        <DeploymentPanel />
+                        <DeploymentPanel toolbarHeight={40}/>
                     </NavigationColumnItem>
                     <NavigationColumnItem title='Options' name='options' iconClass='glyphicon glyphicon-cog'>
                         <OptionsMenu />

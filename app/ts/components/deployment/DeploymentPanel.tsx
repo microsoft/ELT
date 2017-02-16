@@ -1,4 +1,3 @@
-import { LayoutParameters } from '../../stores/dataStructures/LayoutParameters';
 import * as stores from '../../stores/stores';
 import { labelingSuggestionGenerator } from '../../stores/stores';
 import { generateEllModel } from '../../suggestion/ELLDtwModelGeneration';
@@ -29,6 +28,10 @@ interface Tab {
     text: string;
 }
 
+interface DeploymentPanelProps {
+    toolbarHeight: number;
+}
+
 interface DeploymentPanelState {
     arduinoAppCodeTemplate?: string;
     arduinoModelCode?: string;
@@ -41,7 +44,7 @@ interface DeploymentPanelState {
     toolOutput?: string;
 }
 
-export class DeploymentPanel extends React.Component<{}, DeploymentPanelState> {
+export class DeploymentPanel extends React.Component<DeploymentPanelProps, DeploymentPanelState> {
     public refs: {
         [key: string]: Element,
         container: Element,
@@ -49,8 +52,8 @@ export class DeploymentPanel extends React.Component<{}, DeploymentPanelState> {
 
     private toolOutputPanel: ToolOutputPanel;
 
-    constructor() {
-        super();
+    constructor(props: DeploymentPanelProps, context: any) {
+        super(props, context);
         let appCode: string;
         let modelCodeFilename: string;
         if (useEllModel) {
@@ -186,7 +189,7 @@ export class DeploymentPanel extends React.Component<{}, DeploymentPanelState> {
                         top={0}
                         left={0}
                         viewWidth={this.state.width}
-                        viewHeight={LayoutParameters.toolbarViewHeight}
+                        viewHeight={this.props.toolbarHeight}
                         compileClick={this.compile}
                         deployClick={this.deploy} />
                 </div>

@@ -91,6 +91,12 @@ export class SensorPlot extends React.Component<SensorPlotProps, {}> {
                 fill: 'none',
                 stroke: colors(dimIndex)
             };
+
+            // const grayscale = .6 - dimIndex * ((.6 - .2) / dimensions.length); //grayscale range from .6-.2 (dark to light)
+            // const style = {
+            //     fill: 'none',
+            //     stroke: 'rgba(0, 0, 0, ' + grayscale + ')'
+            // };
             return (
                 <path
                     d={d} style={style} key={dimIndex}

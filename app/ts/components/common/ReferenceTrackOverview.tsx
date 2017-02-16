@@ -1,6 +1,5 @@
 // The 'Overview' view that is shared by both alignment and labeling.
 
-import { LayoutParameters } from '../../stores/dataStructures/LayoutParameters';
 import { PanZoomParameters } from '../../stores/dataStructures/PanZoomParameters';
 import { KeyCode } from '../../stores/dataStructures/types';
 import * as stores from '../../stores/stores';
@@ -133,7 +132,7 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
             .domain([start, end])
             .range([0, this.props.viewWidth]);
 
-        const videoHeight = LayoutParameters.referenceOverviewViewVideoHeight;
+        const videoHeight = 50;
         const viewHeight = this.props.viewHeight;
 
         // Layout parameters.
@@ -193,8 +192,6 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
                                         viewHeight={labelsY1 - labelsY0}
                                         zoomTransform={globalPanZoom}
                                         useMipmap={true}
-                                        colorScale={this.props.mode === 'labeling' ?
-                                            LayoutParameters.seriesColorScale : null}
                                     />
                                 );
                             })
