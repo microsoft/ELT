@@ -1,8 +1,8 @@
 // Alignment toolbar view.
 // - Toolbar buttons for alignment.
 
-import { alignmentStore, projectStore} from '../../stores/stores';
-import { ReferenceVideoToolbar} from '../common/ReferenceVideoToolbar';
+import { alignmentStore, projectStore } from '../../stores/stores';
+import { ReferenceVideoToolbar } from '../common/ReferenceVideoToolbar';
 import { remote } from 'electron';
 import { observer } from 'mobx-react';
 import * as React from 'react';
@@ -91,11 +91,11 @@ export class AlignmentToolbar extends React.Component<AlignmentToolbarProps, {}>
                     <span className='glyphicon glyphicon-folder-open'></span>Load Video or Sensor...
                 </button>
                 <span className='sep' />
-                <span style={{visibility: projectStore.referenceTrack ? 'visible' : 'hidden'}}>
-                    <input type='checkbox' style={{marginRight: '2pt'}}
+                <span style={{ visibility: projectStore.referenceTrack ? 'visible' : 'hidden' }}>
+                    <input type='checkbox' style={{ marginRight: '2pt' }}
                         role='checkbox'
                         aria-checked={alignmentStore.shouldFadeVideoBackground ? 'true' : 'false'}
-                        value={alignmentStore.shouldFadeVideoBackground ? 'true' : 'false'}
+                        checked={alignmentStore.shouldFadeVideoBackground}
                         onChange={this.changeFadeVideo} />
                     Emphasize motion
                 </span>
