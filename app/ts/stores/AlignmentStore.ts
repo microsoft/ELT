@@ -1,7 +1,6 @@
 import { Marker, MarkerCorrespondence, Track } from './dataStructures/alignment';
 import { SavedAlignmentState, SavedMarker, SavedMarkerCorrespondence } from './dataStructures/project';
 import { TimeSeriesStateSnapshot } from './dataStructures/TimeSeriesStateSnapshot';
-import { fadeBackground } from './dataStructures/video';
 import { projectStore } from './stores';
 import { action, computed, observable, reaction } from 'mobx';
 
@@ -13,11 +12,6 @@ export class AlignmentStore {
 
     // Correspondences between markers.
     @observable public correspondences: MarkerCorrespondence[];
-
-    @observable public shouldFadeVideoBackground: boolean = false;
-
-    private originalReferenceTrackFilename: string = null;
-    private fadedReferenceTrackFilename: string = null;
 
     constructor() {
         this.markers = [];
@@ -185,26 +179,5 @@ export class AlignmentStore {
         this.markers = [];
         this.correspondences = [];
         this.alignAllTracks(false);
-    }
-
-    @action public fadeBackground(userChoice: boolean): void {
-        this.shouldFadeVideoBackground = userChoice;
-        if (this.shouldFadeVideoBackground) {
-            this.originalReferenceTrackFilename = projectStore.referenceTrack.source;
-            if (this.fadedReferenceTrackFilename == null) {
-                fadeBackground(
-                    projectStore.referenceTrack.source, projectStore.referenceTrack.duration,
-                    frac => projectStore.statusMessage = (frac * 100).toFixed(0) + '%',
-                    video => {
-                        this.fadedReferenceTrackFilename = video.filename;
-                        projectStore.referenceTrack = Track.fromFile(video.filename, [video]);
-                        projectStore.statusMessage = '';
-                    });
-            } else {
-                projectStore.loadReferenceTrack(this.fadedReferenceTrackFilename);
-            }
-        } else if (projectStore.referenceTrack.source != null) {
-            projectStore.loadReferenceTrack(this.originalReferenceTrackFilename);
-        }
     }
 }

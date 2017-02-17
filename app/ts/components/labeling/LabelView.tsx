@@ -104,7 +104,7 @@ export class LabelView extends React.Component<LabelViewProps, LabelViewState> {
                             label.state === LabelConfirmationState.CONFIRMED_START ||
                             label.state === LabelConfirmationState.CONFIRMED_END) {
                             stores.labelingStore.updateLabel(label, { state: LabelConfirmationState.CONFIRMED_BOTH });
-                    }    
+                    }
                 }
             }
         );

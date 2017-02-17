@@ -1,5 +1,3 @@
-// The combined view class for Alignment and Labeling.
-
 import {KeyCode} from '../stores/dataStructures/types';
 import * as stores from '../stores/stores';
 import {AlignmentToolbar} from './alignment/AlignmentToolbar';
@@ -48,7 +46,7 @@ interface AlignmentLabelingViewLayout {
     detailedViewY1: number;
 }
 
-// LabelingView class.
+// FIXME: this is not really a tabpane, its the tab for both alignment and labeling (see props/state names)
 export class TabPane extends React.Component<AlignmentLabelingViewProps, AlignmentLabelingViewState> {
     public refs: {
         [key: string]: Element,

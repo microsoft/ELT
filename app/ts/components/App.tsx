@@ -5,7 +5,6 @@ import * as stores from '../stores/stores';
 import { NavigationColumn, NavigationColumnItem } from './common/NavigationColumn';
 import { DeploymentPanel } from './deployment/DeploymentPanel';
 import { HomeMenu } from './menus/HomeMenu';
-import { OptionsMenu } from './menus/OptionsMenu';
 import { TabPane } from './TabPane';
 import { remote } from 'electron';
 import { observer } from 'mobx-react';
@@ -86,9 +85,6 @@ export class App extends React.Component<{}, {}> {
                     </NavigationColumnItem>
                     <NavigationColumnItem title='Deployment' name='deploying' iconClass='glyphicon glyphicon-export'>
                         <DeploymentPanel toolbarHeight={40}/>
-                    </NavigationColumnItem>
-                    <NavigationColumnItem title='Options' name='options' iconClass='glyphicon glyphicon-cog'>
-                        <OptionsMenu />
                     </NavigationColumnItem>
                 </NavigationColumn>
             </div>

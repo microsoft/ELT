@@ -1,5 +1,6 @@
 import { loadVideoTimeSeriesFromFile, VideoTimeSeries } from './dataset';
 import * as child_process from 'child_process';
+import * as fs from 'fs';
 import * as path from 'path';
 
 const ffmpegExe = 'ffmpeg/windows/ffmpeg.exe';
@@ -22,10 +23,13 @@ function parseOutput(line: string): number/*seconds*/ {
 export function convertToWebm(
     filename: string, duration: number,
     progressCallback: (percentDone: number) => void,
-    callback: (video: VideoTimeSeries) => void): void {
+    callback: (video: VideoTimeSeries) => void): string {
 
     const rootName = path.parse(filename).name;
-    const outName = rootName + '.webm';
+    let outName = path.dirname(filename) + path.sep + rootName + '.webm';
+    for (let i = 0; fs.exists(outName); i++) {
+        outName = path.dirname(filename) + path.sep + rootName + i + '.webm';
+    }
     const process = child_process.spawn(
         ffmpegExe, [
             '-y',               // force overwrite of existing file
@@ -51,6 +55,7 @@ export function convertToWebm(
             loadVideoTimeSeriesFromFile(outName, callback);
         }
     });
+    return outName;
 }
 
 export function fadeBackground(

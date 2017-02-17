@@ -9,7 +9,7 @@ import { HistoryTracker } from './dataStructures/HistoryTracker';
 import { PanZoomParameters } from './dataStructures/PanZoomParameters';
 import { SavedAlignmentSnapshot, SavedLabelingSnapshot, SavedProject, SavedTrack }
     from './dataStructures/project';
-import { convertToWebm, isWebm } from './dataStructures/video';
+import { convertToWebm, fadeBackground, isWebm } from './dataStructures/video';
 import { alignmentStore, labelingStore, projectUiStore } from './stores';
 import * as fs from 'fs';
 import { action, computed, observable, runInAction } from 'mobx';
@@ -31,7 +31,7 @@ class MappedLabel {
     }
 }
 
-// AlignmentLabelingStore: Stores the information about tracks and handles project load/save and undo/redo state saving.
+// Stores the information about tracks and handles project load/save and undo/redo state saving.
 export class ProjectStore {
 
     // Reference track and other tracks.
@@ -42,6 +42,11 @@ export class ProjectStore {
     @observable public projectFileLocation: string;
 
     @observable public statusMessage: string;
+
+    @observable public shouldFadeVideoBackground: boolean = false;
+    private originalReferenceTrackFilename: string = null;
+    private fadedReferenceTrackFilename: string = null;
+
 
     // Stores alignment and labeling history (undo is implemented separately, you can't undo alignment from labeling or vice versa).
     private _alignmentHistory: HistoryTracker<SavedAlignmentSnapshot>;
@@ -80,12 +85,12 @@ export class ProjectStore {
     }
 
 
-    @action public loadReferenceTrack(fileName: string): void {
+    @action public loadReferenceTrack(path: string): void {
         this.alignmentHistoryRecord();
-        loadVideoTimeSeriesFromFile(fileName, video => {
-            if (!isWebm(fileName)) {
-                convertToWebm(
-                    fileName, video.videoDuration,
+        loadVideoTimeSeriesFromFile(path, video => {
+            if (!isWebm(path)) {
+                const newPath = convertToWebm(
+                    path, video.videoDuration,
                     pctDone => {
                        this.statusMessage = 'converting video: ' + (pctDone * 100).toFixed(0) + '%';
                     },
@@ -94,7 +99,7 @@ export class ProjectStore {
                         this.statusMessage = '';
                     });
             }
-            this.referenceTrack = Track.fromFile(fileName, [video]);
+            this.referenceTrack = Track.fromFile(path, [video]);
         });
     }
 
@@ -113,6 +118,27 @@ export class ProjectStore {
         this.alignmentHistoryRecord();
         const sensors = loadMultipleSensorTimeSeriesFromFile(fileName);
         this.tracks.push(Track.fromFile(fileName, sensors));
+    }
+
+     @action public fadeBackground(userChoice: boolean): void {
+        this.shouldFadeVideoBackground = userChoice;
+        if (this.shouldFadeVideoBackground) {
+            this.originalReferenceTrackFilename = this.referenceTrack.source;
+            if (this.fadedReferenceTrackFilename == null) {
+                fadeBackground(
+                    this.referenceTrack.source, this.referenceTrack.duration,
+                    frac => this.statusMessage = 'Converting video...' + (frac * 100).toFixed(0) + '%',
+                    video => {
+                        this.fadedReferenceTrackFilename = video.filename;
+                        this.referenceTrack = Track.fromFile(video.filename, [video]);
+                        this.statusMessage = '';
+                    });
+            } else {
+                this.loadReferenceTrack(this.fadedReferenceTrackFilename);
+            }
+        } else if (this.referenceTrack.source != null) {
+            this.loadReferenceTrack(this.originalReferenceTrackFilename);
+        }
     }
 
     @action public deleteTrack(track: Track): void {

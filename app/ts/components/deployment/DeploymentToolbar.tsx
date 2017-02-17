@@ -12,7 +12,7 @@ export interface DeploymentToolbarProps {
 export class DeploymentToolbar extends React.Component<DeploymentToolbarProps, {}> {
     public render(): JSX.Element {
         return (
-            <div className='labeling-toolbar-view form-inline' style={{
+            <div className='toolbar-view form-inline' style={{
                 position: 'absolute',
                 top: this.props.top + 'px',
                 left: this.props.left + 'px',

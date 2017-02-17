@@ -4,7 +4,7 @@ import { observer } from 'mobx-react';
 import * as path from 'path';
 import * as React from 'react';
 
-
+// FIXME: rename menus to home
 // The 'Home' menu.
 @observer
 export class HomeMenu extends React.Component<{}, {}> {
