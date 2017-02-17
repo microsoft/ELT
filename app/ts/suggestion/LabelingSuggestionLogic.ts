@@ -9,10 +9,10 @@ import * as d3 from 'd3';
 
 
 export enum LabelingSuggestionLogicType {
-    FORWARD,            // Suggest from the last label only, on select suggestion, keep previous ones.
+    FORWARD, // Suggest from the last label only, on select suggestion, keep previous ones.
     FORWARD_CONFIRM,    // Forward, on select suggestion, confirm all before.
     FORWARD_REJECT,     // Forward, on select suggestion, reject all before.
-    CURRENT_VIEW        // Suggest from the current view, towards the end of the dataset.
+    CURRENT_VIEW  // Suggest from the current view, towards the end of the dataset.
 }
 
 

@@ -1,8 +1,7 @@
 // Alignment toolbar view.
 // - Toolbar buttons for alignment.
-
-import { alignmentStore, projectStore} from '../../stores/stores';
-import { ReferenceVideoToolbar} from '../common/ReferenceVideoToolbar';
+import { projectStore} from '../../stores/stores';
+import { OptionsToolbar } from '../common/OptionsToolbar';
 import { remote } from 'electron';
 import { observer } from 'mobx-react';
 import * as React from 'react';
@@ -67,13 +66,9 @@ export class AlignmentToolbar extends React.Component<AlignmentToolbarProps, {}>
             });
     }
 
-    private changeFadeVideo(event: React.FormEvent<HTMLInputElement>): void {
-        alignmentStore.fadeBackground(event.currentTarget.checked);
-    }
-
     public render(): JSX.Element {
         return (
-            <div className='labeling-toolbar-view' style={{
+            <div className='toolbar-view' style={{
                 position: 'absolute',
                 top: this.props.top + 'px',
                 left: this.props.left + 'px',
@@ -90,17 +85,7 @@ export class AlignmentToolbar extends React.Component<AlignmentToolbarProps, {}>
                     onClick={this.loadDataOrVideo}>
                     <span className='glyphicon glyphicon-folder-open'></span>Load Video or Sensor...
                 </button>
-                <span className='sep' />
-                <span style={{visibility: projectStore.referenceTrack ? 'visible' : 'hidden'}}>
-                    <input type='checkbox' style={{marginRight: '2pt'}}
-                        role='checkbox'
-                        aria-checked={alignmentStore.shouldFadeVideoBackground ? 'true' : 'false'}
-                        value={alignmentStore.shouldFadeVideoBackground ? 'true' : 'false'}
-                        onChange={this.changeFadeVideo} />
-                    Emphasize motion
-                </span>
-                <span className='message'>{projectStore.statusMessage}</span>
-                <ReferenceVideoToolbar />
+                 <OptionsToolbar />
             </div>
         );
     }

@@ -30,7 +30,6 @@ export class LabelingStore {
     private _suggestedLabelsIndex: TimeRangeIndex<Label>;
 
     private _windowLabelIndexHistory: TimeRangeIndex<Label>[];
-    
     @observable public classes: string[];
     @observable public classColors: string[];
     @observable public classColormap: { [name: string]: string };
@@ -238,9 +237,7 @@ export class LabelingStore {
         // Filter out rejected suggestions.
         visibleSuggestions = visibleSuggestions.filter(x => x.state !== LabelConfirmationState.REJECTED);
         visibleSuggestions.forEach(label => {
-            label.state = LabelConfirmationState.CONFIRMED_BOTH;
-            this._suggestedLabelsIndex.remove(label);
-            this._labelsIndex.add(label);
+            this.updateLabel(label, {state: LabelConfirmationState.CONFIRMED_BOTH});
         });
     }
 
