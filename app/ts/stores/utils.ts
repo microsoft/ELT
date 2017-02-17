@@ -1,11 +1,7 @@
-import * as d3 from 'd3';
-import * as fs from 'fs';
-import * as path_module from 'path';
-
 import { autocorrelogram } from '../suggestion/algorithms/Autocorrelation';
-import { Dataset, loadSensorTimeSeriesFromFile, loadVideoTimeSeriesFromFile, SensorTimeSeries, TimeSeriesKind }
-    from './dataStructures/dataset';
+import { Dataset, SensorTimeSeries, TimeSeriesKind } from './dataStructures/dataset';
 import { Label, LabelConfirmationState } from './dataStructures/labeling';
+import * as d3 from 'd3';
 
 
 
@@ -181,71 +177,6 @@ export interface DatasetMetadata {
     }[];
 }
 
-export function loadDataFromMetadata(metadataPath: string, callback: (dataset: Dataset) => void): void {
-    const metadata = JSON.parse(fs.readFileSync(metadataPath, 'utf-8').toString()) as DatasetMetadata;
-    const dataset = new Dataset();
-
-    let nTasks = 0;
-    let nTasksCompleted = 0;
-
-    let fixDuration = null;
-    for (const video of metadata.videos) {
-        if (video.alignmentFix) {
-            const [t1, t2] = video.alignmentFix;
-            if (!fixDuration) { fixDuration = t2 - t1; }
-            const ymx = fixDuration / (t2 - t1) * (video.timestampEnd - video.timestampStart);
-            const x = -ymx * (t1 - video.timestampStart) / (video.timestampEnd - video.timestampStart);
-            const y = x + ymx;
-            video.timestampStart = x;
-            video.timestampEnd = y;
-        }
-    }
-    for (const sensor of metadata.sensors) {
-        if (sensor.alignmentFix) {
-            const [t1, t2] = sensor.alignmentFix;
-            if (!fixDuration) { fixDuration = t2 - t1; }
-            const ymx = fixDuration / (t2 - t1) * (sensor.timestampEnd - sensor.timestampStart);
-            const x = -ymx * (t1 - sensor.timestampStart) / (sensor.timestampEnd - sensor.timestampStart);
-            const y = x + ymx;
-            sensor.timestampStart = x;
-            sensor.timestampEnd = y;
-        }
-    }
-
-    metadata.sensors.forEach(s => {
-        const sensor = loadSensorTimeSeriesFromFile(path_module.join(path_module.dirname(metadataPath), s.path));
-        sensor.name = s.name;
-        if (s.timestampStart !== undefined) { sensor.timestampStart = s.timestampStart; }
-        if (s.timestampEnd !== undefined) { sensor.timestampEnd = s.timestampEnd; }
-        dataset.addSensor(sensor);
-    });
-
-    const checkCallback = () => {
-        if (nTasksCompleted === nTasks) {
-            // Resolve name and start/end for the dataset.
-            dataset.name = metadata.name;
-
-            dataset.timestampStart = d3.max(dataset.timeSeries, x => x.timestampStart);
-            dataset.timestampEnd = d3.min(dataset.timeSeries, x => x.timestampEnd);
-            // Call the callback.
-            callback(dataset);
-        }
-    };
-
-    metadata.videos.forEach(s => {
-        nTasks += 1;
-        loadVideoTimeSeriesFromFile(path_module.join(path_module.dirname(metadataPath), s.path), video => {
-            video.name = s.name;
-            if (s.timestampStart !== undefined) { video.timestampStart = s.timestampStart; }
-            if (s.timestampEnd !== undefined) { video.timestampEnd = s.timestampEnd; }
-            dataset.addVideo(video);
-            nTasksCompleted += 1;
-            checkCallback();
-        });
-    });
-
-    checkCallback();
-}
 
 const autocorrelogramCache = new WeakMap<SensorTimeSeries, SensorTimeSeries>();
 

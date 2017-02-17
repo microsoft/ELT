@@ -17,9 +17,6 @@ export interface AlignmentToolbarProps {
 
 @observer
 export class AlignmentToolbar extends React.Component<AlignmentToolbarProps, {}> {
-    public refs: {
-        [name: string]: Element
-    };
 
     constructor(props: AlignmentToolbarProps, context: any) {
         super(props, context);
