@@ -2,7 +2,7 @@
 
 import { TimeSeries } from './dataset';
 import * as d3 from 'd3';
-
+import { observable } from 'mobx';
 
 
 function uniqueIdFactory(prefix: string): () => string {
@@ -59,16 +59,31 @@ export class MarkerCorrespondence {
 
 
 export class Track {
+    public id: string;
+    @observable public minimized: boolean;         // Is the track minimized. 
+    @observable public timeSeries: TimeSeries[];   // should have the same timestampStart and timestampEnd (aka., from the same sensor)
+    public readonly source: string;                // The filename of the timeseries. timeSeries should be what loaded from the file.
+    @observable public isAlignedToReferenceTrack: boolean;
+    @observable public referenceStart: number;     // The starting point of the timeseries in reference time.
+    @observable public referenceEnd: number;       // The ending point of the timeseries in reference time.
 
     constructor(
-        public id: string,
-        public minimized: boolean,                  // Is the track minimized. 
-        public timeSeries: TimeSeries[],   // should have the same timestampStart and timestampEnd (aka., from the same sensor)
-        public source: string,             // The filename of the timeseries. timeSeries should be what loaded from the file.
-        public isAlignedToReferenceTrack: boolean,
-        public referenceStart: number,     // The starting point of the timeseries in reference time.
-        public referenceEnd: number,       // The ending point of the timeseries in reference time.
-    ) { }
+        id: string,
+        minimized: boolean,
+        timeSeries: TimeSeries[],
+        source: string,
+        isAlignedToReferenceTrack: boolean,
+        referenceStart: number,
+        referenceEnd: number) {
+
+        this.id = id;
+        this.minimized = minimized;
+        this.timeSeries = timeSeries;
+        this.source = source;
+        this.isAlignedToReferenceTrack = isAlignedToReferenceTrack;
+        this.referenceStart = referenceStart;
+        this.referenceEnd = referenceEnd;
+    }
 
     // tslint:disable-next-line:function-name
     public static fromFile(fileName: string, timeseries: TimeSeries[]): Track {
