@@ -21,6 +21,10 @@ export interface Label extends TimeRange {
     suggestionConfidence?: number;  // The confidence value of the suggestion, range from 0 to 1.
 }
 
+export function getLabelKey(label: Label): string {
+    return `{label.className}-${label.state}-${label.timestampStart}-${label.timestampEnd}`;
+}
+
 export interface PartialLabel {
     timestampStart?: number;
     timestampEnd?: number;

@@ -1,5 +1,5 @@
 import { SensorTimeSeries } from '../../stores/dataStructures/dataset';
-import { getUniqueIDForObject, isSameArray } from '../../stores/utils';
+import { isSameArray } from '../../stores/utils';
 import { MipmapCache } from './Mipmap';
 import * as d3 from 'd3';
 import * as React from 'react';
@@ -100,7 +100,7 @@ export class SensorPlot extends React.Component<SensorPlotProps, {}> {
             return (
                 <path
                     d={d} style={style} key={dimIndex}
-                    />
+                />
             );
         });
 
@@ -172,7 +172,7 @@ export class SensorRangePlot extends React.Component<SensorRangePlotProps, {}> {
 
     public render(): JSX.Element {
         const left = (this.props.timeSeries.timestampStart - this.props.rangeStart) * this.props.pixelsPerSecond;
-        const clippathID = getUniqueIDForObject(this) + 'clip';
+        const clippathID = 'clip' + this.props.timeSeries.name;
         const timeseries = this.props.timeSeries;
         let rectStyle;
         if (this.props.onDrag) {
@@ -232,7 +232,7 @@ export class SensorRangePlot extends React.Component<SensorRangePlotProps, {}> {
                     iSlice={slice}
                     alternateDimensions={mipmap}
                     dimensionVisibility={this.props.dimensionVisibility}
-                    />
+                />
             );
         });
 
@@ -242,7 +242,7 @@ export class SensorRangePlot extends React.Component<SensorRangePlotProps, {}> {
                     <clipPath id={clippathID}>
                         <rect
                             x={0} y={-2} width={this.props.plotWidth} height={this.props.plotHeight + 4}
-                            />
+                        />
                     </clipPath>
                 </defs>
                 <g clipPath={`url(#${clippathID})`}>
@@ -253,8 +253,8 @@ export class SensorRangePlot extends React.Component<SensorRangePlotProps, {}> {
                 <rect
                     style={rectStyle}
                     x={0} y={0} width={this.props.plotWidth} height={this.props.plotHeight}
-                    onMouseDown={event => { this.onMouseDown(event); } }
-                    />
+                    onMouseDown={event => { this.onMouseDown(event); }}
+                />
             </g>
         );
     }

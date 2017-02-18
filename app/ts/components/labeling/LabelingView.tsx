@@ -1,9 +1,9 @@
 // The main labeling view.
 
-import { LabelConfirmationState } from '../../stores/dataStructures/labeling';
+import { getLabelKey, LabelConfirmationState } from '../../stores/dataStructures/labeling';
 import { KeyCode } from '../../stores/dataStructures/types';
 import * as stores from '../../stores/stores';
-import { getUniqueIDForObject, startDragging } from '../../stores/utils';
+import { startDragging } from '../../stores/utils';
 import { TrackView } from '../common/TrackView';
 import { LabelType, LabelView } from './LabelView';
 import * as d3 from 'd3';
@@ -182,7 +182,8 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
                     <rect
                         x={scale(stores.labelingUiStore.suggestionTimestampStart)}
                         y={this.props.timeAxisHeight - 3}
-                        width={scale(stores.labelingUiStore.suggestionTimestampCompleted) - scale(stores.labelingUiStore.suggestionTimestampStart)}
+                        width={scale(stores.labelingUiStore.suggestionTimestampCompleted) -
+                            scale(stores.labelingUiStore.suggestionTimestampStart)}
                         height={3}
                         style={{ fill: '#AAA' }}
                     />
@@ -192,32 +193,36 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
 
         // band to show confirmed labels
         const confirmedLabelBand = (
-                <rect
-                        x={0} y={this.props.timeAxisHeight}
-                        width={this.props.viewWidth}
-                        height={labelBandHeight}
-                        style={{ stroke: 'none', fill: '#EEE', cursor: 'crosshair' }}
-                    />
+            <rect
+                x={0} y={this.props.timeAxisHeight}
+                width={this.props.viewWidth}
+                height={labelBandHeight}
+                style={{ stroke: 'none', fill: '#EEE', cursor: 'crosshair' }}
+            />
         );
 
         // view for holding labels
-        const labels = stores.labelingUiStore.getLabelsInRange(stores.projectUiStore.referenceTrackPanZoom.getTimeRangeToX(this.props.viewWidth));
+        const labels = stores.labelingUiStore
+            .getLabelsInRange(stores.projectUiStore.referenceTrackPanZoom
+                .getTimeRangeToX(this.props.viewWidth));
+        const refPanZoom = stores.projectUiStore.referenceTrackPanZoom;
+        const startX = refPanZoom.pixelsPerSecond * refPanZoom.rangeStart;
         const labelsView = (
-                <g className='labels' transform={`translate(0, ${labelAreaY0})`}>
-                    <g transform={`translate(${-stores.projectUiStore.referenceTrackPanZoom.pixelsPerSecond * stores.projectUiStore.referenceTrackPanZoom.rangeStart},0)`}>
-                        {labels.map(label =>
-                            <LabelView
-                                key={`label-${getUniqueIDForObject(label)}`}
-                                label={label}
-                                pixelsPerSecond={stores.projectUiStore.referenceTrackPanZoom.pixelsPerSecond}
-                                height={labelAreaY1 - labelAreaY0}
-                                classColormap={stores.labelingStore.classColormap}
-                                labelType={LabelType.Detailed}
-                            />
-                        )}
-                    </g>
-               </g>
-            );
+            <g className='labels' transform={`translate(0, ${labelAreaY0})`}>
+                <g transform={`translate(${-startX},0)`}>
+                    {labels.map(label =>
+                        <LabelView
+                            key={getLabelKey(label)}
+                            label={label}
+                            pixelsPerSecond={stores.projectUiStore.referenceTrackPanZoom.pixelsPerSecond}
+                            height={labelAreaY1 - labelAreaY0}
+                            classColormap={stores.labelingStore.classColormap}
+                            labelType={LabelType.Detailed}
+                        />
+                    )}
+                </g>
+            </g>
+        );
 
         const signalsViewMode = stores.labelingUiStore.signalsViewMode;
         return (

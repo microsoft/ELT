@@ -26,19 +26,6 @@ export function startDragging(
 
 
 
-const unique_id_state = new WeakMap<Object, string>();
-let unique_id_counter: number = 1;
-export function getUniqueIDForObject(obj: Object): string {
-    if (!unique_id_state.has(obj)) {
-        const id = 'objuid' + unique_id_counter.toString();
-        unique_id_counter += 1;
-        unique_id_state.set(obj, id);
-        return id;
-    }
-    return unique_id_state.get(obj);
-}
-
-
 export function isSameArray<T>(arr1?: T[], arr2?: T[]): boolean {
     return arr1 === arr2 || arr1 && arr2 && arr1.length === arr2.length && arr1.every((d, i) => d === arr2[i]);
 }

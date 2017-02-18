@@ -1,12 +1,13 @@
 // The 'Overview' view that is shared by both alignment and labeling.
 
+import { getLabelKey } from '../../stores/dataStructures/labeling';
 import { PanZoomParameters } from '../../stores/dataStructures/PanZoomParameters';
 import { KeyCode } from '../../stores/dataStructures/types';
 import * as stores from '../../stores/stores';
-import { getUniqueIDForObject, makePathDFromPoints, startDragging } from '../../stores/utils';
+import { makePathDFromPoints, startDragging } from '../../stores/utils';
+import { LabelType, LabelView } from '../labeling/LabelView';
 import { TimeAxis } from './TimeAxis';
 import { TrackView } from './TrackView';
-import { LabelType, LabelView } from '../labeling/LabelView';
 import * as d3 from 'd3';
 import { observer } from 'mobx-react';
 import * as React from 'react';
@@ -155,7 +156,7 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
                 <g transform={`translate(${-globalPanZoom.pixelsPerSecond * globalPanZoom.rangeStart},0)`}>
                 {labels.map(label =>
                     <LabelView
-                        key={`label-${getUniqueIDForObject(label)}`}
+                        key={getLabelKey(label)}
                         label={label}
                         pixelsPerSecond={globalPanZoom.pixelsPerSecond}
                         height={labelsY1 - labelsY0}
