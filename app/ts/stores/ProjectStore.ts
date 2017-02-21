@@ -59,6 +59,11 @@ export class ProjectStore {
         this.tracks = [];
         this.projectFileLocation = null;
         this.statusMessage = '';
+
+        this.labelingUndo = this.labelingUndo.bind(this);
+        this.labelingRedo = this.labelingRedo.bind(this);
+        this.alignmentUndo = this.alignmentUndo.bind(this);
+        this.alignmentRedo = this.alignmentRedo.bind(this);
     }
 
 

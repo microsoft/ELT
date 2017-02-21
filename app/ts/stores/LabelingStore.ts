@@ -53,10 +53,6 @@ export class LabelingStore {
         return this._labelsIndex.items;
     }
 
-    @computed public get suggestions(): Label[] {
-        return this._suggestedLabelsIndex.items;
-    }
-
     public getLabelsInRange(timeRange: TimeRange): Label[] {
         return mergeTimeRangeArrays(
             this._labelsIndex.getRangesInRange(timeRange),
