@@ -40,7 +40,7 @@ export class ProjectUiStore {
         this.selectedMarker = null;
         this.selectedCorrespondence = null;
         this.getTimeCursor = this.getTimeCursor.bind(this);
-        this.timeSeriesGrayscale = true;
+        this.timeSeriesGrayscale = false;
 
         autorun('ProjectUiStore.onTracksChanged', () => this.onTracksChanged());
         reaction(
