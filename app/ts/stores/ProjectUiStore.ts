@@ -15,6 +15,8 @@ export class ProjectUiStore {
     @observable public viewWidth: number;
     @observable public currentTab: TabID;
 
+    @observable public timeSeriesGrayscale: boolean;
+
     // Current transition.
     private _referenceViewTransition: TransitionController;
 
@@ -37,8 +39,8 @@ export class ProjectUiStore {
         this._panZoomParameterMap = observable.map<PanZoomParameters>();
         this.selectedMarker = null;
         this.selectedCorrespondence = null;
-
         this.getTimeCursor = this.getTimeCursor.bind(this);
+        this.timeSeriesGrayscale = true;
 
         autorun('ProjectUiStore.onTracksChanged', () => this.onTracksChanged());
         reaction(

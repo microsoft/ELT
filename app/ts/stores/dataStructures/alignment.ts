@@ -141,10 +141,6 @@ export class Track {
 
 }
 
-
-
-
-
 // leastSquares([[yi, xi], ... ]) => [ k, b ] such that sum(k xi + b - yi)^2 is minimized.
 function leastSquares(correspondences: [number, number][]): [number, number] {
     if (correspondences.length === 0) { throw 'leastSquares empty array'; }

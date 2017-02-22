@@ -90,6 +90,7 @@ export class LabelingUiStore {
         this.suggestionLogic = getLabelingSuggestionLogic(logic);
     }
 
+    // FIXME: this should be in projectUIstore
     @action public setSignalsViewMode(mode: SignalsViewMode): void {
         this.signalsViewMode = mode;
     }

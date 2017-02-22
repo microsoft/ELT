@@ -88,28 +88,22 @@ export class ProjectStore {
     }
 
     @computed public get canUndo(): boolean {
-        // FIXME
-        // if ( (projectUiStore.currentTab === 'alignment' && this._labelingHistory.canUndo) ||
-        //  (projectUiStore.currentTab === 'labeling' && this._alignmentHistory.canUndo) ) {
-        //     return true;
-        // } else {
-        //     return false;
-        // }
-        return true;
+        if ( (projectUiStore.currentTab === 'alignment' && this._labelingHistory.canUndo) ||
+         (projectUiStore.currentTab === 'labeling' && this._alignmentHistory.canUndo) ) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     @computed public get canRedo(): boolean {
-        // FIXME
-        // if ( (projectUiStore.currentTab === 'alignment' && this._labelingHistory.canRedo) ||
-        //  (projectUiStore.currentTab === 'labeling' && this._alignmentHistory.canRedo) ) {
-        //     return true;
-        // } else {
-        //     return false;
-        // }
-        return true;
+        if ( (projectUiStore.currentTab === 'alignment' && this._labelingHistory.canRedo) ||
+         (projectUiStore.currentTab === 'labeling' && this._alignmentHistory.canRedo) ) {
+            return true;
+        } else {
+            return false;
+        }
     }
-
-
 
     @action public loadReferenceTrack(path: string): void {
         this.alignmentHistoryRecord();

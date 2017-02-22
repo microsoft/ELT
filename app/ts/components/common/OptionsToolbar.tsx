@@ -7,11 +7,6 @@ import * as React from 'react';
 @observer
 export class OptionsToolbar extends React.Component<{}, {}> {
 
-    private setViewModeThunk: { [viewMode: number]: () => void } = {};
-    private changeFadeVideo(): void {
-        projectStore.fadeBackground(!projectStore.shouldFadeVideoBackground);
-    }
-
     constructor(props: {}, context: any) {
         super(props, context);
         this.onKeyDown = this.onKeyDown.bind(this);
@@ -21,6 +16,14 @@ export class OptionsToolbar extends React.Component<{}, {}> {
         });
     }
 
+    private setViewModeThunk: { [viewMode: number]: () => void } = {};
+    private changeFadeVideo(): void {
+        projectStore.fadeBackground(!projectStore.shouldFadeVideoBackground);
+    }
+
+    private changeTimeSeriesColor(): void {
+        projectUiStore.timeSeriesGrayscale = !projectUiStore.timeSeriesGrayscale;
+    }
     private onKeyDown(event: KeyboardEvent): void {
         if (event.ctrlKey && event.keyCode === 'Z'.charCodeAt(0)) { // Ctrl-Z
             stores.projectStore.undo();
@@ -63,7 +66,20 @@ export class OptionsToolbar extends React.Component<{}, {}> {
                             <span className='glyphicon icon-only glyphicon-cog'></span>
                         </button>
                         <ul className='dropdown-menu options-menu'>
-                            <li className='dropdown-header'>Signals Display</li>
+                            <li className='dropdown-header'>Time Series Color</li>
+                            <li className='option-item'
+                                role='button'
+                                onClick={this.changeTimeSeriesColor}>
+                                    <span className='glyphicon icon-only glyphicon-ok'
+                                            style={{
+                                                visibility: projectUiStore.timeSeriesGrayscale ? 'visible' : 'hidden',
+                                                marginRight: '5pt'}
+                                                }>
+                                    </span>
+                                    Grayscale
+                            </li>
+                            <li role='separator' className='divider'></li>
+                            <li className='dropdown-header'>Signals Display Type</li>
                             <li className='option-item'
                                 role='button'
                                 onClick={this.setViewModeThunk[SignalsViewMode.TIMESERIES]}>
