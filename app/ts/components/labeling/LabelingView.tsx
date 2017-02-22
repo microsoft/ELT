@@ -46,12 +46,6 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
                 }
             }
         }
-        if (event.ctrlKey && event.keyCode === 'Z'.charCodeAt(0)) { // Ctrl-Z
-            stores.projectStore.labelingUndo();
-        }
-        if (event.ctrlKey && event.keyCode === 'Y'.charCodeAt(0)) { // Ctrl-Y
-            stores.projectStore.labelingRedo();
-        }
     }
 
     private getRelativePosition(event: { clientX: number; clientY: number }): number[] {

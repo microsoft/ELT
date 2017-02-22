@@ -33,6 +33,7 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
         this.onKeyDown = this.onKeyDown.bind(this);
     }
 
+    // FIXME: should these be in the OptionsToolbar?
     private onKeyDown(event: KeyboardEvent): void {
         if (event.srcElement === document.body) {
             if (event.keyCode === KeyCode.LEFT) {

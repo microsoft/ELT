@@ -113,7 +113,7 @@ export class AlignmentStore {
         return blocks;
     }
 
-
+    // FIXME: animate doesn't do anything?
     public alignAllTracks(animate: boolean = false): void {
         if (this.correspondences.length === 0) { return; }
         projectStore.tracks.forEach(track => {
@@ -172,7 +172,7 @@ export class AlignmentStore {
             track.referenceStart = tsState.referenceStart;
             track.referenceEnd = tsState.referenceEnd;
         });
-        this.alignAllTracks(false);
+        //this.alignAllTracks(false);
     }
 
     public reset(): void {

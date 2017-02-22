@@ -130,6 +130,7 @@ export class Track {
         });
 
         // Find the translation and scale for correspondences.
+        if (tCorrespondences.length === 0) { return; } // FIXME: this fixes alignment undo bug, but seems hacky
         let [k, b] = leastSquares(tCorrespondences);
         if (isNaN(k) || isNaN(b)) { k = 1; b = 0; } // Is this the right thing to do?
         const project = x => k * x + b;

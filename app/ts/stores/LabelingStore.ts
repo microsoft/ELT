@@ -61,8 +61,8 @@ export class LabelingStore {
 
 
     @action public addLabel(label: Label): void {
-        this._labelsIndex.add(label);
         projectStore.labelingHistoryRecord();
+        this._labelsIndex.add(label);
     }
 
     @action public removeLabel(label: Label): void {

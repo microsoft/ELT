@@ -72,12 +72,6 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
                 }
             }
         }
-        if (event.ctrlKey && event.keyCode === 'Z'.charCodeAt(0)) {
-            stores.projectStore.alignmentUndo();
-        }
-        if (event.ctrlKey && event.keyCode === 'Y'.charCodeAt(0)) {
-            stores.projectStore.alignmentRedo();
-        }
     }
 
     private onTrackMouseDown(

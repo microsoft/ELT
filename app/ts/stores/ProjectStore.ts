@@ -60,10 +60,8 @@ export class ProjectStore {
         this.projectFileLocation = null;
         this.statusMessage = '';
 
-        this.labelingUndo = this.labelingUndo.bind(this);
-        this.labelingRedo = this.labelingRedo.bind(this);
-        this.alignmentUndo = this.alignmentUndo.bind(this);
-        this.alignmentRedo = this.alignmentRedo.bind(this);
+        this.undo = this.undo.bind(this);
+        this.redo = this.redo.bind(this);
     }
 
 
@@ -89,12 +87,35 @@ export class ProjectStore {
         return this.referenceTimestampEnd - this.referenceTimestampStart;
     }
 
+    @computed public get canUndo(): boolean {
+        // FIXME
+        // if ( (projectUiStore.currentTab === 'alignment' && this._labelingHistory.canUndo) ||
+        //  (projectUiStore.currentTab === 'labeling' && this._alignmentHistory.canUndo) ) {
+        //     return true;
+        // } else {
+        //     return false;
+        // }
+        return true;
+    }
+
+    @computed public get canRedo(): boolean {
+        // FIXME
+        // if ( (projectUiStore.currentTab === 'alignment' && this._labelingHistory.canRedo) ||
+        //  (projectUiStore.currentTab === 'labeling' && this._alignmentHistory.canRedo) ) {
+        //     return true;
+        // } else {
+        //     return false;
+        // }
+        return true;
+    }
+
+
 
     @action public loadReferenceTrack(path: string): void {
         this.alignmentHistoryRecord();
         loadVideoTimeSeriesFromFile(path, video => {
             if (!isWebm(path)) {
-                const newPath = convertToWebm(
+                const newPath = convertToWebm( // FIXME: newPath is never used
                     path, video.videoDuration,
                     pctDone => {
                        this.statusMessage = 'converting video: ' + (pctDone * 100).toFixed(0) + '%';
@@ -125,7 +146,7 @@ export class ProjectStore {
         this.tracks.push(Track.fromFile(fileName, sensors));
     }
 
-     @action public fadeBackground(userChoice: boolean): void {
+    @action public fadeBackground(userChoice: boolean): void {
         this.shouldFadeVideoBackground = userChoice;
         if (this.shouldFadeVideoBackground) {
             this.originalReferenceTrackFilename = this.referenceTrack.source;
@@ -355,8 +376,8 @@ export class ProjectStore {
 
     private loadAlignmentSnapshot(snapshot: SavedAlignmentSnapshot): void {
         this.referenceTrack = snapshot.referenceTrack;
-        this.tracks = snapshot.tracks;
         alignmentStore.loadState(snapshot.alignment);
+        this.tracks = snapshot.tracks;
     }
 
     private getLabelingSnapshot(): SavedLabelingSnapshot {
@@ -367,6 +388,7 @@ export class ProjectStore {
         labelingStore.loadState(snapshot.labeling);
     }
 
+    // FIXME: rename history record
     public alignmentHistoryRecord(): void {
         this._alignmentHistory.add(this.getAlignmentSnapshot());
     }
@@ -383,31 +405,31 @@ export class ProjectStore {
         this._labelingHistory.reset();
     }
 
-    public alignmentUndo(): void {
-        const snapshot = this._alignmentHistory.undo(this.getAlignmentSnapshot());
-        if (snapshot) {
-            this.loadAlignmentSnapshot(snapshot);
+    public undo(): void {
+        if ( projectUiStore.currentTab === 'alignment') {
+            const snapshot = this._alignmentHistory.undo(this.getAlignmentSnapshot());
+            if (snapshot) {
+                this.loadAlignmentSnapshot(snapshot);
+            }
+        } else {
+            const snapshot = this._labelingHistory.undo(this.getLabelingSnapshot());
+            if (snapshot) {
+                this.loadLabelingSnapshot(snapshot);
+            }
         }
     }
 
-    public alignmentRedo(): void {
-        const snapshot = this._alignmentHistory.redo(this.getAlignmentSnapshot());
-        if (snapshot) {
-            this.loadAlignmentSnapshot(snapshot);
-        }
-    }
-
-    public labelingUndo(): void {
-        const snapshot = this._labelingHistory.undo(this.getLabelingSnapshot());
-        if (snapshot) {
-            this.loadLabelingSnapshot(snapshot);
-        }
-    }
-
-    public labelingRedo(): void {
-        const snapshot = this._labelingHistory.redo(this.getLabelingSnapshot());
-        if (snapshot) {
-            this.loadLabelingSnapshot(snapshot);
+   public redo(): void {
+        if ( projectUiStore.currentTab === 'alignment') {
+            const snapshot = this._alignmentHistory.redo(this.getAlignmentSnapshot());
+            if (snapshot) {
+                this.loadAlignmentSnapshot(snapshot);
+            }
+        } else {
+            const snapshot = this._labelingHistory.redo(this.getLabelingSnapshot());
+            if (snapshot) {
+                this.loadLabelingSnapshot(snapshot);
+            }
         }
     }
 

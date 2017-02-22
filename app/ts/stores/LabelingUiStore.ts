@@ -3,7 +3,7 @@ import { Label, SignalsViewMode, TimeRange } from './dataStructures/labeling';
 import { ObservableSet } from './dataStructures/ObservableSet';
 import { LabelingStore } from './LabelingStore';
 import { labelingStore } from './stores';
-import { action, computed, observable } from 'mobx';
+import { action, observable } from 'mobx';
 
 
 export class LabelingUiStore {

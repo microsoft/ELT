@@ -22,10 +22,13 @@
 // Snapshots need to be decoupled
 // - They shouldn't reference to the same object which can be updated by the app.
 // - Referencing to the same object is okay (and save space) if the object never changes.
+import { computed, observable } from 'mobx';
 
+// FIXME: Rename
+// FIXME: Snapshot doesn't seem to exist?
 export class HistoryTracker<Snapshot> {
-    private _undoHistory: Snapshot[];
-    private _redoHistory: Snapshot[];
+    @observable private _undoHistory: Snapshot[];
+    @observable private _redoHistory: Snapshot[];
     constructor() {
         this._undoHistory = [];
         this._redoHistory = [];
@@ -58,11 +61,11 @@ export class HistoryTracker<Snapshot> {
         }
     }
 
-    public canUndo(): boolean {
+    @computed public get canUndo(): boolean {
         return this._undoHistory.length > 0;
     }
 
-    public canRndo(): boolean {
+    @computed public get canRedo(): boolean {
         return this._redoHistory.length > 0;
     }
 

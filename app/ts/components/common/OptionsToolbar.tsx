@@ -14,11 +14,28 @@ export class OptionsToolbar extends React.Component<{}, {}> {
 
     constructor(props: {}, context: any) {
         super(props, context);
-
+        this.onKeyDown = this.onKeyDown.bind(this);
         Object.keys(SignalsViewMode).forEach(name => {
             const val = SignalsViewMode[name];
             this.setViewModeThunk[val] = this.setViewMode.bind(this, val);
         });
+    }
+
+    private onKeyDown(event: KeyboardEvent): void {
+        if (event.ctrlKey && event.keyCode === 'Z'.charCodeAt(0)) { // Ctrl-Z
+            stores.projectStore.undo();
+        }
+        if (event.ctrlKey && event.keyCode === 'Y'.charCodeAt(0)) { // Ctrl-Y
+            stores.projectStore.redo();
+        }
+    }
+
+    public componentDidMount(): void {
+        window.addEventListener('keydown', this.onKeyDown);
+    }
+
+    public componentWillUnmount(): void {
+        window.removeEventListener('keydown', this.onKeyDown);
     }
 
     private setViewMode(viewMode: SignalsViewMode): void {
@@ -31,10 +48,15 @@ export class OptionsToolbar extends React.Component<{}, {}> {
         };
         return (
             <div className='pull-right'>
-                 <button className='tbtn tbtn-l3'
-                    onClick={stores.projectStore.labelingUndo}>
-                        Undo
+                 <button className={(stores.projectStore.canUndo) ? 'tbtn tbtn-l3' : 'tbtn tbtn-l3 disabled'}
+                    onClick={stores.projectStore.undo} title='Undo' >
+                         <span className='glyphicon icon-only glyphicon-share-alt flipped-icon'></span>
                 </button>
+                <button className={(stores.projectStore.canRedo) ? 'tbtn tbtn-l3' : 'tbtn tbtn-l3 disabled'}
+                    onClick={stores.projectStore.redo} title='Redo'>
+                         <span className='glyphicon icon-only glyphicon-share-alt'></span>
+                </button>
+                 <span className='sep' />
                 <span className='message' style={{marginRight: '5pt'}}>{projectStore.statusMessage}</span>
                     <div className='btn-group'>
                         <button className='tbtn tbtn-l3 dropdown-toggle' data-toggle='dropdown' title='Options'>
