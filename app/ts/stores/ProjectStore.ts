@@ -88,31 +88,27 @@ export class ProjectStore {
     }
 
     @computed public get canUndo(): boolean {
-        if ( (projectUiStore.currentTab === 'alignment' && this._labelingHistory.canUndo) ||
-         (projectUiStore.currentTab === 'labeling' && this._alignmentHistory.canUndo) ) {
-            return true;
-        } else {
-            return false;
-        }
+        const tab = projectUiStore.currentTab;
+        const canUndoAlignment = this._alignmentHistory.canUndo;
+        const canUndoLabeling = this._labelingHistory.canUndo;
+        return tab === 'alignment' && canUndoAlignment || tab === 'labeling' && canUndoLabeling;
     }
 
     @computed public get canRedo(): boolean {
-        if ( (projectUiStore.currentTab === 'alignment' && this._labelingHistory.canRedo) ||
-         (projectUiStore.currentTab === 'labeling' && this._alignmentHistory.canRedo) ) {
-            return true;
-        } else {
-            return false;
-        }
+        const tab = projectUiStore.currentTab;
+        const canRedoAlignment = this._alignmentHistory.canRedo;
+        const canRedoLabeling = this._labelingHistory.canRedo;
+        return tab === 'alignment' && canRedoAlignment || tab === 'labeling' && canRedoLabeling;
     }
 
     @action public loadReferenceTrack(path: string): void {
         this.alignmentHistoryRecord();
         loadVideoTimeSeriesFromFile(path, video => {
             if (!isWebm(path)) {
-                const newPath = convertToWebm( // FIXME: newPath is never used
+                convertToWebm(
                     path, video.videoDuration,
                     pctDone => {
-                       this.statusMessage = 'converting video: ' + (pctDone * 100).toFixed(0) + '%';
+                        this.statusMessage = 'converting video: ' + (pctDone * 100).toFixed(0) + '%';
                     },
                     webmVideo => {
                         this.referenceTrack = Track.fromFile(webmVideo.filename, [webmVideo]);
@@ -370,8 +366,8 @@ export class ProjectStore {
 
     private loadAlignmentSnapshot(snapshot: SavedAlignmentSnapshot): void {
         this.referenceTrack = snapshot.referenceTrack;
-        alignmentStore.loadState(snapshot.alignment);
         this.tracks = snapshot.tracks;
+        alignmentStore.loadState(snapshot.alignment);
     }
 
     private getLabelingSnapshot(): SavedLabelingSnapshot {
@@ -383,24 +379,24 @@ export class ProjectStore {
     }
 
     // FIXME: rename history record
-    public alignmentHistoryRecord(): void {
+    @action public alignmentHistoryRecord(): void {
         this._alignmentHistory.add(this.getAlignmentSnapshot());
     }
 
-    private alignmentHistoryReset(): void {
+    @action private alignmentHistoryReset(): void {
         this._alignmentHistory.reset();
     }
 
-    public labelingHistoryRecord(): void {
+    @action public labelingHistoryRecord(): void {
         this._labelingHistory.add(this.getLabelingSnapshot());
     }
 
-    private labelingHistoryReset(): void {
+    @action private labelingHistoryReset(): void {
         this._labelingHistory.reset();
     }
 
-    public undo(): void {
-        if ( projectUiStore.currentTab === 'alignment') {
+    @action public undo(): void {
+        if (projectUiStore.currentTab === 'alignment') {
             const snapshot = this._alignmentHistory.undo(this.getAlignmentSnapshot());
             if (snapshot) {
                 this.loadAlignmentSnapshot(snapshot);
@@ -413,8 +409,8 @@ export class ProjectStore {
         }
     }
 
-   public redo(): void {
-        if ( projectUiStore.currentTab === 'alignment') {
+    @action public redo(): void {
+        if (projectUiStore.currentTab === 'alignment') {
             const snapshot = this._alignmentHistory.redo(this.getAlignmentSnapshot());
             if (snapshot) {
                 this.loadAlignmentSnapshot(snapshot);

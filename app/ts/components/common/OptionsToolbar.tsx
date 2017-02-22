@@ -51,11 +51,11 @@ export class OptionsToolbar extends React.Component<{}, {}> {
         };
         return (
             <div className='pull-right'>
-                 <button className={(stores.projectStore.canUndo) ? 'tbtn tbtn-l3' : 'tbtn tbtn-l3 disabled'}
+                 <button className={'tbtn tbtn-l3' + (stores.projectStore.canUndo ? '' : ' disabled')}
                     onClick={stores.projectStore.undo} title='Undo' >
                          <span className='glyphicon icon-only glyphicon-share-alt flipped-icon'></span>
                 </button>
-                <button className={(stores.projectStore.canRedo) ? 'tbtn tbtn-l3' : 'tbtn tbtn-l3 disabled'}
+                <button className={'tbtn tbtn-l3' + (stores.projectStore.canRedo ? '' : ' disabled')}
                     onClick={stores.projectStore.redo} title='Redo'>
                          <span className='glyphicon icon-only glyphicon-share-alt'></span>
                 </button>
