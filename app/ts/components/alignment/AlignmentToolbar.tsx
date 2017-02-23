@@ -1,6 +1,4 @@
-// Alignment toolbar view.
-// - Toolbar buttons for alignment.
-import { alignmentStore, projectStore } from '../../stores/stores';
+import { projectStore } from '../../stores/stores';
 import { OptionsToolbar } from '../common/OptionsToolbar';
 import { remote } from 'electron';
 import { observer } from 'mobx-react';
@@ -29,7 +27,7 @@ export class AlignmentToolbar extends React.Component<AlignmentToolbarProps, {}>
             {
                 properties: ['openFile'],
                 filters: [
-                    { name: 'Videos', extensions: ['mov', 'mp4', 'webm'] },
+                    { name: 'Videos', extensions: ['mov', 'mp4', 'webm'] }
                 ]
             },
             (fileNames: string[]) => {
@@ -76,9 +74,9 @@ export class AlignmentToolbar extends React.Component<AlignmentToolbarProps, {}>
                     <span className='glyphicon glyphicon-folder-open'></span>Load Reference Video...
                 </button>
                 <button className='tbtn tbtn-l1'
-                    title='Load a sensor track from collected data'
+                    title='Load collected sensor data'
                     onClick={this.loadDataOrVideo}>
-                    <span className='glyphicon glyphicon-folder-open'></span>Load Video or Sensor...
+                    <span className='glyphicon glyphicon-folder-open'></span>Load Sensor Data...
                 </button>
                  <OptionsToolbar />
             </div>

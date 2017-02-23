@@ -20,7 +20,6 @@ export interface TrackViewProps {
     viewHeight: number;
     zoomTransform: PanZoomParameters;
     signalsViewMode?: SignalsViewMode;
-    colorScale?: any;
     useMipmap?: boolean;
     videoDetail?: boolean;
 
@@ -70,7 +69,6 @@ export class TrackView extends React.Component<TrackViewProps, {}> {
                                     startX={startX} endX={endX}
                                     height={seriesHeight}
                                     startTime={startTime} endTime={endTime}
-                                    colorScale={this.props.colorScale}
                                     useMipmap={this.props.useMipmap}
                                     videoDetail={this.props.videoDetail}
                                     onMouseDown={this.props.onMouseDown}
@@ -97,7 +95,6 @@ export interface TimeSeriesViewProps {
     height: number;
     startTime: number;
     endTime: number;
-    colorScale?: any;
     useMipmap?: boolean;
     videoDetail?: boolean;
     signalsViewMode?: SignalsViewMode;
@@ -231,7 +228,7 @@ export class TimeSeriesView extends React.Component<TimeSeriesViewProps, {}> {
                 rangeStart={this.props.startTime} pixelsPerSecond={this.pixelsPerSecond}
                 plotWidth={this.width} plotHeight={this.props.height}
                 useMipmap={this.props.useMipmap}
-                colorScale={this.props.colorScale}
+                grayscale={stores.projectUiStore.timeSeriesGrayscale}
             />
         );
     }
@@ -281,7 +278,7 @@ export class TimeSeriesView extends React.Component<TimeSeriesViewProps, {}> {
                     onWheel={this.onWheel}
                 />
                 {
-                    timeCursor != null ? (
+                    timeCursor != null && !isNaN(timeCursor) ? (
                         <line
                             x1={timeCursorX} y1={0}
                             x2={timeCursorX} y2={this.props.height}

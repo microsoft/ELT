@@ -130,6 +130,7 @@ export class Track {
         });
 
         // Find the translation and scale for correspondences.
+        if (tCorrespondences.length === 0) { return; } // The correspondences don't involve this track.
         let [k, b] = leastSquares(tCorrespondences);
         if (isNaN(k) || isNaN(b)) { k = 1; b = 0; } // Is this the right thing to do?
         const project = x => k * x + b;
@@ -139,10 +140,6 @@ export class Track {
     }
 
 }
-
-
-
-
 
 // leastSquares([[yi, xi], ... ]) => [ k, b ] such that sum(k xi + b - yi)^2 is minimized.
 function leastSquares(correspondences: [number, number][]): [number, number] {

@@ -72,12 +72,6 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
                 }
             }
         }
-        if (event.ctrlKey && event.keyCode === 'Z'.charCodeAt(0)) {
-            stores.projectStore.alignmentUndo();
-        }
-        if (event.ctrlKey && event.keyCode === 'Y'.charCodeAt(0)) {
-            stores.projectStore.alignmentRedo();
-        }
     }
 
     private onTrackMouseDown(
@@ -227,7 +221,7 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
         const map = new Map<string, TrackLayout>();
 
         let trackYCurrent = 50;
-        const trackMinimizedHeight = 40; // FIXME: I don't think minimized is every used
+        const trackMinimizedHeight = 40;
 
         const referenceTrack = stores.projectStore.referenceTrack;
         if (referenceTrack) {

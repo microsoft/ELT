@@ -53,10 +53,6 @@ export class LabelingStore {
         return this._labelsIndex.items;
     }
 
-    @computed public get suggestions(): Label[] {
-        return this._suggestedLabelsIndex.items;
-    }
-
     public getLabelsInRange(timeRange: TimeRange): Label[] {
         return mergeTimeRangeArrays(
             this._labelsIndex.getRangesInRange(timeRange),
@@ -65,12 +61,12 @@ export class LabelingStore {
 
 
     @action public addLabel(label: Label): void {
+        projectStore.recordLabelingSnapshot();
         this._labelsIndex.add(label);
-        projectStore.labelingHistoryRecord();
     }
 
     @action public removeLabel(label: Label): void {
-        projectStore.labelingHistoryRecord();
+        projectStore.recordLabelingSnapshot();
         if (this._labelsIndex.has(label)) {
             this._labelsIndex.remove(label);
         }
@@ -80,7 +76,7 @@ export class LabelingStore {
     }
 
     @action public updateLabel(label: Label, newLabel: PartialLabel): void {
-        projectStore.labelingHistoryRecord();
+        projectStore.recordLabelingSnapshot();
         // Update the label info.
         if (newLabel.timestampStart !== undefined) { label.timestampStart = newLabel.timestampStart; }
         if (newLabel.timestampEnd !== undefined) { label.timestampEnd = newLabel.timestampEnd; }
@@ -169,13 +165,13 @@ export class LabelingStore {
     }
 
     @action public removeAllLabels(): void {
-        projectStore.labelingHistoryRecord();
+        projectStore.recordLabelingSnapshot();
         this._labelsIndex.clear();
         this._suggestedLabelsIndex.clear();
     }
 
     @action public addClass(className: string): void {
-        projectStore.labelingHistoryRecord();
+        projectStore.recordLabelingSnapshot();
         if (this.classes.indexOf(className) < 0) {
             this.classes.push(className);
             this.updateColors();
@@ -183,7 +179,7 @@ export class LabelingStore {
     }
 
     @action public removeClass(className: string): void {
-        projectStore.labelingHistoryRecord();
+        projectStore.recordLabelingSnapshot();
         // Remove the labels of that class.
         const toRemove = [];
         this._labelsIndex.forEach(label => {
@@ -204,7 +200,7 @@ export class LabelingStore {
     }
 
     @action public renameClass(oldClassName: string, newClassName: string): void {
-        projectStore.labelingHistoryRecord();
+        projectStore.recordLabelingSnapshot();
         if (this.classes.indexOf(newClassName) < 0) {
             let renamed = false;
             this._labelsIndex.forEach(label => {
@@ -230,7 +226,7 @@ export class LabelingStore {
     }
 
     @action public confirmVisibleSuggestions(): void {
-        projectStore.labelingHistoryRecord();
+        projectStore.recordLabelingSnapshot();
         // Get visible suggestions.
         let visibleSuggestions = this._suggestedLabelsIndex.getRangesInRange(
             projectUiStore.referenceTrackTimeRange);

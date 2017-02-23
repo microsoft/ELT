@@ -22,21 +22,23 @@
 // Snapshots need to be decoupled
 // - They shouldn't reference to the same object which can be updated by the app.
 // - Referencing to the same object is okay (and save space) if the object never changes.
+import { action, computed, observable } from 'mobx';
 
-export class HistoryTracker<Snapshot> {
-    private _undoHistory: Snapshot[];
-    private _redoHistory: Snapshot[];
+export class UndoRedoHistory<TSnapshot> {
+    @observable private _undoHistory: TSnapshot[];
+    @observable private _redoHistory: TSnapshot[];
+
     constructor() {
         this._undoHistory = [];
         this._redoHistory = [];
     }
 
-    public add(item: Snapshot): void {
+    @action public add(item: TSnapshot): void {
         this._undoHistory.push(item);
         this._redoHistory = [];
     }
 
-    public undo(current: Snapshot): Snapshot {
+    @action public undo(current: TSnapshot): TSnapshot {
         const lastIndex = this._undoHistory.length - 1;
         if (lastIndex >= 0) {
             const [lastItem] = this._undoHistory.splice(lastIndex, 1);
@@ -47,7 +49,7 @@ export class HistoryTracker<Snapshot> {
         }
     }
 
-    public redo(current: Snapshot): Snapshot {
+    @action public redo(current: TSnapshot): TSnapshot {
         const lastIndex = this._redoHistory.length - 1;
         if (lastIndex >= 0) {
             const [lastItem] = this._redoHistory.splice(lastIndex, 1);
@@ -58,15 +60,15 @@ export class HistoryTracker<Snapshot> {
         }
     }
 
-    public canUndo(): boolean {
+    @computed public get canUndo(): boolean {
         return this._undoHistory.length > 0;
     }
 
-    public canRndo(): boolean {
+    @computed public get canRedo(): boolean {
         return this._redoHistory.length > 0;
     }
 
-    public reset(): void {
+    @action public reset(): void {
         this._undoHistory = [];
         this._redoHistory = [];
     }

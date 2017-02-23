@@ -1,8 +1,5 @@
-// The 'Overview' view that is shared by both alignment and labeling.
-
 import { getLabelKey } from '../../stores/dataStructures/labeling';
 import { PanZoomParameters } from '../../stores/dataStructures/PanZoomParameters';
-import { KeyCode } from '../../stores/dataStructures/types';
 import * as stores from '../../stores/stores';
 import { makePathDFromPoints, startDragging } from '../../stores/utils';
 import { LabelType, LabelView } from '../labeling/LabelView';
@@ -20,7 +17,7 @@ export interface ReferenceTrackOverviewProps {
     downReach: number;
 }
 
-
+// The 'Overview' view that is shared by both alignment and labeling.
 @observer
 export class ReferenceTrackOverview extends React.Component<ReferenceTrackOverviewProps, {}> {
     public refs: {
@@ -30,18 +27,7 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
 
     constructor(props: ReferenceTrackOverviewProps, context: any) {
         super(props, context);
-        this.onKeyDown = this.onKeyDown.bind(this);
-    }
-
-    private onKeyDown(event: KeyboardEvent): void {
-        if (event.srcElement === document.body) {
-            if (event.keyCode === KeyCode.LEFT) {
-                stores.projectUiStore.zoomReferenceTrackByPercentage(-0.6);
-            }
-            if (event.keyCode === KeyCode.RIGHT) {
-                stores.projectUiStore.zoomReferenceTrackByPercentage(+0.6);
-            }
-        }
+        // this.onKeyDown = this.onKeyDown.bind(this);
     }
 
     private onMouseWheel(event: React.WheelEvent<Element>): void {
@@ -56,14 +42,6 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
         const timeWindow = stores.projectUiStore.referenceTrackDuration;
         stores.projectUiStore.setReferenceTrackPanZoom(
             new PanZoomParameters(t - timeWindow / 2, null), true);
-    }
-
-    public componentDidMount(): void {
-        window.addEventListener('keydown', this.onKeyDown);
-    }
-
-    public componentWillUnmount(): void {
-        window.removeEventListener('keydown', this.onKeyDown);
     }
 
     private raiseOnDrag(mode: string, t0: number, t1: number): void {
@@ -154,17 +132,17 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
         if (this.props.mode === 'labeling') {
             labelsView = (
                 <g transform={`translate(${-globalPanZoom.pixelsPerSecond * globalPanZoom.rangeStart},0)`}>
-                {labels.map(label =>
-                    <LabelView
-                        key={getLabelKey(label)}
-                        label={label}
-                        pixelsPerSecond={globalPanZoom.pixelsPerSecond}
-                        height={labelsY1 - labelsY0}
-                        classColormap={stores.labelingStore.classColormap}
-                        labelType={LabelType.Overview}
-                    />
-                )}
-            </g>
+                    {labels.map(label =>
+                        <LabelView
+                            key={getLabelKey(label)}
+                            label={label}
+                            pixelsPerSecond={globalPanZoom.pixelsPerSecond}
+                            height={labelsY1 - labelsY0}
+                            classColormap={stores.labelingStore.classColormap}
+                            labelType={LabelType.Overview}
+                        />
+                    )}
+                </g>
             );
         }
 
@@ -222,10 +200,11 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
                     </g>
                 </g>
 
-                <g className='time-cursor' transform='translate(0, 0)'>
-                    <line className='bg' x1={cursorX} y1={0} x2={cursorX} y2={this.props.viewHeight} />
-                    <line x1={cursorX} y1={0} x2={cursorX} y2={this.props.viewHeight} />
-                </g>
+                {!isNaN(cursorX) ?
+                    <g className='time-cursor' transform='translate(0, 0)'>
+                        <line className='bg' x1={cursorX} y1={0} x2={cursorX} y2={this.props.viewHeight} />
+                        <line x1={cursorX} y1={0} x2={cursorX} y2={this.props.viewHeight} />
+                    </g> : null}
 
                 <g className='brackets' transform='translate(0, 0)'>
                     <rect x={rangeX0} y={0} width={rangeX1 - rangeX0} height={this.props.viewHeight}

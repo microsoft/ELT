@@ -24,13 +24,13 @@ export class AlignmentStore {
     }
 
     @action public addMarker(marker: Marker): void {
-        projectStore.alignmentHistoryRecord();
+        projectStore.recordAlignmentSnapshot();
         this.markers.push(marker);
     }
 
     @action public updateMarker(marker: Marker, newLocalTimestamp: number, recompute: boolean = true, recordState: boolean = true): void {
         if (recordState) {
-            projectStore.alignmentHistoryRecord();
+            projectStore.recordAlignmentSnapshot();
         }
         marker.localTimestamp = newLocalTimestamp;
         if (recompute) {
@@ -39,7 +39,7 @@ export class AlignmentStore {
     }
 
     @action public deleteMarker(marker: Marker): void {
-        projectStore.alignmentHistoryRecord();
+        projectStore.recordAlignmentSnapshot();
         const index = this.markers.indexOf(marker);
         if (index >= 0) {
             this.markers.splice(index, 1);
@@ -50,7 +50,7 @@ export class AlignmentStore {
     }
 
     @action public addMarkerCorrespondence(marker1: Marker, marker2: Marker): MarkerCorrespondence {
-        projectStore.alignmentHistoryRecord();
+        projectStore.recordAlignmentSnapshot();
         const newCorr = new MarkerCorrespondence(marker1, marker2);
         // Remove all conflicting correspondence.
         this.correspondences = this.correspondences.filter(c => c.compatibleWith(newCorr));
@@ -60,7 +60,7 @@ export class AlignmentStore {
     }
 
     @action public deleteMarkerCorrespondence(correspondence: MarkerCorrespondence): void {
-        projectStore.alignmentHistoryRecord();
+        projectStore.recordAlignmentSnapshot();
         const index = this.correspondences.indexOf(correspondence);
         if (index >= 0) {
             this.correspondences.splice(index, 1);
@@ -112,7 +112,6 @@ export class AlignmentStore {
         }
         return blocks;
     }
-
 
     public alignAllTracks(animate: boolean = false): void {
         if (this.correspondences.length === 0) { return; }
@@ -172,7 +171,7 @@ export class AlignmentStore {
             track.referenceStart = tsState.referenceStart;
             track.referenceEnd = tsState.referenceEnd;
         });
-        this.alignAllTracks(false);
+        //this.alignAllTracks(false);
     }
 
     public reset(): void {

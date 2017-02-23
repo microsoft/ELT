@@ -1,4 +1,5 @@
 import { SignalsViewMode } from '../../stores/dataStructures/labeling';
+import { KeyCode } from '../../stores/dataStructures/types';
 import * as stores from '../../stores/stores';
 import { projectStore, projectUiStore } from '../../stores/stores';
 import { observer } from 'mobx-react';
@@ -7,22 +8,48 @@ import * as React from 'react';
 @observer
 export class OptionsToolbar extends React.Component<{}, {}> {
 
-    private setViewModeThunk: { [viewMode: number]: () => void } = {};
-    private changeFadeVideo(): void {
-        projectStore.fadeBackground(!projectStore.shouldFadeVideoBackground);
-    }
-
     constructor(props: {}, context: any) {
         super(props, context);
-
+        this.onKeyDown = this.onKeyDown.bind(this);
         Object.keys(SignalsViewMode).forEach(name => {
             const val = SignalsViewMode[name];
             this.setViewModeThunk[val] = this.setViewMode.bind(this, val);
         });
     }
 
+    private setViewModeThunk: { [viewMode: number]: () => void } = {};
+    private changeFadeVideo(): void {
+        projectStore.fadeBackground(!projectStore.shouldFadeVideoBackground);
+    }
+
+    private changeTimeSeriesColor(): void {
+        projectUiStore.timeSeriesGrayscale = !projectUiStore.timeSeriesGrayscale;
+    }
+    private onKeyDown(event: KeyboardEvent): void {
+        if (event.keyCode === KeyCode.LEFT) {
+            stores.projectUiStore.zoomReferenceTrackByPercentage(-0.6);
+        }
+        if (event.keyCode === KeyCode.RIGHT) {
+            stores.projectUiStore.zoomReferenceTrackByPercentage(+0.6);
+        }
+        if (event.ctrlKey && event.keyCode === 'Z'.charCodeAt(0)) { // Ctrl-Z
+            stores.projectStore.undo();
+        }
+        if (event.ctrlKey && event.keyCode === 'Y'.charCodeAt(0)) { // Ctrl-Y
+            stores.projectStore.redo();
+        }
+    }
+
+    public componentDidMount(): void {
+        window.addEventListener('keydown', this.onKeyDown);
+    }
+
+    public componentWillUnmount(): void {
+        window.removeEventListener('keydown', this.onKeyDown);
+    }
+
     private setViewMode(viewMode: SignalsViewMode): void {
-        stores.labelingUiStore.setSignalsViewMode(viewMode);
+        stores.labelingUiStore.signalsViewMode = viewMode;
     }
 
     public render(): JSX.Element {
@@ -31,17 +58,35 @@ export class OptionsToolbar extends React.Component<{}, {}> {
         };
         return (
             <div className='pull-right'>
-                 <button className='tbtn tbtn-l3'
-                    onClick={stores.projectStore.labelingUndo}>
-                        Undo
+                 <button className={'tbtn tbtn-l3' + (stores.projectStore.canUndo ? '' : ' disabled')}
+                    onClick={stores.projectStore.undo} title='Undo' >
+                         <span className='glyphicon icon-only glyphicon-share-alt flipped-icon'></span>
                 </button>
+                <button className={'tbtn tbtn-l3' + (stores.projectStore.canRedo ? '' : ' disabled')}
+                    onClick={stores.projectStore.redo} title='Redo'>
+                         <span className='glyphicon icon-only glyphicon-share-alt'></span>
+                </button>
+                 <span className='sep' />
                 <span className='message' style={{marginRight: '5pt'}}>{projectStore.statusMessage}</span>
                     <div className='btn-group'>
                         <button className='tbtn tbtn-l3 dropdown-toggle' data-toggle='dropdown' title='Options'>
                             <span className='glyphicon icon-only glyphicon-cog'></span>
                         </button>
                         <ul className='dropdown-menu options-menu'>
-                            <li className='dropdown-header'>Signals Display</li>
+                            <li className='dropdown-header'>Time Series Color</li>
+                            <li className='option-item'
+                                role='button'
+                                onClick={this.changeTimeSeriesColor}>
+                                    <span className='glyphicon icon-only glyphicon-ok'
+                                            style={{
+                                                visibility: projectUiStore.timeSeriesGrayscale ? 'visible' : 'hidden',
+                                                marginRight: '5pt'}
+                                                }>
+                                    </span>
+                                    Grayscale
+                            </li>
+                            <li role='separator' className='divider'></li>
+                            <li className='dropdown-header'>Signals Display Type</li>
                             <li className='option-item'
                                 role='button'
                                 onClick={this.setViewModeThunk[SignalsViewMode.TIMESERIES]}>
