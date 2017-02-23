@@ -132,17 +132,17 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
         if (this.props.mode === 'labeling') {
             labelsView = (
                 <g transform={`translate(${-globalPanZoom.pixelsPerSecond * globalPanZoom.rangeStart},0)`}>
-                {labels.map(label =>
-                    <LabelView
-                        key={getLabelKey(label)}
-                        label={label}
-                        pixelsPerSecond={globalPanZoom.pixelsPerSecond}
-                        height={labelsY1 - labelsY0}
-                        classColormap={stores.labelingStore.classColormap}
-                        labelType={LabelType.Overview}
-                    />
-                )}
-            </g>
+                    {labels.map(label =>
+                        <LabelView
+                            key={getLabelKey(label)}
+                            label={label}
+                            pixelsPerSecond={globalPanZoom.pixelsPerSecond}
+                            height={labelsY1 - labelsY0}
+                            classColormap={stores.labelingStore.classColormap}
+                            labelType={LabelType.Overview}
+                        />
+                    )}
+                </g>
             );
         }
 
@@ -200,10 +200,11 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
                     </g>
                 </g>
 
-                <g className='time-cursor' transform='translate(0, 0)'>
-                    <line className='bg' x1={cursorX} y1={0} x2={cursorX} y2={this.props.viewHeight} />
-                    <line x1={cursorX} y1={0} x2={cursorX} y2={this.props.viewHeight} />
-                </g>
+                {!isNaN(cursorX) ?
+                    <g className='time-cursor' transform='translate(0, 0)'>
+                        <line className='bg' x1={cursorX} y1={0} x2={cursorX} y2={this.props.viewHeight} />
+                        <line x1={cursorX} y1={0} x2={cursorX} y2={this.props.viewHeight} />
+                    </g> : null}
 
                 <g className='brackets' transform='translate(0, 0)'>
                     <rect x={rangeX0} y={0} width={rangeX1 - rangeX0} height={this.props.viewHeight}
