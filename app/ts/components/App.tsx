@@ -8,8 +8,6 @@ import { HomeMenu } from './menus/HomeMenu';
 import { TabPane } from './TabPane';
 import { remote } from 'electron';
 import { observer } from 'mobx-react';
-// tslint:disable-next-line:import-name
-import DevTools from 'mobx-react-devtools';
 import * as React from 'react';
 
 
@@ -66,9 +64,16 @@ export class App extends React.Component<{}, {}> {
 
     // FIXME: TabPane just refers to alignment/labeling relocate or split like other tabs
     public render(): JSX.Element {
+        const debugging = remote.getGlobal('debugging');
         return (
             <div className='app-container container-fluid'>
-                <DevTools />
+
+                {debugging ?
+                    // The following weird construct is to ensure that the devtools
+                    // module is only loaded when the debugging flag is true. 
+                    // tslint:disable-next-line:no-require-imports
+                    (DevTools => <DevTools />)(require('mobx-react-devtools').default) : null}
+
                 <NavigationColumn selected={stores.projectUiStore.currentTab} onSelect={
                     tab => {
                         stores.projectUiStore.currentTab = tab as TabID;
@@ -78,13 +83,13 @@ export class App extends React.Component<{}, {}> {
                         <HomeMenu />
                     </NavigationColumnItem>
                     <NavigationColumnItem title='Alignment' name='alignment' showButton={true} iconClass={'glyphicon glyphicon-time'}>
-                        <TabPane mode='alignment' toolbarHeight={40}/>
+                        <TabPane mode='alignment' toolbarHeight={40} />
                     </NavigationColumnItem>
                     <NavigationColumnItem title='Labeling' name='labeling' showButton={true} iconClass={'glyphicon glyphicon-tags'}>
-                        <TabPane mode='labeling' toolbarHeight={40}/>
+                        <TabPane mode='labeling' toolbarHeight={40} />
                     </NavigationColumnItem>
                     <NavigationColumnItem title='Deployment' name='deploying' iconClass='glyphicon glyphicon-export'>
-                        <DeploymentPanel toolbarHeight={40}/>
+                        <DeploymentPanel toolbarHeight={40} />
                     </NavigationColumnItem>
                 </NavigationColumn>
             </div>

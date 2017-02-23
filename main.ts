@@ -9,6 +9,7 @@ interface ExpectedEnv {
 
 const debugging = process.argv.some(a => a === '--debugging');
 if (!debugging) { (<ExpectedEnv>process.env).NODE_ENV = 'production'; }
+(global as any).debugging = debugging;
 
 // Module to create native browser window.
 const window = electron.BrowserWindow;
