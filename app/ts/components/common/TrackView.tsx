@@ -278,7 +278,7 @@ export class TimeSeriesView extends React.Component<TimeSeriesViewProps, {}> {
                     onWheel={this.onWheel}
                 />
                 {
-                    timeCursor != null ? (
+                    timeCursor != null && !isNaN(timeCursor) ? (
                         <line
                             x1={timeCursorX} y1={0}
                             x2={timeCursorX} y2={this.props.height}
