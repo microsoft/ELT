@@ -1,9 +1,9 @@
-import { action, computed, observable, ObservableMap } from 'mobx';
 import * as Map from 'es6-map';
+import { action, computed, observable, ObservableMap } from 'mobx';
 
-// FIXME: this class requires the es6-map polyfill for Map. Consider changing the implementation to avoid this.
+// This class requires the es6-map polyfill for Map. 
 export class ObservableSet<T> {
-    private map: ObservableMap<boolean>; //Observable<string,boolean>
+    private map: ObservableMap<boolean>;
     private keyMap: Map<string, T>;
 
     constructor(private getKey: (item: T) => string) {

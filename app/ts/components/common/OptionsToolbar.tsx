@@ -1,4 +1,5 @@
 import { SignalsViewMode } from '../../stores/dataStructures/labeling';
+import { KeyCode } from '../../stores/dataStructures/types';
 import * as stores from '../../stores/stores';
 import { projectStore, projectUiStore } from '../../stores/stores';
 import { observer } from 'mobx-react';
@@ -25,6 +26,12 @@ export class OptionsToolbar extends React.Component<{}, {}> {
         projectUiStore.timeSeriesGrayscale = !projectUiStore.timeSeriesGrayscale;
     }
     private onKeyDown(event: KeyboardEvent): void {
+        if (event.keyCode === KeyCode.LEFT) {
+            stores.projectUiStore.zoomReferenceTrackByPercentage(-0.6);
+        }
+        if (event.keyCode === KeyCode.RIGHT) {
+            stores.projectUiStore.zoomReferenceTrackByPercentage(+0.6);
+        }
         if (event.ctrlKey && event.keyCode === 'Z'.charCodeAt(0)) { // Ctrl-Z
             stores.projectStore.undo();
         }
@@ -42,7 +49,7 @@ export class OptionsToolbar extends React.Component<{}, {}> {
     }
 
     private setViewMode(viewMode: SignalsViewMode): void {
-        stores.labelingUiStore.setSignalsViewMode(viewMode);
+        stores.labelingUiStore.signalsViewMode = viewMode;
     }
 
     public render(): JSX.Element {

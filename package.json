@@ -17,52 +17,39 @@
     "package:darwin": "electron-packager . --overwrite --platform=darwin --arch=x64 --ignore=\"/data($|/)\" --asar --out=../packaged"
   },
   "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git+https://cjacobs.visualstudio.com/DefaultCollection/_git/ElectronApp"
-  },
-  "keywords": [],
-  "author": "cjacobs",
   "devDependencies": {
     "cross-env": "^2.0.1",
     "electron-packager": "^8.1.0",
     "electron": "^1.4.4",
     "electron-rebuild": "^1.1.5",
     "mobx-react-devtools": "^4.2.11",
-    "tslint": "^3.15.1"
+    "tslint": "^3.15.1",
+    "tslint-microsoft-contrib": "^2.0.13"
   },
   "dependencies": {
     "@types/d3": "^4.4.0",
     "@types/electron": "^1.4.29",
-    "@types/es6-promise": "0.0.32",
-    "@types/flux": "0.0.33",
+    "@types/es6-promise": "0.0.32",    
     "@types/node": "^6.0.52",
     "@types/react": "^0.14.55",
-    "@types/react-bootstrap": "0.0.37",
     "@types/react-dom": "^0.14.19",
     "bootstrap": "^3.3.6",
     "browserify": "^13.1.1",
     "d3": "^4.4.0",
-    "digitalsignals": "^1.0.0",
     "electron": "^1.4.12",
-    "electron-packager": "^8.4.0",
     "emll": "file:../../emllModule",
     "es6-map": "^0.1.4",
     "es6-promise": "^3.2.1",
-    "flux": "^2.1.1",
     "jquery": "^2.2.2",
     "less": "^2.7.1",
     "mobx": "^3.0.0",
     "mobx-react": "^4.1.0",
     "monaco-editor": "^0.7.0",
     "react": "^15.4.1",
-    "react-bootstrap": "^0.30.3",
     "react-dom": "^15.1.0",
     "requirejs": "^2.2.0",
     "serialport": "^2.1.2",
-    "tslint-microsoft-contrib": "^2.0.13",
     "typescript": "^2.1.6",
     "typescript-require": "^0.2.9-1",
-    "underscore": "^1.8.3"
   }
 }

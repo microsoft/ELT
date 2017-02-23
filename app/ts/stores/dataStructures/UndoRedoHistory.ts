@@ -24,23 +24,21 @@
 // - Referencing to the same object is okay (and save space) if the object never changes.
 import { action, computed, observable } from 'mobx';
 
-// FIXME: Rename
-// FIXME: Snapshot doesn't seem to exist?
-export class HistoryTracker<Snapshot> {
-    @observable private _undoHistory: Snapshot[];
-    @observable private _redoHistory: Snapshot[];
+export class UndoRedoHistory<TSnapshot> {
+    @observable private _undoHistory: TSnapshot[];
+    @observable private _redoHistory: TSnapshot[];
 
     constructor() {
         this._undoHistory = [];
         this._redoHistory = [];
     }
 
-    @action public add(item: Snapshot): void {
+    @action public add(item: TSnapshot): void {
         this._undoHistory.push(item);
         this._redoHistory = [];
     }
 
-    @action public undo(current: Snapshot): Snapshot {
+    @action public undo(current: TSnapshot): TSnapshot {
         const lastIndex = this._undoHistory.length - 1;
         if (lastIndex >= 0) {
             const [lastItem] = this._undoHistory.splice(lastIndex, 1);
@@ -51,7 +49,7 @@ export class HistoryTracker<Snapshot> {
         }
     }
 
-    @action public redo(current: Snapshot): Snapshot {
+    @action public redo(current: TSnapshot): TSnapshot {
         const lastIndex = this._redoHistory.length - 1;
         if (lastIndex >= 0) {
             const [lastItem] = this._redoHistory.splice(lastIndex, 1);

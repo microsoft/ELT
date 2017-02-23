@@ -90,11 +90,6 @@ export class LabelingUiStore {
         this.suggestionLogic = getLabelingSuggestionLogic(logic);
     }
 
-    // FIXME: this should be in projectUIstore
-    @action public setSignalsViewMode(mode: SignalsViewMode): void {
-        this.signalsViewMode = mode;
-    }
-
     public getLabelsInRange(timeRange: TimeRange): Label[] {
         const labels = labelingStore.getLabelsInRange(timeRange);
         return labels.filter(l => !this.selectedLabels.has(l)).concat(

@@ -1,8 +1,5 @@
-// The 'Overview' view that is shared by both alignment and labeling.
-
 import { getLabelKey } from '../../stores/dataStructures/labeling';
 import { PanZoomParameters } from '../../stores/dataStructures/PanZoomParameters';
-import { KeyCode } from '../../stores/dataStructures/types';
 import * as stores from '../../stores/stores';
 import { makePathDFromPoints, startDragging } from '../../stores/utils';
 import { LabelType, LabelView } from '../labeling/LabelView';
@@ -20,7 +17,7 @@ export interface ReferenceTrackOverviewProps {
     downReach: number;
 }
 
-
+// The 'Overview' view that is shared by both alignment and labeling.
 @observer
 export class ReferenceTrackOverview extends React.Component<ReferenceTrackOverviewProps, {}> {
     public refs: {
@@ -30,19 +27,7 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
 
     constructor(props: ReferenceTrackOverviewProps, context: any) {
         super(props, context);
-        this.onKeyDown = this.onKeyDown.bind(this);
-    }
-
-    // FIXME: should these be in the OptionsToolbar?
-    private onKeyDown(event: KeyboardEvent): void {
-        if (event.srcElement === document.body) {
-            if (event.keyCode === KeyCode.LEFT) {
-                stores.projectUiStore.zoomReferenceTrackByPercentage(-0.6);
-            }
-            if (event.keyCode === KeyCode.RIGHT) {
-                stores.projectUiStore.zoomReferenceTrackByPercentage(+0.6);
-            }
-        }
+        // this.onKeyDown = this.onKeyDown.bind(this);
     }
 
     private onMouseWheel(event: React.WheelEvent<Element>): void {
@@ -57,14 +42,6 @@ export class ReferenceTrackOverview extends React.Component<ReferenceTrackOvervi
         const timeWindow = stores.projectUiStore.referenceTrackDuration;
         stores.projectUiStore.setReferenceTrackPanZoom(
             new PanZoomParameters(t - timeWindow / 2, null), true);
-    }
-
-    public componentDidMount(): void {
-        window.addEventListener('keydown', this.onKeyDown);
-    }
-
-    public componentWillUnmount(): void {
-        window.removeEventListener('keydown', this.onKeyDown);
     }
 
     private raiseOnDrag(mode: string, t0: number, t1: number): void {

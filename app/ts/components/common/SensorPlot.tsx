@@ -66,7 +66,6 @@ export class SensorPlot extends React.Component<SensorPlotProps, {}> {
                 d3.scaleOrdinal<number, string>(d3.schemeCategory10) :
                 d3.scaleOrdinal<number, string>(d3.schemeCategory20));
 
-        // FIXME: will dimensions ever contain more than one index?
         const paths = dimensions.map((dimSeries: number[], dimIndex: number) => {
             if (this.props.dimensionVisibility != null) {
                 if (!this.props.dimensionVisibility[dimIndex]) { return null; }

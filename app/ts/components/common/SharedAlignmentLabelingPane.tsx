@@ -1,11 +1,11 @@
-import {KeyCode} from '../stores/dataStructures/types';
-import * as stores from '../stores/stores';
-import {AlignmentToolbar} from './alignment/AlignmentToolbar';
-import {AlignmentView} from './alignment/AlignmentView';
-import {LabelingToolbar} from './labeling/LabelingToolbar';
-import {LabelingView} from './labeling/LabelingView';
-import {ReferenceTrackDetail} from './common/ReferenceTrackDetail';
-import {ReferenceTrackOverview} from './common/ReferenceTrackOverview';
+import {KeyCode} from '../../stores/dataStructures/types';
+import * as stores from '../../stores/stores';
+import {AlignmentToolbar} from '../alignment/AlignmentToolbar';
+import {AlignmentView} from '../alignment/AlignmentView';
+import {ReferenceTrackDetail} from '../common/ReferenceTrackDetail';
+import {ReferenceTrackOverview} from '../common/ReferenceTrackOverview';
+import {LabelingToolbar} from '../labeling/LabelingToolbar';
+import {LabelingView} from '../labeling/LabelingView';
 import * as React from 'react';
 
 
@@ -18,7 +18,6 @@ interface AlignmentLabelingViewState {
     layout: AlignmentLabelingViewLayout;
 }
 
-// FIXME: why are these not state variables?
 interface AlignmentLabelingViewLayout {
     viewWidth: number;
     viewHeight: number;
@@ -46,8 +45,7 @@ interface AlignmentLabelingViewLayout {
     detailedViewY1: number;
 }
 
-// FIXME: this is not really a tabpane, its the tab for both alignment and labeling (see props/state names)
-export class TabPane extends React.Component<AlignmentLabelingViewProps, AlignmentLabelingViewState> {
+export class SharedAlignmentLabelingPane extends React.Component<AlignmentLabelingViewProps, AlignmentLabelingViewState> {
     public refs: {
         [key: string]: Element,
         container: Element,
@@ -106,7 +104,6 @@ export class TabPane extends React.Component<AlignmentLabelingViewProps, Alignme
     }
 
     public computeLayoutAttributes(viewWidth: number, viewHeight: number, props: AlignmentLabelingViewProps): AlignmentLabelingViewLayout {
-        // FIXME: rename svgs
         // Layout parameters.
         const overviewDetailsSVGXPadding1 = 8;
         const overviewDetailsSVGXPadding2 = 8 + 20;
@@ -233,8 +230,8 @@ export class TabPane extends React.Component<AlignmentLabelingViewProps, Alignme
                                 <AlignmentView ref='alignmentView'
                                     viewWidth={layout.detailedViewX1 - layout.detailedViewX0}
                                     viewHeight={layout.detailedViewY1 - layout.detailedViewY0}
-                                    trackHeight={250} // FIXME: should this go in App?
-                                    trackGap={40} // FIXME: should this go in App?
+                                    trackHeight={250}
+                                    trackGap={40}
                                     referenceDetailedViewHeight={layout.referenceDetailedViewHeight}
                                     timeAxisHeight={layout.timeAxisHeight}
                                     />

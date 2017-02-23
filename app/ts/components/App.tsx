@@ -1,18 +1,13 @@
-// The main view for the app.
-
 import { TabID } from '../stores/dataStructures/types';
 import * as stores from '../stores/stores';
 import { NavigationColumn, NavigationColumnItem } from './common/NavigationColumn';
+import { SharedAlignmentLabelingPane } from './common/SharedAlignmentLabelingPane';
 import { DeploymentPanel } from './deployment/DeploymentPanel';
-import { HomeMenu } from './menus/HomeMenu';
-import { TabPane } from './TabPane';
+import { HomeMenu } from './home/HomeMenu';
 import { remote } from 'electron';
 import { observer } from 'mobx-react';
 import * as React from 'react';
 
-
-
-// Labeling app has some configuration code, then it calls LabelingView.
 @observer
 export class App extends React.Component<{}, {}> {
     constructor(props: {}, context: any) {
@@ -62,7 +57,6 @@ export class App extends React.Component<{}, {}> {
         }
     }
 
-    // FIXME: TabPane just refers to alignment/labeling relocate or split like other tabs
     public render(): JSX.Element {
         const debugging = remote.getGlobal('debugging');
         return (
@@ -83,10 +77,10 @@ export class App extends React.Component<{}, {}> {
                         <HomeMenu />
                     </NavigationColumnItem>
                     <NavigationColumnItem title='Alignment' name='alignment' showButton={true} iconClass={'glyphicon glyphicon-time'}>
-                        <TabPane mode='alignment' toolbarHeight={40} />
+                        <SharedAlignmentLabelingPane mode='alignment' toolbarHeight={40} />
                     </NavigationColumnItem>
                     <NavigationColumnItem title='Labeling' name='labeling' showButton={true} iconClass={'glyphicon glyphicon-tags'}>
-                        <TabPane mode='labeling' toolbarHeight={40} />
+                        <SharedAlignmentLabelingPane mode='labeling' toolbarHeight={40} />
                     </NavigationColumnItem>
                     <NavigationColumnItem title='Deployment' name='deploying' iconClass='glyphicon glyphicon-export'>
                         <DeploymentPanel toolbarHeight={40} />

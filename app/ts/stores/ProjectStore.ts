@@ -5,10 +5,10 @@ import { Track } from './dataStructures/alignment';
 import { loadMultipleSensorTimeSeriesFromFile, loadRawSensorTimeSeriesFromFile, loadVideoTimeSeriesFromFile }
     from './dataStructures/dataset';
 import { DeferredCallbacks } from './dataStructures/DeferredCallbacks';
-import { HistoryTracker } from './dataStructures/HistoryTracker';
 import { PanZoomParameters } from './dataStructures/PanZoomParameters';
 import { SavedAlignmentSnapshot, SavedLabelingSnapshot, SavedProject, SavedTrack }
     from './dataStructures/project';
+import { UndoRedoHistory } from './dataStructures/UndoRedoHistory';
 import { convertToWebm, fadeBackground, isWebm } from './dataStructures/video';
 import { alignmentStore, labelingStore, projectUiStore } from './stores';
 import * as fs from 'fs';
@@ -49,12 +49,12 @@ export class ProjectStore {
 
 
     // Stores alignment and labeling history (undo is implemented separately, you can't undo alignment from labeling or vice versa).
-    private _alignmentHistory: HistoryTracker<SavedAlignmentSnapshot>;
-    private _labelingHistory: HistoryTracker<SavedLabelingSnapshot>;
+    private _alignmentUndoRedoHistory: UndoRedoHistory<SavedAlignmentSnapshot>;
+    private _labelingUndoRedoHistory: UndoRedoHistory<SavedLabelingSnapshot>;
 
     constructor() {
-        this._alignmentHistory = new HistoryTracker<SavedAlignmentSnapshot>();
-        this._labelingHistory = new HistoryTracker<SavedLabelingSnapshot>();
+        this._alignmentUndoRedoHistory = new UndoRedoHistory<SavedAlignmentSnapshot>();
+        this._labelingUndoRedoHistory = new UndoRedoHistory<SavedLabelingSnapshot>();
         this.referenceTrack = null;
         this.tracks = [];
         this.projectFileLocation = null;
@@ -89,20 +89,20 @@ export class ProjectStore {
 
     @computed public get canUndo(): boolean {
         const tab = projectUiStore.currentTab;
-        const canUndoAlignment = this._alignmentHistory.canUndo;
-        const canUndoLabeling = this._labelingHistory.canUndo;
+        const canUndoAlignment = this._alignmentUndoRedoHistory.canUndo;
+        const canUndoLabeling = this._labelingUndoRedoHistory.canUndo;
         return tab === 'alignment' && canUndoAlignment || tab === 'labeling' && canUndoLabeling;
     }
 
     @computed public get canRedo(): boolean {
         const tab = projectUiStore.currentTab;
-        const canRedoAlignment = this._alignmentHistory.canRedo;
-        const canRedoLabeling = this._labelingHistory.canRedo;
+        const canRedoAlignment = this._alignmentUndoRedoHistory.canRedo;
+        const canRedoLabeling = this._labelingUndoRedoHistory.canRedo;
         return tab === 'alignment' && canRedoAlignment || tab === 'labeling' && canRedoLabeling;
     }
 
     @action public loadReferenceTrack(path: string): void {
-        this.alignmentHistoryRecord();
+        this.recordAlignmentSnapshot();
         loadVideoTimeSeriesFromFile(path, video => {
             if (!isWebm(path)) {
                 convertToWebm(
@@ -124,14 +124,14 @@ export class ProjectStore {
     }
 
     @action public loadVideoTrack(fileName: string): void {
-        this.alignmentHistoryRecord();
+        this.recordAlignmentSnapshot();
         loadVideoTimeSeriesFromFile(fileName, video => {
             this.tracks.push(Track.fromFile(fileName, [video]));
         });
     }
 
     @action public loadSensorTrack(fileName: string): void {
-        this.alignmentHistoryRecord();
+        this.recordAlignmentSnapshot();
         const sensors = loadMultipleSensorTimeSeriesFromFile(fileName);
         this.tracks.push(Track.fromFile(fileName, sensors));
     }
@@ -158,7 +158,7 @@ export class ProjectStore {
     }
 
     @action public deleteTrack(track: Track): void {
-        this.alignmentHistoryRecord();
+        this.recordAlignmentSnapshot();
         const index = this.tracks.map(t => t.id).indexOf(track.id);
         this.tracks.splice(index, 1);
     }
@@ -185,8 +185,8 @@ export class ProjectStore {
             const json = fs.readFileSync(fileName, 'utf-8');
             const project = JSON.parse(json);
             this.projectFileLocation = null;
-            this.alignmentHistoryReset();
-            this.labelingHistoryReset();
+            this.resetAlignmentUndoRedoHistory();
+            this.resetLabelingUndoRedoHistory();
             this.loadProjectHelper(project as SavedProject, () => {
                 this.projectFileLocation = fileName;
                 this.addToRecentProjects(fileName);
@@ -370,6 +370,14 @@ export class ProjectStore {
         alignmentStore.loadState(snapshot.alignment);
     }
 
+    @action public recordAlignmentSnapshot(): void {
+        this._alignmentUndoRedoHistory.add(this.getAlignmentSnapshot());
+    }
+
+    @action private resetAlignmentUndoRedoHistory(): void {
+        this._alignmentUndoRedoHistory.reset();
+    }
+
     private getLabelingSnapshot(): SavedLabelingSnapshot {
         return { labeling: deepClone(labelingStore.saveState()) };
     }
@@ -378,31 +386,22 @@ export class ProjectStore {
         labelingStore.loadState(snapshot.labeling);
     }
 
-    // FIXME: rename history record
-    @action public alignmentHistoryRecord(): void {
-        this._alignmentHistory.add(this.getAlignmentSnapshot());
+    @action public recordLabelingSnapshot(): void {
+        this._labelingUndoRedoHistory.add(this.getLabelingSnapshot());
     }
 
-    @action private alignmentHistoryReset(): void {
-        this._alignmentHistory.reset();
-    }
-
-    @action public labelingHistoryRecord(): void {
-        this._labelingHistory.add(this.getLabelingSnapshot());
-    }
-
-    @action private labelingHistoryReset(): void {
-        this._labelingHistory.reset();
+    @action private resetLabelingUndoRedoHistory(): void {
+        this._labelingUndoRedoHistory.reset();
     }
 
     @action public undo(): void {
         if (projectUiStore.currentTab === 'alignment') {
-            const snapshot = this._alignmentHistory.undo(this.getAlignmentSnapshot());
+            const snapshot = this._alignmentUndoRedoHistory.undo(this.getAlignmentSnapshot());
             if (snapshot) {
                 this.loadAlignmentSnapshot(snapshot);
             }
         } else {
-            const snapshot = this._labelingHistory.undo(this.getLabelingSnapshot());
+            const snapshot = this._labelingUndoRedoHistory.undo(this.getLabelingSnapshot());
             if (snapshot) {
                 this.loadLabelingSnapshot(snapshot);
             }
@@ -411,12 +410,12 @@ export class ProjectStore {
 
     @action public redo(): void {
         if (projectUiStore.currentTab === 'alignment') {
-            const snapshot = this._alignmentHistory.redo(this.getAlignmentSnapshot());
+            const snapshot = this._alignmentUndoRedoHistory.redo(this.getAlignmentSnapshot());
             if (snapshot) {
                 this.loadAlignmentSnapshot(snapshot);
             }
         } else {
-            const snapshot = this._labelingHistory.redo(this.getLabelingSnapshot());
+            const snapshot = this._labelingUndoRedoHistory.redo(this.getLabelingSnapshot());
             if (snapshot) {
                 this.loadLabelingSnapshot(snapshot);
             }

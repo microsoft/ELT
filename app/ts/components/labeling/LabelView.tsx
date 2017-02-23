@@ -123,7 +123,6 @@ export class LabelView extends React.Component<LabelViewProps, LabelViewState> {
             this.props.label.state === LabelConfirmationState.CONFIRMED_BOTH;
     }
 
-    // FIXME: what does this do?
     private getSuggestionConfidenceOrOne(): number {
         const suggestionConfidence = this.props.label.suggestionConfidence;
         if (suggestionConfidence && this.props.label.state !== LabelConfirmationState.CONFIRMED_BOTH) {

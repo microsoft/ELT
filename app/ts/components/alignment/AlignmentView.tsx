@@ -221,7 +221,7 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
         const map = new Map<string, TrackLayout>();
 
         let trackYCurrent = 50;
-        const trackMinimizedHeight = 40; // FIXME: I don't think minimized is every used
+        const trackMinimizedHeight = 40;
 
         const referenceTrack = stores.projectStore.referenceTrack;
         if (referenceTrack) {
