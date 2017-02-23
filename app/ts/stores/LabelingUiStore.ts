@@ -1,4 +1,3 @@
-import { getLabelingSuggestionLogic, LabelingSuggestionLogic, LabelingSuggestionLogicType } from '../suggestion/LabelingSuggestionLogic';
 import { Label, SignalsViewMode, TimeRange } from './dataStructures/labeling';
 import { ObservableSet } from './dataStructures/ObservableSet';
 import { LabelingStore } from './LabelingStore';
@@ -18,9 +17,7 @@ export class LabelingUiStore {
 
     @observable public suggestionEnabled: boolean;
     @observable public suggestionConfidenceThreshold: number;
-    @observable public suggestionLogic: LabelingSuggestionLogic;
-
-
+    
     constructor(labelingStore: LabelingStore) {
 
         this.signalsViewMode = SignalsViewMode.TIMESERIES;
@@ -29,7 +26,6 @@ export class LabelingUiStore {
             lab => lab.className + ':' + lab.timestampStart + '-' + lab.timestampEnd);
 
         this.suggestionEnabled = true;
-        this.suggestionLogic = getLabelingSuggestionLogic(LabelingSuggestionLogicType.CURRENT_VIEW);
         this.suggestionConfidenceThreshold = 0.2;
         this.suggestionConfidenceHistogram = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
@@ -84,10 +80,6 @@ export class LabelingUiStore {
         if (this.suggestionConfidenceThreshold !== threshold) {
             this.suggestionConfidenceThreshold = threshold;
         }
-    }
-
-    @action public setSuggestionLogic(logic: LabelingSuggestionLogicType): void {
-        this.suggestionLogic = getLabelingSuggestionLogic(logic);
     }
 
     public getLabelsInRange(timeRange: TimeRange): Label[] {

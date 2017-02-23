@@ -1,5 +1,5 @@
+import {autocorrelogram} from '../../stores/dataStructures/Autocorrelation';
 import {SensorTimeSeries} from '../../stores/dataStructures/dataset';
-import {autocorrelogram} from '../../suggestion/algorithms/Autocorrelation';
 import * as d3 from 'd3';
 import * as React from 'react';
 

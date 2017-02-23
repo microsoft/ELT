@@ -1,7 +1,6 @@
 import * as stores from '../../stores/stores';
 import { OptionsToolbar } from '../common/OptionsToolbar';
 import { InlineClassesListView } from './ClassesListView';
-import { SuggestionsToolbar } from './SuggestionsToolbar';
 import { observer } from 'mobx-react';
 import * as React from 'react';
 
@@ -43,7 +42,6 @@ export class LabelingToolbar extends React.Component<LabelingToolbarProps, {}> {
                 </button>
                 <span className='sep' />
                 <OptionsToolbar />
-                <SuggestionsToolbar />
             </div>
         );
     }

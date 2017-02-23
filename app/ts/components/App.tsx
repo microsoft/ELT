@@ -2,7 +2,6 @@ import { TabID } from '../stores/dataStructures/types';
 import * as stores from '../stores/stores';
 import { NavigationColumn, NavigationColumnItem } from './common/NavigationColumn';
 import { SharedAlignmentLabelingPane } from './common/SharedAlignmentLabelingPane';
-import { DeploymentPanel } from './deployment/DeploymentPanel';
 import { HomeMenu } from './home/HomeMenu';
 import { remote } from 'electron';
 import { observer } from 'mobx-react';
@@ -81,9 +80,6 @@ export class App extends React.Component<{}, {}> {
                     </NavigationColumnItem>
                     <NavigationColumnItem title='Labeling' name='labeling' showButton={true} iconClass={'glyphicon glyphicon-tags'}>
                         <SharedAlignmentLabelingPane mode='labeling' toolbarHeight={40} />
-                    </NavigationColumnItem>
-                    <NavigationColumnItem title='Deployment' name='deploying' iconClass='glyphicon glyphicon-export'>
-                        <DeploymentPanel toolbarHeight={40} />
                     </NavigationColumnItem>
                 </NavigationColumn>
             </div>
