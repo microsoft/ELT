@@ -1,6 +1,5 @@
 import {VideoTimeSeries} from '../../stores/dataStructures/dataset';
 import * as React from 'react';
-
 // Component VideoRangePlot
 // Display a video as frame thumbnails.
 export interface VideoRangePlotProps {

@@ -386,6 +386,7 @@ export class ProjectStore {
         labelingStore.loadState(snapshot.labeling);
     }
 
+
     @action public recordLabelingSnapshot(): void {
         this._labelingUndoRedoHistory.add(this.getLabelingSnapshot());
     }

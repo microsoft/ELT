@@ -18,6 +18,7 @@ export class LabelingUiStore {
     @observable public suggestionEnabled: boolean;
     @observable public suggestionConfidenceThreshold: number;
     
+
     constructor(labelingStore: LabelingStore) {
 
         this.signalsViewMode = SignalsViewMode.TIMESERIES;

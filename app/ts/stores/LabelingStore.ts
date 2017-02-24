@@ -124,7 +124,6 @@ export class LabelingStore {
                     renamed = true;
                 }
             });
-          
             const index = this.classes.indexOf(oldClassName);
             if (index >= 0) {
                 this.classes[index] = newClassName;

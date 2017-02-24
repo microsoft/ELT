@@ -105,7 +105,6 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
             });
     }
 
-
     private getRelativePosition(event: MouseEvent): number[] {
         const x: number = event.clientX - this.refs.interactionRect.getBoundingClientRect().left;
         const y: number = event.clientY - this.refs.interactionRect.getBoundingClientRect().top;
@@ -271,7 +270,6 @@ export class AlignmentView extends React.Component<AlignmentViewProps, Alignment
                         useMipmap={true}
                         signalsViewMode={stores.labelingUiStore.signalsViewMode}
                     />
-
                     <rect className='track-decoration'
                         x={this.props.viewWidth} y={0}
                         width={3} height={trackLayout.height} />

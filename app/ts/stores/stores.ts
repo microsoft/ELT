@@ -9,3 +9,4 @@ export const alignmentStore = new AlignmentStore();
 export const projectUiStore = new ProjectUiStore(projectStore);
 export const labelingStore = new LabelingStore(alignmentStore);
 export const labelingUiStore = new LabelingUiStore(labelingStore);
+
