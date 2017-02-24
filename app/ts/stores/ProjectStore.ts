@@ -5,14 +5,14 @@ import { Track } from './dataStructures/alignment';
 import { loadMultipleSensorTimeSeriesFromFile, loadRawSensorTimeSeriesFromFile, loadVideoTimeSeriesFromFile }
     from './dataStructures/dataset';
 import { DeferredCallbacks } from './dataStructures/DeferredCallbacks';
-import { HistoryTracker } from './dataStructures/HistoryTracker';
+import { PanZoomParameters } from './dataStructures/PanZoomParameters';
 import { SavedAlignmentSnapshot, SavedLabelingSnapshot, SavedProject, SavedTrack }
     from './dataStructures/project';
+import { UndoRedoHistory } from './dataStructures/UndoRedoHistory';
+import { convertToWebm, fadeBackground, isWebm } from './dataStructures/video';
 import { alignmentStore, labelingStore, projectUiStore } from './stores';
 import * as fs from 'fs';
 import { action, computed, observable, runInAction } from 'mobx';
-
-
 
 
 // Deep copy an object.
@@ -31,11 +31,7 @@ class MappedLabel {
     }
 }
 
-
-
-
-
-// AlignmentLabelingStore: Stores the information about tracks and handles project load/save and undo/redo state saving.
+// Stores the information about tracks and handles project load/save and undo/redo state saving.
 export class ProjectStore {
 
     // Reference track and other tracks.
@@ -45,16 +41,27 @@ export class ProjectStore {
     // The location of the saved/opened project.
     @observable public projectFileLocation: string;
 
+    @observable public statusMessage: string;
+
+    @observable public shouldFadeVideoBackground: boolean = false;
+    private originalReferenceTrackFilename: string = null;
+    private fadedReferenceTrackFilename: string = null;
+
+
     // Stores alignment and labeling history (undo is implemented separately, you can't undo alignment from labeling or vice versa).
-    private _alignmentHistory: HistoryTracker<SavedAlignmentSnapshot>;
-    private _labelingHistory: HistoryTracker<SavedLabelingSnapshot>;
+    private _alignmentUndoRedoHistory: UndoRedoHistory<SavedAlignmentSnapshot>;
+    private _labelingUndoRedoHistory: UndoRedoHistory<SavedLabelingSnapshot>;
 
     constructor() {
-        this._alignmentHistory = new HistoryTracker<SavedAlignmentSnapshot>();
-        this._labelingHistory = new HistoryTracker<SavedLabelingSnapshot>();
+        this._alignmentUndoRedoHistory = new UndoRedoHistory<SavedAlignmentSnapshot>();
+        this._labelingUndoRedoHistory = new UndoRedoHistory<SavedLabelingSnapshot>();
         this.referenceTrack = null;
         this.tracks = [];
         this.projectFileLocation = null;
+        this.statusMessage = '';
+
+        this.undo = this.undo.bind(this);
+        this.redo = this.redo.bind(this);
     }
 
 
@@ -76,12 +83,39 @@ export class ProjectStore {
             : 100;
     }
 
+    @computed public get referenceTimeDuration(): number {
+        return this.referenceTimestampEnd - this.referenceTimestampStart;
+    }
 
-    @action
-    public loadReferenceTrack(fileName: string): void {
-        this.alignmentHistoryRecord();
-        loadVideoTimeSeriesFromFile(fileName, video => {
-            this.referenceTrack = Track.fromFile(fileName, [video]);
+    @computed public get canUndo(): boolean {
+        const tab = projectUiStore.currentTab;
+        const canUndoAlignment = this._alignmentUndoRedoHistory.canUndo;
+        const canUndoLabeling = this._labelingUndoRedoHistory.canUndo;
+        return tab === 'alignment' && canUndoAlignment || tab === 'labeling' && canUndoLabeling;
+    }
+
+    @computed public get canRedo(): boolean {
+        const tab = projectUiStore.currentTab;
+        const canRedoAlignment = this._alignmentUndoRedoHistory.canRedo;
+        const canRedoLabeling = this._labelingUndoRedoHistory.canRedo;
+        return tab === 'alignment' && canRedoAlignment || tab === 'labeling' && canRedoLabeling;
+    }
+
+    @action public loadReferenceTrack(path: string): void {
+        this.recordAlignmentSnapshot();
+        loadVideoTimeSeriesFromFile(path, video => {
+            if (!isWebm(path)) {
+                convertToWebm(
+                    path, video.videoDuration,
+                    pctDone => {
+                        this.statusMessage = 'converting video: ' + (pctDone * 100).toFixed(0) + '%';
+                    },
+                    webmVideo => {
+                        this.referenceTrack = Track.fromFile(webmVideo.filename, [webmVideo]);
+                        this.statusMessage = '';
+                    });
+            }
+            this.referenceTrack = Track.fromFile(path, [video]);
         });
     }
 
@@ -90,21 +124,42 @@ export class ProjectStore {
     }
 
     @action public loadVideoTrack(fileName: string): void {
-        this.alignmentHistoryRecord();
+        this.recordAlignmentSnapshot();
         loadVideoTimeSeriesFromFile(fileName, video => {
             this.tracks.push(Track.fromFile(fileName, [video]));
         });
     }
 
     @action public loadSensorTrack(fileName: string): void {
-        this.alignmentHistoryRecord();
+        this.recordAlignmentSnapshot();
         const sensors = loadMultipleSensorTimeSeriesFromFile(fileName);
         this.tracks.push(Track.fromFile(fileName, sensors));
     }
 
+    @action public fadeBackground(userChoice: boolean): void {
+        this.shouldFadeVideoBackground = userChoice;
+        if (this.shouldFadeVideoBackground) {
+            this.originalReferenceTrackFilename = this.referenceTrack.source;
+            if (this.fadedReferenceTrackFilename == null) {
+                fadeBackground(
+                    this.referenceTrack.source, this.referenceTrack.duration,
+                    frac => this.statusMessage = 'Converting video...' + (frac * 100).toFixed(0) + '%',
+                    video => {
+                        this.fadedReferenceTrackFilename = video.filename;
+                        this.referenceTrack = Track.fromFile(video.filename, [video]);
+                        this.statusMessage = '';
+                    });
+            } else {
+                this.loadReferenceTrack(this.fadedReferenceTrackFilename);
+            }
+        } else if (this.referenceTrack.source != null) {
+            this.loadReferenceTrack(this.originalReferenceTrackFilename);
+        }
+    }
+
     @action public deleteTrack(track: Track): void {
-        this.alignmentHistoryRecord();
-        const index = this.tracks.indexOf(track);
+        this.recordAlignmentSnapshot();
+        const index = this.tracks.map(t => t.id).indexOf(track.id);
         this.tracks.splice(index, 1);
     }
 
@@ -130,8 +185,8 @@ export class ProjectStore {
             const json = fs.readFileSync(fileName, 'utf-8');
             const project = JSON.parse(json);
             this.projectFileLocation = null;
-            this.alignmentHistoryReset();
-            this.labelingHistoryReset();
+            this.resetAlignmentUndoRedoHistory();
+            this.resetLabelingUndoRedoHistory();
             this.loadProjectHelper(project as SavedProject, () => {
                 this.projectFileLocation = fileName;
                 this.addToRecentProjects(fileName);
@@ -157,7 +212,7 @@ export class ProjectStore {
                 referenceStart: track.referenceStart,
                 referenceEnd: track.referenceEnd,
                 source: track.source,
-                aligned: track.aligned
+                aligned: track.isAlignedToReferenceTrack
             };
         };
 
@@ -172,8 +227,8 @@ export class ProjectStore {
             labeling: labelingStore.saveState(),
             ui: {
                 currentTab: projectUiStore.currentTab,
-                referenceViewStart: projectUiStore.referenceViewStart,
-                referenceViewPPS: projectUiStore.referenceViewPPS
+                referenceViewStart: projectUiStore.referenceTrackPanZoom.rangeStart,
+                referenceViewPPS: projectUiStore.referenceTrackPanZoom.pixelsPerSecond
             }
         };
     }
@@ -269,7 +324,7 @@ export class ProjectStore {
         const newTracks = project.tracks.map(loadTrack);
 
         deferred.onComplete(() => {
-            runInAction(() => {
+            runInAction('loadProjectHelper', () => {
                 // Set the new tracks once they are loaded successfully.
                 this.referenceTrack = newReferenceTrack;
                 this.tracks = newTracks;
@@ -278,7 +333,8 @@ export class ProjectStore {
                 alignmentStore.loadState(project.alignment);
                 labelingStore.loadState(project.labeling);
 
-                projectUiStore.setProjectReferenceViewZooming(project.ui.referenceViewStart, project.ui.referenceViewPPS);
+                projectUiStore.setReferenceTrackPanZoom(
+                    new PanZoomParameters(project.ui.referenceViewStart, project.ui.referenceViewPPS));
                 if (project.ui.currentTab === 'file') {
                     projectUiStore.currentTab = 'alignment';
                 } else {
@@ -296,7 +352,7 @@ export class ProjectStore {
         this.tracks = [];
         alignmentStore.reset();
         labelingStore.reset();
-        projectUiStore.setProjectReferenceViewZooming(0, 1);
+        projectUiStore.setReferenceTrackPanZoom(new PanZoomParameters(0, 1));
         projectUiStore.currentTab = 'alignment';
     }
 
@@ -314,6 +370,14 @@ export class ProjectStore {
         alignmentStore.loadState(snapshot.alignment);
     }
 
+    @action public recordAlignmentSnapshot(): void {
+        this._alignmentUndoRedoHistory.add(this.getAlignmentSnapshot());
+    }
+
+    @action private resetAlignmentUndoRedoHistory(): void {
+        this._alignmentUndoRedoHistory.reset();
+    }
+
     private getLabelingSnapshot(): SavedLabelingSnapshot {
         return { labeling: deepClone(labelingStore.saveState()) };
     }
@@ -322,47 +386,40 @@ export class ProjectStore {
         labelingStore.loadState(snapshot.labeling);
     }
 
-    public alignmentHistoryRecord(): void {
-        this._alignmentHistory.add(this.getAlignmentSnapshot());
+
+    @action public recordLabelingSnapshot(): void {
+        this._labelingUndoRedoHistory.add(this.getLabelingSnapshot());
     }
 
-    private alignmentHistoryReset(): void {
-        this._alignmentHistory.reset();
+    @action private resetLabelingUndoRedoHistory(): void {
+        this._labelingUndoRedoHistory.reset();
     }
 
-    public labelingHistoryRecord(): void {
-        this._labelingHistory.add(this.getLabelingSnapshot());
-    }
-
-    private labelingHistoryReset(): void {
-        this._labelingHistory.reset();
-    }
-
-    public alignmentUndo(): void {
-        const snapshot = this._alignmentHistory.undo(this.getAlignmentSnapshot());
-        if (snapshot) {
-            this.loadAlignmentSnapshot(snapshot);
+    @action public undo(): void {
+        if (projectUiStore.currentTab === 'alignment') {
+            const snapshot = this._alignmentUndoRedoHistory.undo(this.getAlignmentSnapshot());
+            if (snapshot) {
+                this.loadAlignmentSnapshot(snapshot);
+            }
+        } else {
+            const snapshot = this._labelingUndoRedoHistory.undo(this.getLabelingSnapshot());
+            if (snapshot) {
+                this.loadLabelingSnapshot(snapshot);
+            }
         }
     }
 
-    public alignmentRedo(): void {
-        const snapshot = this._alignmentHistory.redo(this.getAlignmentSnapshot());
-        if (snapshot) {
-            this.loadAlignmentSnapshot(snapshot);
-        }
-    }
-
-    public labelingUndo(): void {
-        const snapshot = this._labelingHistory.undo(this.getLabelingSnapshot());
-        if (snapshot) {
-            this.loadLabelingSnapshot(snapshot);
-        }
-    }
-
-    public labelingRedo(): void {
-        const snapshot = this._labelingHistory.redo(this.getLabelingSnapshot());
-        if (snapshot) {
-            this.loadLabelingSnapshot(snapshot);
+    @action public redo(): void {
+        if (projectUiStore.currentTab === 'alignment') {
+            const snapshot = this._alignmentUndoRedoHistory.redo(this.getAlignmentSnapshot());
+            if (snapshot) {
+                this.loadAlignmentSnapshot(snapshot);
+            }
+        } else {
+            const snapshot = this._labelingUndoRedoHistory.redo(this.getLabelingSnapshot());
+            if (snapshot) {
+                this.loadLabelingSnapshot(snapshot);
+            }
         }
     }
 

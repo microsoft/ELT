@@ -1,153 +1,222 @@
-import { Track } from '../stores/dataStructures/alignment';
-import { TabID } from '../stores/dataStructures/types';
-import { TransitionController } from '../stores/utils';
-import { projectStore } from './stores';
-import { action, autorun, IObservableArray, observable } from 'mobx';
+import { Marker, MarkerCorrespondence, Track } from './dataStructures/alignment';
+import { TimeRange } from './dataStructures/labeling';
+import { PanZoomParameters } from './dataStructures/PanZoomParameters';
+import { TabID } from './dataStructures/types';
+import { ProjectStore } from './ProjectStore';
+import { alignmentStore, projectStore } from './stores';
+import { TransitionController } from './utils';
+import * as d3 from 'd3';
+import { action, autorun, computed, observable, ObservableMap, reaction } from 'mobx';
 
 
 
-
-// AlignmentLabelingUiStore: UI States for common part of alignment and labeling: the global zooming level. 
 export class ProjectUiStore {
 
-    // Zooming view parameters.
     @observable public viewWidth: number;
-    @observable public referenceViewStart: number;
-    @observable public referenceViewPPS: number;
     @observable public currentTab: TabID;
 
-    // Global cursor.
-    @observable public referenceViewTimeCursor: number;
+    @observable public timeSeriesGrayscale: boolean;
 
     // Current transition.
     private _referenceViewTransition: TransitionController;
 
-    constructor() {
-        // Initial setup.
+    // Individually stores current time cursor for track.
+    // The timeCursors should be in the series's own timestamps.
+    private _trackTimeCursor: ObservableMap<number>;
+    private _panZoomParameterMap: ObservableMap<PanZoomParameters>;
+
+    // Currently selected markers OR correspondence (update one should cause the other to be null).
+    @observable public selectedMarker: Marker;
+    @observable public selectedCorrespondence: MarkerCorrespondence;
+
+    private _alignmentTransitionController: TransitionController;
+
+    constructor(projectStore: ProjectStore) {
         this.viewWidth = 800;
-        this.referenceViewStart = 0;
-        this.referenceViewPPS = 0.1;
         this._referenceViewTransition = null;
-        this.referenceViewTimeCursor = null;
         this.currentTab = 'file';
+        this._trackTimeCursor = observable.map<number>();
+        this._panZoomParameterMap = observable.map<PanZoomParameters>();
+        this.selectedMarker = null;
+        this.selectedCorrespondence = null;
+        this.getTimeCursor = this.getTimeCursor.bind(this);
+        this.timeSeriesGrayscale = false;
 
-        (projectStore.tracks as IObservableArray<Track>).observe(this.onTracksChanged.bind(this));
-
-        // Listen to the track changed event from the alignmentLabelingStore.
-        // alignmentLabelingStore.tracksChanged.on(this.onTracksChanged.bind(this));
-        autorun(() => this.onTracksChanged());
-    }
-
-    @action
-    public switchTab(tab: TabID): void {
-        this.currentTab = tab;
+        autorun('ProjectUiStore.onTracksChanged', () => this.onTracksChanged());
+        reaction(
+            () => alignmentStore.trackBlocks,
+            () => this.updatePanZoomBasedOnAlignment(),
+            { name: 'ProjectUiStore.updatePanZoomBasedOnAlignment' }
+        );
     }
 
     // On tracks changed, update zooming parameters so that the views don't overflow.
     public onTracksChanged(): void {
         if (projectStore.referenceTrack) {
-            [this.referenceViewStart, this.referenceViewPPS] =
-                this.constrainDetailedViewZoomingParameters(this.referenceViewStart, this.referenceViewPPS);
+            this.setReferenceTrackPanZoom(this.referenceTrackPanZoom, false);
         }
     }
 
-    // Return updated zooming parameters so that they don't exceed the reference track range.
-    private constrainDetailedViewZoomingParameters(referenceViewStart: number, referenceViewPPS: number): [number, number] {
-        if (!referenceViewStart) { referenceViewStart = this.referenceViewStart; }
-        if (!referenceViewPPS) { referenceViewPPS = this.referenceViewPPS; }
-        // Check if we go outside of the view, if yes, tune the parameters.
-        if (projectStore) {
-            referenceViewPPS = Math.max(
-                this.viewWidth / (projectStore.referenceTimestampEnd - projectStore.referenceTimestampStart),
-                referenceViewPPS);
-            referenceViewStart = Math.max(
-                projectStore.referenceTimestampStart,
-                Math.min(projectStore.referenceTimestampEnd - this.viewWidth / referenceViewPPS, referenceViewStart));
-        }
-        return [referenceViewStart, referenceViewPPS];
+    @computed public get referenceTrackDuration(): number {
+        return this.viewWidth / this.referenceTrackPanZoom.pixelsPerSecond;
     }
 
+    @computed public get referenceTrackTimeRange(): TimeRange {
+        return {
+            timestampStart: this.referenceTrackPanZoom.rangeStart,
+            timestampEnd: this.referenceTrackPanZoom.getTimeFromX(this.viewWidth)
+        };
+    }
 
-    // Exposed properties.
-    // Detailed view zooming and translation.
-    public get referenceViewDuration(): number { return this.viewWidth / this.referenceViewPPS; }
-    public get referenceViewEnd(): number { return this.referenceViewStart + this.viewWidth / this.referenceViewPPS; }
-
-    // Set the zooming parameters when a project is loaded.
-    public setProjectReferenceViewZooming(referenceViewStart: number, referenceViewPPS: number): void {
-        [referenceViewStart, referenceViewPPS] = this.constrainDetailedViewZoomingParameters(referenceViewStart, referenceViewPPS);
-        this.referenceViewStart = referenceViewStart;
-        this.referenceViewPPS = referenceViewPPS;
+    @computed public get referenceTrackPanZoom(): PanZoomParameters {
+        return projectStore.referenceTrack ?
+            this.getTrackPanZoom(projectStore.referenceTrack) :
+            new PanZoomParameters(0, 0.1);
     }
 
     @action
     public setViewWidth(width: number): void {
         this.viewWidth = width;
-        [this.referenceViewStart, this.referenceViewPPS] =
-            this.constrainDetailedViewZoomingParameters(this.referenceViewStart, this.referenceViewPPS);
+        this.setReferenceTrackPanZoom(this.referenceTrackPanZoom, false);
     }
 
     @action
-    public setReferenceViewZooming(referenceViewStart: number, referenceViewPPS: number = null, animate: boolean = false): void {
-        if (!referenceViewStart) { referenceViewStart = this.referenceViewStart; }
-        if (!referenceViewPPS) { referenceViewPPS = this.referenceViewPPS; }
-        const [start, pps] =
-            this.constrainDetailedViewZoomingParameters(referenceViewStart, referenceViewPPS);
-        // Change current class to label's class.
-        if (this.referenceViewStart !== start || this.referenceViewPPS !== pps) {
-            if (!animate) {
-                if (this._referenceViewTransition) {
-                    this._referenceViewTransition.terminate();
-                    this._referenceViewTransition = null;
-                }
-                this.referenceViewStart = start;
-                this.referenceViewPPS = pps;
+    public setReferenceTrackPanZoom(target: PanZoomParameters, animate: boolean = false): void {
+        if (!projectStore.referenceTrack) { return; }
+        target = this.referenceTrackPanZoom.constrain(target, this.viewWidth, {
+            timestampStart: projectStore.referenceTimestampStart,
+            timestampEnd: projectStore.referenceTimestampEnd
+        });
+        if (this.referenceTrackPanZoom.equals(target)) { return; }
+        this.setTrackPanZoom(projectStore.referenceTrack, target);
+    }
+
+    @action
+    public zoomReferenceTrack(zoom: number, zoomCenter: 'cursor' | 'center'): void {
+        const original = this.referenceTrackPanZoom;
+        const k = Math.exp(-zoom);
+        // Two rules to compute new zooming.
+        // 1. Time cursor should be preserved: (time_cursor - old_start) * old_pps = (time_cursor - new_start) * new_pps
+        // 2. Zoom factor should be applied: new_start = k * old_start
+        let timeCursor = this.referenceTrackPanZoom.rangeStart + this.referenceTrackDuration / 2;
+        if (zoomCenter === 'cursor') { timeCursor = this.referenceTrackTimeCursor; }
+        const newPPS = original.pixelsPerSecond * k;
+        const newStart = original.rangeStart / k + timeCursor * (1 - 1 / k);
+        this.setReferenceTrackPanZoom(new PanZoomParameters(newStart, newPPS), false);
+    }
+
+    @action
+    public zoomReferenceTrackByPercentage(percentage: number): void {
+        const original = this.referenceTrackPanZoom;
+        const timeWidth = this.referenceTrackDuration;
+        this.setReferenceTrackPanZoom(new PanZoomParameters(original.rangeStart + timeWidth * percentage, null), true);
+    }
+
+    @computed get referenceTrackTimeCursor(): number {
+        return this.getTimeCursor(projectStore.referenceTrack);
+    }
+
+    @action
+    public setReferenceTrackTimeCursor(timeCursor: number): void {
+        this.setTimeCursor(projectStore.referenceTrack, timeCursor);
+        const block = alignmentStore.getTrackBlock(projectStore.referenceTrack);
+        block.forEach(track => {
+            const scale = d3.scaleLinear()
+                .domain([track.referenceStart, track.referenceEnd])
+                .range([track.timeSeries[0].timestampStart, track.timeSeries[0].timestampEnd]);
+            this.setTimeCursor(track, scale(timeCursor));
+        });
+    }
+
+    public getTimeCursor(track: Track): number {
+        return this._trackTimeCursor.get(track.id.toString());
+    }
+
+    @action public setTimeCursor(track: Track, timeCursor: number): void {
+        this._trackTimeCursor.set(track.id.toString(), timeCursor);
+    }
+
+    @action public selectMarker(marker: Marker): void {
+        this.selectedMarker = marker;
+        this.selectedCorrespondence = null;
+    }
+
+    @action public selectMarkerCorrespondence(correspondence: MarkerCorrespondence): void {
+        this.selectedCorrespondence = correspondence;
+        this.selectedMarker = null;
+    }
+
+    @action public setTrackMinimized(track: Track, minimized: boolean): void {
+        track.minimized = minimized;
+    }
+
+    public getTrackPanZoom(track: Track): PanZoomParameters {
+        return this._panZoomParameterMap.has(track.id) ?
+            this._panZoomParameterMap.get(track.id) :
+            new PanZoomParameters(track.referenceStart, this.viewWidth / track.duration); // show whole track by default
+    }
+
+    @action public setTrackPanZoom(track: Track, panZoom: PanZoomParameters): void {
+        const block = alignmentStore.getTrackBlock(track);
+        this.setBlockPanZoom(block, panZoom);
+    }
+
+    private setBlockPanZoom(block: Set<Track>, target: PanZoomParameters): void {
+        const trackId = block.keys().next().value.id;
+        const sharedPanZoom = this._panZoomParameterMap.has(trackId) ?
+            this._panZoomParameterMap.get(trackId) : new PanZoomParameters(0, 1);
+        sharedPanZoom.rangeStart = target.rangeStart;
+        sharedPanZoom.pixelsPerSecond = target.pixelsPerSecond;
+        block.forEach(track => {
+            this._panZoomParameterMap.set(track.id, sharedPanZoom);
+        });
+    }
+
+    // Terminate current animation.
+    public stopAnimation(): void {
+        if (this._alignmentTransitionController) {
+            this._alignmentTransitionController.terminate();
+            this._alignmentTransitionController = null;
+        }
+    }
+
+    private getChangeFunction(animate: boolean): (block: Set<Track>, pz: PanZoomParameters) => void {
+        return animate ?
+            (block, target) => {
+                const original = target;
+                this._alignmentTransitionController = new TransitionController(
+                    100, 'linear',
+                    action('setReferenceTrackPanZoom animation', (fraction: number) => {
+                        const interp = original.interpolate(target, fraction);
+                        this.setBlockPanZoom(block, interp);
+                    }));
+            } :
+            (block, target) => {
+                this.setBlockPanZoom(block, target);
+            };
+    }
+
+    private updatePanZoomBasedOnAlignment(animate: boolean = false): void {
+        this.stopAnimation();
+        const change = this.getChangeFunction(animate);
+
+        // A "block" is a set of connected tracks.
+        for (const block of alignmentStore.trackBlocks) {
+            // If it's a reference track.
+            if (block.has(projectStore.referenceTrack)) {
+                block.forEach(track => track.isAlignedToReferenceTrack = true);
+                change(block, this.referenceTrackPanZoom);
             } else {
-                if (this._referenceViewTransition) {
-                    this._referenceViewTransition.terminate();
-                    this._referenceViewTransition = null;
-                }
-                const start0 = this.referenceViewStart;
-                const zoom0 = this.referenceViewPPS;
-                const start1 = start;
-                const zoom1 = pps;
-                this._referenceViewTransition = new TransitionController(100, 'linear', action((t: number) => {
-                    this.referenceViewStart = start0 + (start1 - start0) * t;
-                    if (zoom1) {
-                        this.referenceViewPPS = 1 / (1 / zoom0 + (1 / zoom1 - 1 / zoom0) * t);
+                const ranges: [number, number][] = [];
+                block.forEach(track => {
+                    track.isAlignedToReferenceTrack = false;
+                    const alignmentParms = this.getTrackPanZoom(track);
+                    if (alignmentParms) {
+                        ranges.push([alignmentParms.rangeStart, alignmentParms.pixelsPerSecond]);
                     }
-                }));
+                });
+                change(block, new PanZoomParameters(d3.mean(ranges, x => x[0]), 1 / d3.mean(ranges, x => 1 / x[1])));
             }
-        }
-    }
-
-    @action
-    public referenceViewPanAndZoom(percentage: number, zoom: number, zoomCenter: 'cursor' | 'center' = 'cursor'): void {
-        if (zoom !== 0) {
-            const k = Math.exp(-zoom);
-            // Two rules to compute new zooming.
-            // 1. Time cursor should be preserved: (time_cursor - old_start) * old_pps = (time_cursor - new_start) * new_pps
-            // 2. Zoom factor should be applied: new_start = k * old_start
-            const oldPPS = this.referenceViewPPS;
-            const oldStart = this.referenceViewStart;
-            let timeCursor = this.referenceViewStart + this.referenceViewDuration / 2;
-            if (zoomCenter === 'cursor') { timeCursor = this.referenceViewTimeCursor; }
-            const newPPS = oldPPS * k;
-            const newStart = oldStart / k + timeCursor * (1 - 1 / k);
-            this.setReferenceViewZooming(newStart, newPPS, false);
-        }
-        if (percentage !== 0) {
-            const originalStart = this.referenceViewStart;
-            const timeWidth = this.referenceViewDuration;
-            this.setReferenceViewZooming(originalStart + timeWidth * percentage, null, true);
-        }
-    }
-
-    @action
-    public setReferenceViewTimeCursor(timeCursor: number): void {
-        // Change current class to label's class.
-        if (this.referenceViewTimeCursor !== timeCursor) {
-            this.referenceViewTimeCursor = timeCursor;
         }
     }
 

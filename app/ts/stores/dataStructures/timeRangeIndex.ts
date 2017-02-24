@@ -17,18 +17,18 @@ export class TimeRangeIndex<TimeRangeType extends TimeRange> extends ObservableS
     }
 
     // Get all ranges that *overlaps* with [tmin, tmax], return them in order by timestampStart.
-    public getRangesInRange(tmin: number, tmax: number): TimeRangeType[] {
+    public getRangesInRange(timeRange: TimeRange): TimeRangeType[] {
         return this.items
-            .filter(r => r.timestampEnd >= tmin && r.timestampStart <= tmax)
+            .filter(r => r.timestampEnd >= timeRange.timestampStart && r.timestampStart <= timeRange.timestampEnd)
             .sort((a, b) => a.timestampStart - b.timestampStart);
     }
 
     // Get all ranges that *overlaps* with [tmin, tmax], whose overlap length is larger than margin. Return them in order by timestampStart.
-    public getRangesWithinMargin(tmin: number, tmax: number, margin: number): TimeRangeType[] {
-        return this.getRangesInRange(tmin, tmax)
+    public getRangesWithinMargin(timeRange: TimeRange, margin: number): TimeRangeType[] {
+        return this.getRangesInRange(timeRange)
             .filter(range => {
-                const oBegin = Math.max(range.timestampStart, tmin);
-                const oEnd = Math.min(range.timestampEnd, tmax);
+                const oBegin = Math.max(range.timestampStart, timeRange.timestampStart);
+                const oEnd = Math.min(range.timestampEnd, timeRange.timestampEnd);
                 return oEnd - oBegin > margin;
             });
     }

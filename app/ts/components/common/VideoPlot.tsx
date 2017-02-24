@@ -1,8 +1,5 @@
 import {VideoTimeSeries} from '../../stores/dataStructures/dataset';
-import {getUniqueIDForObject} from '../../stores/utils';
 import * as React from 'react';
-
-
 // Component VideoRangePlot
 // Display a video as frame thumbnails.
 export interface VideoRangePlotProps {
@@ -65,7 +62,7 @@ export class VideoRangePlot extends React.Component<VideoRangePlotProps, {}> {
             }
         }
 
-        const clippathID = getUniqueIDForObject(this) + 'clip';
+        const clippathID = 'clip' + this.props.timeSeries.name;
 
         return (
             <g>

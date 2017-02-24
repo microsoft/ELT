@@ -1,0 +1,1 @@
+ffmpeg -y -i %1 -g 3 -c:v vp8 -crf 10 -b:v 2000k -an -vf scale=iw/%3:ih/%3 %2

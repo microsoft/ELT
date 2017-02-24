@@ -1,19 +1,12 @@
-// The main view for the app.
-
 import { TabID } from '../stores/dataStructures/types';
 import * as stores from '../stores/stores';
 import { NavigationColumn, NavigationColumnItem } from './common/NavigationColumn';
-import { HomeMenu } from './menus/HomeMenu';
-import { WorkPanel } from './WorkPanel';
+import { SharedAlignmentLabelingPane } from './common/SharedAlignmentLabelingPane';
+import { HomeMenu } from './home/HomeMenu';
 import { remote } from 'electron';
 import { observer } from 'mobx-react';
-// tslint:disable-next-line:import-name
-import DevTools from 'mobx-react-devtools';
 import * as React from 'react';
 
-
-
-// Labeling app has some configuration code, then it calls LabelingView.
 @observer
 export class App extends React.Component<{}, {}> {
     constructor(props: {}, context: any) {
@@ -64,22 +57,29 @@ export class App extends React.Component<{}, {}> {
     }
 
     public render(): JSX.Element {
+        const debugging = remote.getGlobal('debugging');
         return (
             <div className='app-container container-fluid'>
-                <DevTools />
+
+                {debugging ?
+                    // The following weird construct is to ensure that the devtools
+                    // module is only loaded when the debugging flag is true. 
+                    // tslint:disable-next-line:no-require-imports
+                    (DevTools => <DevTools />)(require('mobx-react-devtools').default) : null}
+
                 <NavigationColumn selected={stores.projectUiStore.currentTab} onSelect={
                     tab => {
-                        stores.projectUiStore.switchTab(tab as TabID);
+                        stores.projectUiStore.currentTab = tab as TabID;
                     }
                 }>
                     <NavigationColumnItem title='Home' name='file' iconClass='glyphicon glyphicon-home'>
                         <HomeMenu />
                     </NavigationColumnItem>
                     <NavigationColumnItem title='Alignment' name='alignment' showButton={true} iconClass={'glyphicon glyphicon-time'}>
-                        <WorkPanel mode='alignment' />
+                        <SharedAlignmentLabelingPane mode='alignment' toolbarHeight={40} />
                     </NavigationColumnItem>
                     <NavigationColumnItem title='Labeling' name='labeling' showButton={true} iconClass={'glyphicon glyphicon-tags'}>
-                        <WorkPanel mode='labeling' />
+                        <SharedAlignmentLabelingPane mode='labeling' toolbarHeight={40} />
                     </NavigationColumnItem>
                 </NavigationColumn>
             </div>

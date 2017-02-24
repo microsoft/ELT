@@ -1,88 +1,50 @@
-// LabelingUIStore
-// Labeling selection and hovering states.
-// Options for labeling and suggestions (move to elsewhere?)
-
-import { Label, PartialLabel } from '../stores/dataStructures/labeling';
-import { ObservableSet } from '../stores/dataStructures/ObservableSet';
+import { Label, SignalsViewMode, TimeRange } from './dataStructures/labeling';
+import { ObservableSet } from './dataStructures/ObservableSet';
 import { LabelingStore } from './LabelingStore';
 import { labelingStore } from './stores';
-import { action, computed, observable } from 'mobx';
+import { action, observable } from 'mobx';
 
-
-// LabelingUIStore
-// Labeling selection and hovering states.
-// Options for labeling and suggestions (move to elsewhere?)
 
 export class LabelingUiStore {
-    // Label hover and selection.
-    @observable public hoveringLabel: Label;
     @observable public selectedLabels: ObservableSet<Label>;
-
-    // Current selected class.
     @observable public currentClass: string;
+    @observable public signalsViewMode: SignalsViewMode;
 
-    // Suggestion status.
-    private _isSuggesting: boolean;
-    private _suggestionTimestampStart: number;
-    private _suggestionTimestampCompleted: number;
-    private _suggestionTimestampEnd: number;
-    private _suggestionConfidenceHistogram: number[];
+    @observable public isSuggesting: boolean;
+    @observable public suggestionTimestampStart: number;
+    @observable public suggestionTimestampCompleted: number;
+    @observable public suggestionConfidenceHistogram: number[];
 
-    // Suggestion settings.
     @observable public suggestionEnabled: boolean;
     @observable public suggestionConfidenceThreshold: number;
-    private _changePointsEnabled: boolean;
-
-    private _microAdjusterType: string;
+    
 
     constructor(labelingStore: LabelingStore) {
-        this.hoveringLabel = null;
+
+        this.signalsViewMode = SignalsViewMode.TIMESERIES;
+
         this.selectedLabels = new ObservableSet<Label>(
             lab => lab.className + ':' + lab.timestampStart + '-' + lab.timestampEnd);
 
         this.suggestionEnabled = true;
-        this._changePointsEnabled = true;
         this.suggestionConfidenceThreshold = 0.2;
-        this._suggestionConfidenceHistogram = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        this.suggestionConfidenceHistogram = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
         const nonIgnoreClases = labelingStore.classes.filter(x => x !== 'IGNORE');
         this.currentClass = nonIgnoreClases.length > 0 ? nonIgnoreClases[0] : null;
 
-        this._isSuggesting = false;
-        this._suggestionTimestampStart = null;
-        this._suggestionTimestampCompleted = null;
-        this._suggestionTimestampEnd = null;
+        this.isSuggesting = false;
+        this.suggestionTimestampStart = null;
+        this.suggestionTimestampCompleted = null;
 
-        this._microAdjusterType = 'frame-drag';
-
-        // // NOTICE THAT THIS STORES PARENT IS A LABELING STORE??
-        // labelingStore.classesChanged.on(this.onClassesChanged.bind(this));
-        // labelingStore.labelsArrayChanged.on(this.onLabelsArrayChanged.bind(this));
     }
 
-
-    @computed public get suggestionProgress(): number[] {
-        if (!this._isSuggesting) { return null; }
-        return [this._suggestionTimestampStart, this._suggestionTimestampCompleted, this._suggestionTimestampEnd];
-    }
-
-    @computed public get suggestionConfidenceHistogram(): number[] {
-        return this._suggestionConfidenceHistogram;
-    }
-
-
-    @action public hoverLabel(label: Label): void {
-        if (this.hoveringLabel !== label) {
-            this.hoveringLabel = label;
-        }
-    }
 
     @action public selectLabel(label: Label, ctrlSelect: boolean = false, shiftSelect: boolean = false): void {
         const previous_selected_labels: Label[] = [];
         this.selectedLabels.forEach(lab => { previous_selected_labels.push(lab); });
         this.selectedLabels.clear();
         this.selectedLabels.add(label);
-        // Change current class to label's class.
         this.currentClass = label.className;
     }
 
@@ -93,7 +55,6 @@ export class LabelingUiStore {
     }
 
     @action public selectClass(className: string): void {
-        // Change current class to label's class.
         if (this.currentClass !== className) {
             if (labelingStore.classes.indexOf(className) >= 0) {
                 this.currentClass = className;
@@ -105,15 +66,14 @@ export class LabelingUiStore {
         suggesting: boolean,
         timestampStart: number,
         timestampCompleted: number,
-        timestampEnd: number,
+        endTime: number,
         confidenceHistogram?: number[]): void {
 
-        this._isSuggesting = suggesting;
-        this._suggestionTimestampStart = timestampStart;
-        this._suggestionTimestampCompleted = timestampCompleted;
-        this._suggestionTimestampEnd = timestampEnd;
+        this.isSuggesting = suggesting;
+        this.suggestionTimestampStart = timestampStart;
+        this.suggestionTimestampCompleted = timestampCompleted;
         if (confidenceHistogram) {
-            this._suggestionConfidenceHistogram = confidenceHistogram;
+            this.suggestionConfidenceHistogram = confidenceHistogram;
         }
     }
 
@@ -123,45 +83,10 @@ export class LabelingUiStore {
         }
     }
 
-    @action public setSuggestionEnabled(enabled: boolean): void {
-        this.suggestionEnabled = enabled;
-    }
-
-    @action public updateLabel(label: Label, newLabel: PartialLabel): void {
-        labelingStore.updateLabel(label, newLabel);
-    }
-
-    @action public removeLabel(label: Label): void {
-        labelingStore.removeLabel(label);
-    }
-
-
-    // private onClassesChanged(): void {
-    //     if (labelingStore.classes.indexOf(this.currentClass) < 0) {
-    //         this.currentClass = labelingStore.classes.length > 0 ? labelingStore.classes[0] : null;
-    //     }
-    // }
-
-    // private onLabelsArrayChanged(): void {
-    //     // Remove labels from selection if deleted.
-    //     let deleted_labels = false;
-    //     this.selectedLabels.forEach(label => {
-    //         if (labelingStore.labels.indexOf(label) < 0) {
-    //             this.selectedLabels.remove(label);
-    //             deleted_labels = true;
-    //         }
-    //     });
-    // }
-
-    public getLabelsInRange(timestampStart: number, timestampEnd: number): Label[] {
-        const labels = labelingStore.getLabelsInRange(timestampStart, timestampEnd);
-        return labels.filter(l => l !== this.hoveringLabel && !this.selectedLabels.has(l)).concat(
-            labels.filter(l => l !== this.hoveringLabel && this.selectedLabels.has(l))).concat(
-            labels.filter(l => l === this.hoveringLabel));
-    }
-
-    public isLabelHovered(label: Label): boolean {
-        return this.hoveringLabel === label;
+    public getLabelsInRange(timeRange: TimeRange): Label[] {
+        const labels = labelingStore.getLabelsInRange(timeRange);
+        return labels.filter(l => !this.selectedLabels.has(l)).concat(
+            labels.filter(l => this.selectedLabels.has(l)));
     }
 
     public isLabelSelected(label: Label): boolean {

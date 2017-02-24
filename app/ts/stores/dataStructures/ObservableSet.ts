@@ -1,6 +1,7 @@
+import * as Map from 'es6-map';
 import { action, computed, observable, ObservableMap } from 'mobx';
 
-
+// This class requires the es6-map polyfill for Map. 
 export class ObservableSet<T> {
     private map: ObservableMap<boolean>;
     private keyMap: Map<string, T>;
@@ -18,7 +19,7 @@ export class ObservableSet<T> {
     }
 
     public has(item: T): boolean {
-        return this.keyMap.has(this.getKey(item));
+        return this.map.has(this.getKey(item));
     }
 
     @action public remove(item: T): ObservableSet<T> {

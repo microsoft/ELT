@@ -113,7 +113,7 @@ function getVideoMetadata(filename: string, callback: (width: number, height: nu
 
 export function loadVideoTimeSeriesFromFile(filename: string, callback: (video: VideoTimeSeries) => void): void {
     getVideoMetadata(filename, (width: number, height: number, duration: number) => {
-        const vts: VideoTimeSeries = {
+        callback({
             timestampStart: 0,
             timestampEnd: duration,
             width: width,
@@ -122,67 +122,8 @@ export function loadVideoTimeSeriesFromFile(filename: string, callback: (video: 
             filename: filename,
             kind: TimeSeriesKind.VIDEO,
             name: filename
-        };
-        callback(vts);
+        });
     });
-}
-
-
-export function loadSensorTimeSeriesFromFile(filename: string): SensorTimeSeries {
-    const content = readFileSync(filename, 'utf-8');
-    const rows = d3.tsvParseRows(content)
-        .filter(x => x.length > 0 && x.join('').length > 0);
-    const numColumns = rows[0].length;
-    const columns: number[][] = [];
-    const isColumnValid: boolean[] = [];
-    for (let i = 0; i < numColumns; i++) {
-        const column: number[] = [];
-        let valid = false;
-        for (let j = 0; j < rows.length; j++) {
-            const val = +rows[j][i];
-            column[j] = val;
-            if (val === val) { valid = true; }
-        }
-        columns[i] = column;
-        isColumnValid[i] = valid;
-    }
-    const timeColumn = columns[0]; // time are in milliseconds, these are converted to seconds in the following code.
-
-    if (isColumnValid[1] && isColumnValid[2] && isColumnValid[3]) {
-        const X = columns[1];
-        const Y = columns[2];
-        const Z = columns[3];
-        const min = d3.min([d3.min(X), d3.min(Y), d3.min(Z)]);
-        const max = d3.max([d3.max(X), d3.max(Y), d3.max(Z)]);
-        const scale = [min, max];
-        return {
-            name: filename,
-            kind: TimeSeriesKind.ACCELEROMETER,
-            timestampStart: timeColumn[0] / 1000,
-            timestampEnd: timeColumn[timeColumn.length - 1] / 1000,
-            sampleRate: (timeColumn[timeColumn.length - 1] - timeColumn[0]) / 1000 / (timeColumn.length - 1),
-            dimensions: [X, Y, Z],
-            scales: [scale, scale, scale]
-        };
-    }
-    if (isColumnValid[7] && isColumnValid[8] && isColumnValid[9]) {
-        const X = columns[7];
-        const Y = columns[8];
-        const Z = columns[9];
-        const min = d3.min([d3.min(X), d3.min(Y), d3.min(Z)]);
-        const max = d3.max([d3.max(X), d3.max(Y), d3.max(Z)]);
-        const scale = [min, max];
-        return {
-            name: filename,
-            kind: TimeSeriesKind.GYROSCOPE,
-            timestampStart: timeColumn[0] / 1000,
-            timestampEnd: timeColumn[timeColumn.length - 1] / 1000,
-            sampleRate: (timeColumn[timeColumn.length - 1] - timeColumn[0]) / 1000 / (timeColumn.length - 1),
-            dimensions: [X, Y, Z],
-            scales: [scale, scale, scale]
-        };
-    }
-    return null;
 }
 
 
@@ -214,42 +155,20 @@ export function loadMultipleSensorTimeSeriesFromFile(filename: string): SensorTi
         isColumnValid[i] = valid;
     }
     const timeColumn = columns[0]; // time are in milliseconds, these are converted to seconds in the following code.
-    const result: SensorTimeSeries[] = [];
-    if (isColumnValid[1] && isColumnValid[2] && isColumnValid[3]) {
-        const X = columns[1];
-        const Y = columns[2];
-        const Z = columns[3];
-        const min = d3.min([d3.min(X), d3.min(Y), d3.min(Z)]);
-        const max = d3.max([d3.max(X), d3.max(Y), d3.max(Z)]);
-        const scale = [min, max];
-        result.push({
-            name: filename + '.Accelerometer',
+    const timeSeriesList: SensorTimeSeries[] = [];
+    for (let c = 1; c < columns.length; c++) {
+        if (!isColumnValid[c]) { continue; }
+        timeSeriesList.push({
+            name: filename + '.col' + c,
             kind: TimeSeriesKind.ACCELEROMETER,
             timestampStart: timeColumn[0] / 1000,
             timestampEnd: timeColumn[timeColumn.length - 1] / 1000,
             sampleRate: (timeColumn[timeColumn.length - 1] - timeColumn[0]) / 1000 / (timeColumn.length - 1),
-            dimensions: [X, Y, Z],
-            scales: [scale, scale, scale]
+            dimensions: [columns[c]],
+            scales: [[d3.min(columns[c]), d3.max(columns[c])]]
         });
     }
-    if (isColumnValid[7] && isColumnValid[8] && isColumnValid[9]) {
-        const X = columns[7];
-        const Y = columns[8];
-        const Z = columns[9];
-        const min = d3.min([d3.min(X), d3.min(Y), d3.min(Z)]);
-        const max = d3.max([d3.max(X), d3.max(Y), d3.max(Z)]);
-        const scale = [min, max];
-        result.push({
-            name: filename + '.Gyroscope',
-            kind: TimeSeriesKind.GYROSCOPE,
-            timestampStart: timeColumn[0] / 1000,
-            timestampEnd: timeColumn[timeColumn.length - 1] / 1000,
-            sampleRate: (timeColumn[timeColumn.length - 1] - timeColumn[0]) / 1000 / (timeColumn.length - 1),
-            dimensions: [X, Y, Z],
-            scales: [scale, scale, scale]
-        });
-    }
-    return result;
+    return timeSeriesList;
 }
 
 export function loadRawSensorTimeSeriesFromFile(filename: string): RawTimeSeries {

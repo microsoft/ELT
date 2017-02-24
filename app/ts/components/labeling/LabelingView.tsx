@@ -1,28 +1,26 @@
 // The main labeling view.
 
-import { LayoutParameters } from '../../stores/dataStructures/LayoutParameters';
+import { getLabelKey, LabelConfirmationState } from '../../stores/dataStructures/labeling';
 import { KeyCode } from '../../stores/dataStructures/types';
 import * as stores from '../../stores/stores';
 import { startDragging } from '../../stores/utils';
 import { TrackView } from '../common/TrackView';
-import { ChangePointRangePlot } from './ChangePointPlot';
-import { LabelKind } from './LabelPlot';
-import { LabelsRangePlot } from './LabelsRangePlot';
+import { LabelType, LabelView } from './LabelView';
 import * as d3 from 'd3';
 import { observer } from 'mobx-react';
 import * as React from 'react';
 
-
-export interface LabelingViewProps {
-    // Viewport size.
+interface LabelingViewProps {
     viewWidth: number;
     viewHeight: number;
+    trackHeight: number;
+    trackGap: number;
+    timeAxisHeight: number;
 }
 
-
 interface LabelingViewState {
-    hint_t0?: number;
-    hint_t1?: number;
+    newLabel_t0?: number;
+    newLabel_t1?: number;
 }
 
 @observer
@@ -34,7 +32,7 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
 
     constructor(props: LabelingViewProps, context: any) {
         super(props, context);
-        this.state = { hint_t0: null, hint_t1: null };
+        this.state = { newLabel_t0: null, newLabel_t1: null };
         this.onKeyDown = this.onKeyDown.bind(this);
     }
 
@@ -48,12 +46,6 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
                 }
             }
         }
-        if (event.ctrlKey && event.keyCode === 'Z'.charCodeAt(0)) { // Ctrl-Z
-            stores.projectStore.labelingUndo();
-        }
-        if (event.ctrlKey && event.keyCode === 'Y'.charCodeAt(0)) { // Ctrl-Y
-            stores.projectStore.labelingRedo();
-        }
     }
 
     private getRelativePosition(event: { clientX: number; clientY: number }): number[] {
@@ -65,40 +57,11 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
     private onMouseMove(event: React.MouseEvent<Element>): void {
         const x = this.getRelativePosition(event)[0];
         const t = this.getTimeFromX(x);
-        stores.projectUiStore.setReferenceViewTimeCursor(t);
+        stores.projectUiStore.setReferenceTrackTimeCursor(t);
     }
 
     private getTimeFromX(x: number): number {
-        return x / stores.projectUiStore.referenceViewPPS + stores.projectUiStore.referenceViewStart;
-    }
-
-    private onDoubleClickChangePointDetection(event: React.MouseEvent<Element>): void {
-        const isInteractionRect = event.target === this.refs.interactionRect;
-        const t0 = this.getTimeFromX(this.getRelativePosition(event)[0]);
-        if (isInteractionRect) {
-            const cps = stores.labelingStore.changePoints;
-            let p0 = null;
-            let p1 = null;
-            cps.forEach(d => {
-                if (d < t0) {
-                    if (p0 === null || p0 < d) { p0 = d; }
-                }
-                if (d > t0) {
-                    if (p1 === null || p1 > d) { p1 = d; }
-                }
-            });
-            if (p0 && p1 && p0 !== p1) {
-                if (stores.labelingUiStore.currentClass) {
-                    const newLabel = {
-                        timestampStart: p0,
-                        timestampEnd: p1,
-                        className: stores.labelingUiStore.currentClass
-                    };
-                    stores.labelingStore.addLabel(newLabel);
-                    stores.labelingUiStore.selectLabel(newLabel);
-                }
-            }
-        }
+        return stores.projectUiStore.referenceTrackPanZoom.getTimeFromX(x);
     }
 
     private onMouseDownCreateLabel(event: React.MouseEvent<Element>): void {
@@ -118,21 +81,22 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
             moveEvent => {
                 t1 = this.getTimeFromX(this.getRelativePosition(moveEvent)[0]);
                 this.setState({
-                    hint_t0: Math.min(t0, t1),
-                    hint_t1: Math.max(t0, t1)
+                    newLabel_t0: Math.min(t0, t1),
+                    newLabel_t1: Math.max(t0, t1)
                 });
             },
             upEvent => {
                 this.setState({
-                    hint_t0: null,
-                    hint_t1: null
+                    newLabel_t0: null,
+                    newLabel_t1: null
                 });
                 if (t0 !== t1 && t1) {
                     if (stores.labelingUiStore.currentClass) {
                         const newLabel = {
                             timestampStart: Math.min(t0, t1),
                             timestampEnd: Math.max(t0, t1),
-                            className: stores.labelingUiStore.currentClass
+                            className: stores.labelingUiStore.currentClass,
+                            state: LabelConfirmationState.MANUAL
                         };
                         stores.labelingStore.addLabel(newLabel);
                         stores.labelingUiStore.selectLabel(newLabel);
@@ -140,7 +104,10 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
                 } else {
                     if (isInteractionRect && (upEvent as MouseEvent).shiftKey) {
                         const labels = stores.labelingStore.getLabelsInRange(
-                            stores.projectUiStore.referenceViewStart, t0);
+                            {
+                                timestampStart: stores.projectUiStore.referenceTrackTimeRange.timestampStart,
+                                timestampEnd: t0
+                            });
                         if (labels.length > 0) {
                             // Get the one with largest timestampEnd.
                             labels.sort((a, b) => a.timestampEnd - b.timestampEnd);
@@ -149,7 +116,8 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
                                 const newLabel = {
                                     timestampStart: lastLabel.timestampEnd,
                                     timestampEnd: t0,
-                                    className: stores.labelingUiStore.currentClass
+                                    className: stores.labelingUiStore.currentClass,
+                                    state: LabelConfirmationState.UNCONFIRMED
                                 };
                                 stores.labelingStore.addLabel(newLabel);
                                 stores.labelingUiStore.selectLabel(newLabel);
@@ -163,159 +131,128 @@ export class LabelingView extends React.Component<LabelingViewProps, LabelingVie
 
     private onMouseWheel(event: React.WheelEvent<Element>): void {
         // Decide the zooming factor.
-        stores.projectUiStore.referenceViewPanAndZoom(0, event.deltaY / 1000);
+        stores.projectUiStore.zoomReferenceTrack(event.deltaY / 1000, 'cursor');
     }
 
     public render(): JSX.Element {
-        // Compute sensor area dimensions.
-
-        // Layout parameters.
-        const timeAxisHeight = 20;
+        // Compute layout
+        // Confirmed label band area
         const labelBandHeight = 20;
 
-        // Offset parameters.
-        // --- time axis ---------
-        // [ label status        ]
-        const timeAxisY0 = 2;
-        const timeAxisY1 = timeAxisY0 + timeAxisHeight;
-        // [ labels ]
-        const labelAreaY0 = timeAxisY1 + labelBandHeight;
+        // Labels/detailed view sensors area
+        const labelAreaY0 = this.props.timeAxisHeight + labelBandHeight;
         const labelAreaY1 = this.props.viewHeight;
-        // [ timeseries ]
-        const sensorAreaY0 = labelAreaY0;
-        const sensorAreaY1 = labelAreaY1;
 
-        // Time cursor and hint's Y span.
-        const timeCursorY0 = timeAxisY1;
-        const timeCursorY1 = labelAreaY1;
+        // New label height (should extend over labelBandHeight)
+        const newLabelY0 = this.props.timeAxisHeight;
+        const newLabelY1 = labelAreaY1;
 
-        const start = stores.projectUiStore.referenceViewStart;
-        const pps = stores.projectUiStore.referenceViewPPS;
+        const start = stores.projectUiStore.referenceTrackPanZoom.rangeStart;
+        const pps = stores.projectUiStore.referenceTrackPanZoom.pixelsPerSecond;
         // The time scale.
         const scale = d3.scaleLinear()
             .domain([start, start + this.props.viewWidth / pps])
             .range([0, this.props.viewWidth]);
 
-        // Cursor
-        let gCursor = null;
-        const timeCursor = stores.projectUiStore.referenceViewTimeCursor;
-        if (timeCursor) {
-            gCursor = (
-                <g className='time-cursor'>
-                    <line
-                        x1={scale(timeCursor)}
-                        y1={timeCursorY0}
-                        x2={scale(timeCursor)}
-                        y2={timeCursorY1}
-                        />
-                </g>
-            );
-        }
-
-        // Hint range.
-        let gHint = null;
-        if (this.state.hint_t0 && this.state.hint_t1) {
-            gHint = (
-                <g className='time-hint'>
+        // New label range
+        let newLabelRange = null;
+        if (this.state.newLabel_t0 && this.state.newLabel_t1) {
+            newLabelRange = (
+                <g className='new-label'>
                     <rect
-                        x={scale(this.state.hint_t0)}
-                        y={timeCursorY0}
-                        width={scale(this.state.hint_t1) - scale(this.state.hint_t0)}
-                        height={timeCursorY1 - timeCursorY0}
-                        />
+                        x={scale(this.state.newLabel_t0)} y={newLabelY0}
+                        width={scale(this.state.newLabel_t1) - scale(this.state.newLabel_t0)}
+                        height={newLabelY1 - newLabelY0}
+                    />
                 </g>
             );
         }
 
+        // view for suggestion progress bar
         let suggestionProgress = null;
-        if (stores.labelingUiStore.suggestionProgress) {
-            const [tStart, tCompleted] = stores.labelingUiStore.suggestionProgress;
+        if (stores.labelingUiStore.isSuggesting) {
             suggestionProgress = (
                 <g>
                     <rect
-                        x={scale(tStart)}
-                        y={timeAxisY1 - 3}
-                        width={scale(tCompleted) - scale(tStart)}
+                        x={scale(stores.labelingUiStore.suggestionTimestampStart)}
+                        y={this.props.timeAxisHeight - 3}
+                        width={scale(stores.labelingUiStore.suggestionTimestampCompleted) -
+                            scale(stores.labelingUiStore.suggestionTimestampStart)}
                         height={3}
                         style={{ fill: '#AAA' }}
-                        />
+                    />
                 </g>
             );
         }
 
-        const maxOverlapFactor = 0.4;
-        const tracksViewHeight = sensorAreaY1 - sensorAreaY0;
-        let trackViewTrackHeight = tracksViewHeight;
-        let tracksViewTrackSpacing = 0;
-        if (stores.projectStore.tracks.length > 1) {
-            const n = stores.projectStore.tracks.length;
-            trackViewTrackHeight = tracksViewHeight / (n - n * maxOverlapFactor + maxOverlapFactor);
-            tracksViewTrackSpacing = trackViewTrackHeight * (1 - maxOverlapFactor);
-        }
+        // band to show confirmed labels
+        const confirmedLabelBand = (
+            <rect
+                x={0} y={this.props.timeAxisHeight}
+                width={this.props.viewWidth}
+                height={labelBandHeight}
+                style={{ stroke: 'none', fill: '#EEE', cursor: 'crosshair' }}
+            />
+        );
 
+        // view for holding labels
+        const labels = stores.labelingUiStore
+            .getLabelsInRange(stores.projectUiStore.referenceTrackPanZoom
+                .getTimeRangeToX(this.props.viewWidth));
+        const refPanZoom = stores.projectUiStore.referenceTrackPanZoom;
+        const startX = refPanZoom.pixelsPerSecond * refPanZoom.rangeStart;
+        const labelsView = (
+            <g className='labels' transform={`translate(0, ${labelAreaY0})`}>
+                <g transform={`translate(${-startX},0)`}>
+                    {labels.map(label =>
+                        <LabelView
+                            key={getLabelKey(label)}
+                            label={label}
+                            pixelsPerSecond={stores.projectUiStore.referenceTrackPanZoom.pixelsPerSecond}
+                            height={labelAreaY1 - labelAreaY0}
+                            classColormap={stores.labelingStore.classColormap}
+                            labelType={LabelType.Detailed}
+                        />
+                    )}
+                </g>
+            </g>
+        );
+
+        const signalsViewMode = stores.labelingUiStore.signalsViewMode;
         return (
             <g className='labeling-detailed-view'>
                 <g
                     onMouseMove={event => this.onMouseMove(event)}
                     onWheel={event => this.onMouseWheel(event)}
                     onMouseDown={event => this.onMouseDownCreateLabel(event)}
-                    onDoubleClick={event => this.onDoubleClickChangePointDetection(event)}
-                    >
+                >
 
                     <rect ref='interactionRect'
-                        x={0} y={sensorAreaY0} width={this.props.viewWidth} height={sensorAreaY1 - sensorAreaY0}
+                        x={0} y={labelAreaY0}
+                        width={this.props.viewWidth} height={labelAreaY1 - labelAreaY0}
                         style={{ fill: 'none', stroke: 'none', pointerEvents: 'all', cursor: 'crosshair' }}
-                        />
+                    />
 
                     {
                         stores.projectStore.tracks.map((track, index) => (
                             <g key={track.id}
-                                transform={`translate(0, ${sensorAreaY0 + tracksViewTrackSpacing * index})`}>
+                                transform={`translate(0, ${labelAreaY0 + this.props.trackGap * index})`}>
                                 <TrackView
                                     track={track}
-                                    zoomTransform={{ rangeStart: start, pixelsPerSecond: pps }}
-                                    viewHeight={trackViewTrackHeight}
+                                    zoomTransform={stores.projectUiStore.referenceTrackPanZoom}
+                                    viewHeight={this.props.trackHeight}
                                     viewWidth={this.props.viewWidth}
-                                    colorScale={LayoutParameters.seriesColorScale}
                                     useMipmap={true}
-                                    />
+                                    signalsViewMode={signalsViewMode}
+                                />
                             </g>
                         ))
                     }
 
                     {suggestionProgress}
-
-                    <rect
-                        x={0}
-                        y={timeAxisY1}
-                        width={this.props.viewWidth}
-                        height={labelBandHeight}
-                        style={{ stroke: 'none', fill: '#EEE', cursor: 'crosshair' }}
-                        />
-
-                    <g className='labels' transform={`translate(0, ${labelAreaY0})`}>
-                        {
-                            stores.labelingUiStore.suggestionEnabled ? (
-                                <ChangePointRangePlot
-                                    pixelsPerSecond={pps}
-                                    rangeStart={start}
-                                    plotWidth={this.props.viewWidth}
-                                    plotHeight={10}
-                                    />
-                            ) : null
-                        }
-                        <LabelsRangePlot
-                            pixelsPerSecond={pps}
-                            rangeStart={start}
-                            plotWidth={this.props.viewWidth}
-                            plotHeight={labelAreaY1 - labelAreaY0}
-                            labelKind={LabelKind.Detailed}
-                            />
-                    </g>
-
-                    {gHint}
-
-                    {gCursor}
+                    {confirmedLabelBand}
+                    {labelsView}
+                    {newLabelRange}
                 </g>
             </g>
         );

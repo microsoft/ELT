@@ -1,5 +1,5 @@
 import { SensorTimeSeries } from '../../stores/dataStructures/dataset';
-import { getUniqueIDForObject, isSameArray } from '../../stores/utils';
+import { isSameArray } from '../../stores/utils';
 import { MipmapCache } from './Mipmap';
 import * as d3 from 'd3';
 import * as React from 'react';
@@ -14,7 +14,8 @@ const mipmapCache = new MipmapCache();
 export interface SensorPlotProps {
     timeSeries: SensorTimeSeries;     // The timeseries object to show, replace it with a NEW object if you need to update its contents.
     dimensionVisibility?: boolean[];  // boolean array to show/hide individual dimensions.
-    colorScale?: d3.ScaleOrdinal<number, string>; // Colors to use, if null, use d3.category10 or 20.
+    grayscale: boolean;
+    //colorScale?: d3.ScaleOrdinal<number, string>; // Colors to use, if null, use d3.category10 or 20.
     pixelsPerSecond: number;          // Scaling factor (assume the dataset's timeunit is seconds).
     plotHeight: number;               // The height of the plot.
     yDomain?: number[];               // The y domain: [ min, max ], similar to D3's scale.domain([min, max]).
@@ -28,7 +29,7 @@ export class SensorPlot extends React.Component<SensorPlotProps, {}> {
         // We consider the timeSeries object and colorScale constant, so any change INSIDE these objects will not trigger an update.
         // To change the timeSeries, replace it with another object, don't update it directly.
         return nextProps.timeSeries !== this.props.timeSeries ||
-            nextProps.colorScale !== this.props.colorScale ||
+            nextProps.grayscale !== this.props.grayscale ||
             nextProps.pixelsPerSecond !== this.props.pixelsPerSecond ||
             nextProps.plotHeight !== this.props.plotHeight ||
             nextProps.alternateDimensions !== this.props.alternateDimensions ||
@@ -61,8 +62,7 @@ export class SensorPlot extends React.Component<SensorPlotProps, {}> {
         const yScale = 1 / (y0 - y1) * this.props.plotHeight;
 
         // Determine color scale.
-        const colors = this.props.colorScale ||
-            (numSeries <= 10 ?
+        const colors = (numSeries <= 10 ?
                 d3.scaleOrdinal<number, string>(d3.schemeCategory10) :
                 d3.scaleOrdinal<number, string>(d3.schemeCategory20));
 
@@ -87,14 +87,23 @@ export class SensorPlot extends React.Component<SensorPlotProps, {}> {
                 }
             }
             const d: string = 'M' + positions.join('L');
-            const style = {
+
+            const grayscale = .6 - dimIndex * ((.6 - .2) / dimensions.length); //grayscale range from .6-.2 (dark to light)
+            let style = {
                 fill: 'none',
-                stroke: colors(dimIndex)
+                stroke: 'rgba(0, 0, 0, ' + grayscale + ')'
             };
+            if ( !this.props.grayscale) {
+                style = {
+                    fill: 'none',
+                    stroke: colors(dimIndex)
+                };
+            }
+
             return (
                 <path
                     d={d} style={style} key={dimIndex}
-                    />
+                />
             );
         });
 
@@ -112,7 +121,7 @@ export class SensorPlot extends React.Component<SensorPlotProps, {}> {
 export interface SensorRangePlotProps {
     timeSeries: SensorTimeSeries;     // The timeseries object to show, replace it with a NEW object if you need to update its contents.
     dimensionVisibility?: boolean[];  // boolean array to show/hide individual dimensions.
-    colorScale?: any;                 // Colors to use, if null, use d3.category10 or 20.
+    grayscale: boolean;                 // Colors to use, if null, use d3.category10 or 20.
     pixelsPerSecond: number;          // Scaling factor (assume the dataset's timeunit is seconds).
     plotWidth: number;                // The width of the plot.
     plotHeight: number;               // The height of the plot.
@@ -129,7 +138,7 @@ export class SensorRangePlot extends React.Component<SensorRangePlotProps, {}> {
 
     public shouldComponentUpdate(nextProps: SensorRangePlotProps): boolean {
         return nextProps.timeSeries !== this.props.timeSeries ||
-            nextProps.colorScale !== this.props.colorScale ||
+            nextProps.grayscale !== this.props.grayscale ||
             nextProps.pixelsPerSecond !== this.props.pixelsPerSecond ||
             nextProps.plotHeight !== this.props.plotHeight ||
             !isSameArray(nextProps.yDomain, this.props.yDomain) ||
@@ -166,7 +175,7 @@ export class SensorRangePlot extends React.Component<SensorRangePlotProps, {}> {
 
     public render(): JSX.Element {
         const left = (this.props.timeSeries.timestampStart - this.props.rangeStart) * this.props.pixelsPerSecond;
-        const clippathID = getUniqueIDForObject(this) + 'clip';
+        const clippathID = 'clip' + this.props.timeSeries.name;
         const timeseries = this.props.timeSeries;
         let rectStyle;
         if (this.props.onDrag) {
@@ -219,14 +228,14 @@ export class SensorRangePlot extends React.Component<SensorRangePlotProps, {}> {
                 <SensorPlot
                     key={`slice-${slice[0]}`}
                     timeSeries={timeseries}
-                    colorScale={this.props.colorScale}
+                    grayscale={this.props.grayscale}
                     pixelsPerSecond={this.props.pixelsPerSecond}
                     plotHeight={this.props.plotHeight}
                     yDomain={this.props.yDomain}
                     iSlice={slice}
                     alternateDimensions={mipmap}
                     dimensionVisibility={this.props.dimensionVisibility}
-                    />
+                />
             );
         });
 
@@ -236,7 +245,7 @@ export class SensorRangePlot extends React.Component<SensorRangePlotProps, {}> {
                     <clipPath id={clippathID}>
                         <rect
                             x={0} y={-2} width={this.props.plotWidth} height={this.props.plotHeight + 4}
-                            />
+                        />
                     </clipPath>
                 </defs>
                 <g clipPath={`url(#${clippathID})`}>
@@ -247,8 +256,8 @@ export class SensorRangePlot extends React.Component<SensorRangePlotProps, {}> {
                 <rect
                     style={rectStyle}
                     x={0} y={0} width={this.props.plotWidth} height={this.props.plotHeight}
-                    onMouseDown={event => { this.onMouseDown(event); } }
-                    />
+                    onMouseDown={event => { this.onMouseDown(event); }}
+                />
             </g>
         );
     }

@@ -1,10 +1,10 @@
-import { Track } from '../stores/dataStructures/alignment';
-import { Dataset, SensorTimeSeries } from '../stores/dataStructures/dataset';
-import { Label, PartialLabel } from '../stores/dataStructures/labeling';
-import { SavedLabelingState } from '../stores/dataStructures/project';
-import { resampleColumn } from '../stores/dataStructures/sampling';
-import { TimeRangeIndex } from '../stores/dataStructures/TimeRangeIndex';
 import { AlignmentStore } from './AlignmentStore';
+import { Track } from './dataStructures/alignment';
+import { Dataset, SensorTimeSeries } from './dataStructures/dataset';
+import { Label, LabelConfirmationState, PartialLabel, TimeRange } from './dataStructures/labeling';
+import { SavedLabelingState } from './dataStructures/project';
+import { resampleColumn } from './dataStructures/sampling';
+import { mergeTimeRangeArrays, TimeRangeIndex } from './dataStructures/TimeRangeIndex';
 import { labelingUiStore, projectStore, projectUiStore } from './stores';
 import * as d3 from 'd3';
 import { action, computed, observable } from 'mobx';
@@ -23,18 +23,12 @@ const d3category20 = [
 ];
 
 
-
-
-
 export class LabelingStore {
-    @observable private _labelsIndex: TimeRangeIndex<Label>;
-    @observable private _windowLabelsIndex: TimeRangeIndex<Label>;
-    @observable private _windowAccuracyLabelsIndex: TimeRangeIndex<Label>;
+    private _labelsIndex: TimeRangeIndex<Label>;
+    private _windowLabelsIndex: TimeRangeIndex<Label>;
+    private _windowAccuracyLabelsIndex: TimeRangeIndex<Label>;
 
-    @observable private _windowLabelIndexHistory: TimeRangeIndex<Label>[];
-    @observable private _windowLabelsHistory: Label[][];
-
-    @observable public changePoints: number[];
+    private _windowLabelIndexHistory: TimeRangeIndex<Label>[];
     @observable public classes: string[];
     @observable public classColors: string[];
     @observable public classColormap: { [name: string]: string };
@@ -46,57 +40,53 @@ export class LabelingStore {
         this._windowAccuracyLabelsIndex = new TimeRangeIndex<Label>();
 
         this._windowLabelIndexHistory = [];
-        this._windowLabelsHistory = [];
 
         this.classes = ['IGNORE', 'Positive'];
         this.updateColors();
         this.timestampConfirmed = null;
 
-        this.changePoints = [];
     }
 
     @computed public get labels(): Label[] {
         return this._labelsIndex.items;
     }
 
-    public getLabelsInRange(tmin: number, tmax: number): Label[] {
-        return this._labelsIndex.getRangesInRange(tmin, tmax);
+    public getLabelsInRange(timeRange: TimeRange): Label[] {
+        return this._labelsIndex.getRangesInRange(timeRange);
     }
 
 
     @action public addLabel(label: Label): void {
+        projectStore.recordLabelingSnapshot();
         this._labelsIndex.add(label);
-        projectStore.labelingHistoryRecord();
     }
 
     @action public removeLabel(label: Label): void {
-        projectStore.labelingHistoryRecord();
+        projectStore.recordLabelingSnapshot();
         if (this._labelsIndex.has(label)) {
             this._labelsIndex.remove(label);
         }
     }
 
     @action public updateLabel(label: Label, newLabel: PartialLabel): void {
-        projectStore.labelingHistoryRecord();
+        projectStore.recordLabelingSnapshot();
         // Update the label info.
         if (newLabel.timestampStart !== undefined) { label.timestampStart = newLabel.timestampStart; }
         if (newLabel.timestampEnd !== undefined) { label.timestampEnd = newLabel.timestampEnd; }
         if (newLabel.className !== undefined) { label.className = newLabel.className; }
+        if (newLabel.state !== undefined) { label.state = newLabel.state; }
         if (newLabel.suggestionConfidence !== undefined) { label.suggestionConfidence = newLabel.suggestionConfidence; }
         if (newLabel.suggestionGeneration !== undefined) { label.suggestionGeneration = newLabel.suggestionGeneration; }
-    }
 
-    @action public suggestChangePoints(changePoints: number[]): void {
-        this.changePoints = changePoints;
     }
 
     @action public removeAllLabels(): void {
-        projectStore.labelingHistoryRecord();
+        projectStore.recordLabelingSnapshot();
         this._labelsIndex.clear();
     }
 
     @action public addClass(className: string): void {
-        projectStore.labelingHistoryRecord();
+        projectStore.recordLabelingSnapshot();
         if (this.classes.indexOf(className) < 0) {
             this.classes.push(className);
             this.updateColors();
@@ -104,7 +94,7 @@ export class LabelingStore {
     }
 
     @action public removeClass(className: string): void {
-        projectStore.labelingHistoryRecord();
+        projectStore.recordLabelingSnapshot();
         // Remove the labels of that class.
         const toRemove = [];
         this._labelsIndex.forEach(label => {
@@ -125,7 +115,7 @@ export class LabelingStore {
     }
 
     @action public renameClass(oldClassName: string, newClassName: string): void {
-        projectStore.labelingHistoryRecord();
+        projectStore.recordLabelingSnapshot();
         if (this.classes.indexOf(newClassName) < 0) {
             let renamed = false;
             this._labelsIndex.forEach(label => {
@@ -134,7 +124,6 @@ export class LabelingStore {
                     renamed = true;
                 }
             });
-
             const index = this.classes.indexOf(oldClassName);
             if (index >= 0) {
                 this.classes[index] = newClassName;
@@ -143,7 +132,6 @@ export class LabelingStore {
             }
         }
     }
-
 
     @action private updateColors(): void {
         // Update class colors, try to keep original colors.
@@ -264,7 +252,6 @@ export class LabelingStore {
         for (const label of state.labels) {
             this._labelsIndex.add(label);
         }
-        // this.updateAlignedDataset(true);
 
         // Update the current class.
         const nonIgnoreClases = this.classes.filter(x => x !== 'IGNORE');
@@ -275,7 +262,6 @@ export class LabelingStore {
         this._labelsIndex.clear();
         this.classes = ['IGNORE', 'Positive'];
         this.updateColors();
-        this.changePoints = [];
         const nonIgnoreClases = this.classes.filter(x => x !== 'IGNORE');
         labelingUiStore.currentClass = nonIgnoreClases.length > 0 ? nonIgnoreClases[0] : null;
     }

@@ -1,10 +1,15 @@
 // TrackView: display a single track in the app.
 
 import { Track } from '../../stores/dataStructures/alignment';
-import { SensorTimeSeries, TimeSeriesKind, VideoTimeSeries } from '../../stores/dataStructures/dataset';
+import { SensorTimeSeries, TimeSeries, TimeSeriesKind, VideoTimeSeries } from '../../stores/dataStructures/dataset';
+import { SignalsViewMode } from '../../stores/dataStructures/labeling';
+import { PanZoomParameters } from '../../stores/dataStructures/PanZoomParameters';
+import * as stores from '../../stores/stores';
+import { AutocorrelogramPlot } from '../common/AutocorrelogramPlot';
 import { SensorRangePlot } from '../common/SensorPlot';
 import { VideoFrame, VideoRangePlot } from '../common/VideoPlot';
 import * as d3 from 'd3';
+import { observer } from 'mobx-react';
 import * as React from 'react';
 
 
@@ -13,68 +18,20 @@ export interface TrackViewProps {
     track: Track;
     viewWidth: number;
     viewHeight: number;
-    zoomTransform: { rangeStart: number, pixelsPerSecond: number };
-    colorScale?: any;
+    zoomTransform: PanZoomParameters;
+    signalsViewMode?: SignalsViewMode;
     useMipmap?: boolean;
-    timeCursor?: number;
+    videoDetail?: boolean;
 
-    onWheel?: (event: React.WheelEvent<Element>, track: Track, t: number, pps: number, deltaY: number) => any;
-    onMouseMove?: (event: React.MouseEvent<Element>, track: Track, t: number, pps: number) => any;
-    onMouseDown?: (event: React.MouseEvent<Element>, track: Track, t: number, pps: number) => any;
-    onMouseEnter?: (event: React.MouseEvent<Element>, track: Track, t: number, pps: number) => any;
-    onMouseLeave?: (event: React.MouseEvent<Element>, track: Track, t: number, pps: number) => any;
+    onMouseDown?: (event: React.MouseEvent<Element>, track: Track, time: number, pps: number) => any;
 }
 
 
-
-export function truncatePPS(pps: number): number {
-    if (pps <= 0) { return pps; }
-    const numDigits = Math.ceil(Math.log(pps) / Math.log(2));
-    const scaler = Math.pow(2, (32 - numDigits));
-    return Math.round(pps * scaler) / scaler;
-}
-
-
-
+@observer
 export class TrackView extends React.Component<TrackViewProps, {}> {
-    public refs: {
-        [name: string]: Element,
-        interactionRect: Element
-    };
-
-    private getRelativePosition(event: React.MouseEvent<Element> | React.WheelEvent<Element>): number[] {
-        const x: number = event.clientX - this.refs.interactionRect.getBoundingClientRect().left;
-        const y: number = event.clientY - this.refs.interactionRect.getBoundingClientRect().top;
-        return [x, y];
-    }
-
-    private onMouseDown(event: React.MouseEvent<Element>, track: Track, t: number, pps: number): void {
-        if (this.props.onMouseDown) { this.props.onMouseDown(event, track, t, pps); }
-    }
-    private onMouseMove(event: React.MouseEvent<Element>, track: Track, t: number, pps: number): void {
-        if (this.props.onMouseMove) { this.props.onMouseMove(event, track, t, pps); }
-    }
-    private onMouseEnter(event: React.MouseEvent<Element>, track: Track, t: number, pps: number): void {
-        if (this.props.onMouseEnter) { this.props.onMouseEnter(event, track, t, pps); }
-    }
-    private onMouseLeave(event: React.MouseEvent<Element>, track: Track, t: number, pps: number): void {
-        if (this.props.onMouseLeave) { this.props.onMouseLeave(event, track, t, pps); }
-    }
-    private onWheel(
-        event: React.WheelEvent<Element>, track: Track, t: number, pps: number,
-        deltaY: number): void {
-        if (this.props.onWheel) { this.props.onWheel(event, track, t, pps, deltaY); }
-    }
-
 
     public render(): JSX.Element {
         const track = this.props.track;
-        // Get zooming factors.
-        const zooming = this.props.zoomTransform;
-        // scale: Reference -> Pixel.
-        const sReferenceToPixel = d3.scaleLinear()
-            .domain([zooming.rangeStart, zooming.rangeStart + this.props.viewWidth / zooming.pixelsPerSecond])
-            .range([0, this.props.viewWidth]);
 
         return (
             <g className='track-view'>
@@ -83,132 +40,261 @@ export class TrackView extends React.Component<TrackViewProps, {}> {
                     x={0} y={0}
                     width={this.props.viewWidth}
                     height={this.props.viewHeight}
-                    />
+                />
                 {
                     track.timeSeries.map((timeSeries, t) => {
-                        // scale: Signal -> Reference.
-                        const sSignalToReference = d3.scaleLinear()
+
+                        const scaleTimeToPixel = d3.scaleLinear()
+                            .domain([this.props.zoomTransform.rangeStart, this.props.zoomTransform.getTimeFromX(this.props.viewWidth)])
+                            .range([0, this.props.viewWidth]);
+
+                        const startX = Math.max(0, Math.min(this.props.viewWidth, scaleTimeToPixel(track.referenceStart)));
+                        const endX = Math.max(0, Math.min(this.props.viewWidth, scaleTimeToPixel(track.referenceEnd)));
+
+                        const seriesHeight = this.props.viewHeight / track.timeSeries.length;
+                        const seriesY = seriesHeight * t;
+
+                        const scaleSignalToReference = d3.scaleLinear()
                             .domain([timeSeries.timestampStart, timeSeries.timestampEnd])
                             .range([track.referenceStart, track.referenceEnd]);
 
-                        // Determine the x range.
-                        let xStart = sReferenceToPixel(track.referenceStart);
-                        let xEnd = sReferenceToPixel(track.referenceEnd);
+                        const startTime = scaleSignalToReference.invert(scaleTimeToPixel.invert(startX));
+                        const endTime = scaleSignalToReference.invert(scaleTimeToPixel.invert(endX));
 
-                        // Clamp the x range to the boundary of the view.
-                        xStart = Math.max(0, Math.min(this.props.viewWidth, xStart));
-                        xEnd = Math.max(0, Math.min(this.props.viewWidth, xEnd));
-
-                        if (xEnd === xStart) { return null; }
-
-                        // Determine the range start and end in reference time.
-                        const rStart = sReferenceToPixel.invert(xStart);
-                        const rEnd = sReferenceToPixel.invert(xEnd);
-
-                        // Determine the range start and end in signal time.
-                        const tStart = sSignalToReference.invert(rStart);
-                        const tEnd = sSignalToReference.invert(rEnd);
-                        const pps = truncatePPS((xEnd - xStart) / (tEnd - tStart));
-
-                        // Get time from mouse event.
-                        const getTime = (event: React.MouseEvent<Element> | React.WheelEvent<Element>) => {
-                            const x = this.getRelativePosition(event)[0];
-                            return tStart + (x - xStart) / pps;
-                        };
-
-                        // Get time cursor x position.
-                        let timeCursor: number = this.props.timeCursor;
-                        // Don't display timeCursor if it's outside.
-                        if (timeCursor < timeSeries.timestampStart || timeCursor > timeSeries.timestampEnd) {
-                            timeCursor = null;
-                        }
-                        const timeCursorX = timeCursor != null ? sReferenceToPixel(sSignalToReference(timeCursor)) : null;
-
-                        const chunkHeight = this.props.viewHeight / track.timeSeries.length;
-                        const ySeries = chunkHeight * t;
-
-                        const interactionRect = (
-                            <g>
-                                <rect style={{ stroke: 'none', cursor: 'crosshair', fill: 'none', pointerEvents: 'all' }}
-                                    x={0}
-                                    y={0}
-                                    width={xEnd - xStart}
-                                    height={chunkHeight}
-                                    onMouseDown={event => { this.onMouseDown(event, track, getTime(event), pps); } }
-                                    onMouseMove={event => { this.onMouseMove(event, track, getTime(event), pps); } }
-                                    onMouseEnter={event => { this.onMouseEnter(event, track, getTime(event), pps); } }
-                                    onMouseLeave={event => { this.onMouseLeave(event, track, getTime(event), pps); } }
-                                    onWheel={event => { this.onWheel(event, track, getTime(event), pps, event.deltaY); } }
-                                    />
-                                {
-                                    timeCursor != null ? (
-                                        <line
-                                            x1={timeCursorX - xStart}
-                                            x2={timeCursorX - xStart}
-                                            y1={0}
-                                            y2={chunkHeight}
-                                            style={{ stroke: 'black', pointerEvents: 'none' }}
-                                            />
-                                    ) : (null)
-                                }
+                        return (
+                            <g transform={`translate(${startX}, ${seriesY})`} key={`ts-${track.id}-${t}`}>
+                                <TimeSeriesView
+                                    track={track}
+                                    timeSeries={timeSeries}
+                                    startX={startX} endX={endX}
+                                    height={seriesHeight}
+                                    startTime={startTime} endTime={endTime}
+                                    useMipmap={this.props.useMipmap}
+                                    videoDetail={this.props.videoDetail}
+                                    onMouseDown={this.props.onMouseDown}
+                                    signalsViewMode={this.props.signalsViewMode}
+                                />
                             </g>
                         );
-
-                        if (timeSeries.kind === TimeSeriesKind.VIDEO) {
-                            const video = timeSeries as VideoTimeSeries;
-                            const scaledVideoWidth = this.props.viewHeight * video.width / video.height;
-                            if (timeCursor != null) {
-                                return (
-                                    <g transform={`translate(${xStart}, 0)`} key={`ts-${track.id}-${t}`}>
-                                        <VideoFrame
-                                            x={Math.max(
-                                                0,
-                                                Math.min(
-                                                    this.props.viewWidth - scaledVideoWidth,
-                                                    timeCursorX - scaledVideoWidth * 0.5))
-                                                - xStart}
-                                            y={0}
-                                            width={scaledVideoWidth}
-                                            height={this.props.viewHeight}
-                                            timeCursor={timeCursor}
-                                            timeSeries={video}
-                                            />
-                                    </g>
-                                );
-                            } else {
-                                return (
-                                    <g transform={`translate(${xStart}, 0)`} key={`ts-${track.id}-${t}`}>
-                                        <g opacity={1}>
-                                            <VideoRangePlot
-                                                timeSeries={video}
-                                                rangeStart={tStart}
-                                                pixelsPerSecond={pps}
-                                                plotWidth={xEnd - xStart}
-                                                plotHeight={this.props.viewHeight}
-                                                />
-                                        </g>
-                                        {interactionRect}
-                                    </g>
-                                );
-                            }
-                        } else {
-                            return (
-                                <g transform={`translate(${xStart}, ${ySeries})`} key={`ts-${track.id}-${t}`}>
-                                    <SensorRangePlot
-                                        timeSeries={timeSeries as SensorTimeSeries}
-                                        rangeStart={tStart}
-                                        pixelsPerSecond={pps}
-                                        plotWidth={xEnd - xStart}
-                                        plotHeight={chunkHeight}
-                                        useMipmap={this.props.useMipmap}
-                                        colorScale={this.props.colorScale}
-                                        />
-                                    {interactionRect}
-                                </g>
-                            );
-                        }
                     })
                 }
+            </g>
+        );
+    }
+
+}
+
+
+
+
+export interface TimeSeriesViewProps {
+    track: Track;
+    timeSeries: TimeSeries;
+    startX: number;
+    endX: number;
+    height: number;
+    startTime: number;
+    endTime: number;
+    useMipmap?: boolean;
+    videoDetail?: boolean;
+    signalsViewMode?: SignalsViewMode;
+
+    onMouseDown?: (event: React.MouseEvent<Element>, track: Track, time: number, pps: number) => any;
+}
+
+
+
+@observer
+export class TimeSeriesView extends React.Component<TimeSeriesViewProps, {}> {
+
+    constructor(props: TrackViewProps, context: any) {
+        super(props, context);
+        this.onMouseEnter = this.onMouseEnter.bind(this);
+        this.onMouseLeave = this.onMouseLeave.bind(this);
+        this.onMouseDown = this.onMouseDown.bind(this);
+        this.onMouseMove = this.onMouseMove.bind(this);
+        this.onWheel = this.onWheel.bind(this);
+    }
+
+    public get width(): number { return this.props.endX - this.props.startX; }
+    public get duration(): number { return this.props.endTime - this.props.startTime; }
+    public get pixelsPerSecond(): number { return this.width / this.duration; }
+
+    private timeToPixels(t: number): number {
+        return this.props.startX + (t - this.props.startTime) * this.pixelsPerSecond;
+    }
+    private pixelsToTime(x: number): number {
+        return this.props.startTime + (x - this.props.startX) / this.pixelsPerSecond;
+    }
+
+    private getTimeFromMouseX(event: React.MouseEvent<Element> | React.WheelEvent<Element>): number {
+        const left = (event.target as SVGElement).getBoundingClientRect().left;
+        const x = event.clientX - left;
+        return this.pixelsToTime(x);
+    }
+
+    // In these events, t and pps are in the timeSeries' local time, not the reference time.
+    private onMouseMove(event: React.MouseEvent<Element>): void {
+        const time = this.getTimeFromMouseX(event);
+        const track = this.props.track;
+        if (track.isAlignedToReferenceTrack) {
+            const scale = d3.scaleLinear()
+                .domain([track.referenceStart, track.referenceEnd])
+                .range([track.timeSeries[0].timestampStart, track.timeSeries[0].timestampEnd]);
+            stores.projectUiStore.setReferenceTrackTimeCursor(scale.invert(time));
+        } else {
+            stores.projectUiStore.setTimeCursor(track, time);
+        }
+    }
+
+    private onMouseLeave(): void {
+        stores.projectUiStore.setTimeCursor(this.props.track, null);
+    }
+
+    private onMouseEnter(event: React.MouseEvent<Element>): void {
+        const time = this.getTimeFromMouseX(event);
+        stores.projectUiStore.setTimeCursor(this.props.track, time);
+    }
+
+    private onMouseDown(event: React.MouseEvent<Element>): void {
+        const time = this.getTimeFromMouseX(event);
+        if (this.props.onMouseDown) { this.props.onMouseDown(event, this.props.track, time, this.pixelsPerSecond); }
+    }
+
+    private onWheel(event: React.WheelEvent<Element>): void {
+        const deltaY = event.deltaY;
+        const track = this.props.track;
+        if (stores.projectStore.isReferenceTrack(track) || track.isAlignedToReferenceTrack) {
+            stores.projectUiStore.zoomReferenceTrack(deltaY / 1000, 'cursor');
+        } else {
+            const scale = d3.scaleLinear()
+                .domain([track.referenceStart, track.referenceEnd])
+                .range([this.props.timeSeries.timestampStart, this.props.timeSeries.timestampEnd]);
+            const timeCursor = stores.projectUiStore.getTimeCursor(track);
+            if (timeCursor === null) { return; }
+            const { rangeStart: oldStart, pixelsPerSecond: oldPPS } =
+                stores.projectUiStore.getTrackPanZoom(track);
+            const k = Math.exp(-deltaY / 1000);
+            const newPPS = oldPPS * k;
+            const newStart = oldStart / k + scale.invert(timeCursor) * (1 - 1 / k);
+            stores.projectUiStore.setTrackPanZoom(track, new PanZoomParameters(newStart, newPPS));
+        }
+    }
+
+    private renderVideoDetail(): JSX.Element {
+        const video = this.props.timeSeries as VideoTimeSeries;
+        const scaledVideoWidth = this.props.height * video.width / video.height;
+        const timeCursor = this.timeCursor;
+        const timeCursorX = timeCursor != null ? this.timeToPixels(timeCursor) : null;
+        return (
+            <VideoFrame
+                x={Math.max(0, Math.min(
+                    this.width - scaledVideoWidth,
+                    timeCursorX - scaledVideoWidth * 0.5))}
+                y={0}
+                width={scaledVideoWidth} height={this.props.height}
+                timeCursor={timeCursor}
+                timeSeries={this.props.timeSeries as VideoTimeSeries}
+            />
+        );
+    }
+
+    private renderVideoOverview(): JSX.Element {
+        return (
+            <g opacity={1}>
+                <VideoRangePlot
+                    timeSeries={this.props.timeSeries as VideoTimeSeries}
+                    rangeStart={this.props.startTime} pixelsPerSecond={this.pixelsPerSecond}
+                    plotWidth={this.width} plotHeight={this.props.height}
+                />
+            </g>
+        );
+    }
+
+    private renderAutocorrelogram(): JSX.Element {
+        return (
+            <AutocorrelogramPlot
+                timeSeries={this.props.timeSeries as SensorTimeSeries}
+                rangeStart={this.props.startTime} pixelsPerSecond={this.pixelsPerSecond}
+                plotWidth={this.width} plotHeight={this.props.height}
+            />
+        );
+    }
+
+    private renderPlot(): JSX.Element {
+        return (
+            <SensorRangePlot
+                timeSeries={this.props.timeSeries as SensorTimeSeries}
+                rangeStart={this.props.startTime} pixelsPerSecond={this.pixelsPerSecond}
+                plotWidth={this.width} plotHeight={this.props.height}
+                useMipmap={this.props.useMipmap}
+                grayscale={stores.projectUiStore.timeSeriesGrayscale}
+            />
+        );
+    }
+
+    private renderTimeSeries(): JSX.Element {
+        switch (this.props.timeSeries.kind) {
+            case TimeSeriesKind.VIDEO:
+                return this.props.videoDetail ?
+                    this.renderVideoDetail() :
+                    this.renderVideoOverview();
+            default:
+                switch (this.props.signalsViewMode) {
+                    case SignalsViewMode.AUTOCORRELOGRAM:
+                        return this.renderAutocorrelogram();
+                    case SignalsViewMode.COMBINED:
+                        return (<g>
+                            {this.renderAutocorrelogram()}
+                            {this.renderPlot()}
+                        </g>);
+                    default:
+                        return this.renderPlot();
+                }
+        }
+    }
+
+    private get timeCursor(): number {
+        let timeCursor: number = stores.projectUiStore.getTimeCursor(this.props.track);
+        if (timeCursor < this.props.timeSeries.timestampStart || timeCursor > this.props.timeSeries.timestampEnd) {
+            timeCursor = null;
+        }
+        return timeCursor;
+    }
+
+    private renderTimeCursor(): JSX.Element {
+        if (this.props.videoDetail) { return null; }
+        const timeCursor = this.timeCursor;
+        const timeCursorX = timeCursor != null ? this.timeToPixels(timeCursor) : null;
+        return (
+            <g>
+                <rect style={{ stroke: 'none', cursor: 'crosshair', fill: 'none', pointerEvents: 'all' }}
+                    x={0} y={0}
+                    width={this.width} height={this.props.height}
+                    onMouseDown={this.onMouseDown}
+                    onMouseMove={this.onMouseMove}
+                    onMouseEnter={this.onMouseEnter}
+                    onMouseLeave={this.onMouseLeave}
+                    onWheel={this.onWheel}
+                />
+                {
+                    timeCursor != null && !isNaN(timeCursor) ? (
+                        <line
+                            x1={timeCursorX} y1={0}
+                            x2={timeCursorX} y2={this.props.height}
+                            style={{ stroke: 'black', pointerEvents: 'none' }}
+                        />
+                    ) : (null)
+                }
+            </g>
+        );
+    }
+
+    public render(): JSX.Element {
+        return (
+            <g>
+                {this.renderTimeSeries()}
+                {this.renderTimeCursor()}
             </g>
         );
     }

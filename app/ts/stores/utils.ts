@@ -1,12 +1,3 @@
-import * as d3 from 'd3';
-import * as fs from 'fs';
-import * as path_module from 'path';
-
-import { Dataset, loadSensorTimeSeriesFromFile, loadVideoTimeSeriesFromFile }
-    from './dataStructures/dataset';
-
-
-
 export function startDragging(
     move?: (e: MouseEvent) => void,
     up?: (e: MouseEvent) => void,
@@ -26,21 +17,6 @@ export function startDragging(
     window.addEventListener('mouseup', handler_up, useCapture);
 }
 
-
-
-const unique_id_state = new WeakMap<Object, string>();
-let unique_id_counter: number = 1;
-export function getUniqueIDForObject(obj: Object): string {
-    if (!unique_id_state.has(obj)) {
-        const id = 'objuid' + unique_id_counter.toString();
-        unique_id_counter += 1;
-        unique_id_state.set(obj, id);
-        return id;
-    }
-    return unique_id_state.get(obj);
-}
-
-
 export function isSameArray<T>(arr1?: T[], arr2?: T[]): boolean {
     return arr1 === arr2 || arr1 && arr2 && arr1.length === arr2.length && arr1.every((d, i) => d === arr2[i]);
 }
@@ -50,8 +26,6 @@ export function makePathDFromPoints(points: number[][]): string {
     return 'M' + points.map(([x, y]) => x + ',' + y).join('L');
 }
 
-
-
 export class TransitionController {
     private _timer: number;
     private _onProgress: (t: number, finish?: boolean) => void;
@@ -60,11 +34,11 @@ export class TransitionController {
     private _timeStart: number;
 
     private onTick(): void {
-        const t = (new Date().getTime() - this._timeStart) / this._duration;
-        if (t > 1) {
+        const fraction = (new Date().getTime() - this._timeStart) / this._duration;
+        if (fraction > 1) {
             this.terminate();
         } else {
-            if (this._onProgress) { this._onProgress(t, false); }
+            if (this._onProgress) { this._onProgress(fraction, false); }
         }
     }
 
@@ -76,16 +50,13 @@ export class TransitionController {
         }
     }
 
-    constructor(duration: number, easing: string, on_progress?: (t: number, finish?: boolean) => void) {
+    constructor(duration: number, easing: string, on_progress?: (fraction: number, finish?: boolean) => void) {
         this._timeStart = new Date().getTime();
         this._onProgress = on_progress;
         this._duration = duration;
         this._timer = setInterval(this.onTick.bind(this), 10);
     }
 }
-
-
-
 
 export class ArrayThrottler<ItemType, StationaryType> {
     private _minInterval: number;
@@ -138,86 +109,3 @@ export class ArrayThrottler<ItemType, StationaryType> {
     }
 }
 
-export interface DatasetMetadata {
-    name: string;
-    sensors: {
-        name: string;
-        path: string;
-        timestampStart?: number;
-        timestampEnd?: number;
-        alignmentFix?: [number, number];
-    }[];
-    videos: {
-        name: string;
-        path: string;
-        timestampStart?: number;
-        timestampEnd?: number;
-        alignmentFix?: [number, number];
-    }[];
-}
-
-export function loadDataFromMetadata(metadataPath: string, callback: (dataset: Dataset) => void): void {
-    const metadata = JSON.parse(fs.readFileSync(metadataPath, 'utf-8').toString()) as DatasetMetadata;
-    const dataset = new Dataset();
-
-    let nTasks = 0;
-    let nTasksCompleted = 0;
-
-    let fixDuration = null;
-    for (const video of metadata.videos) {
-        if (video.alignmentFix) {
-            const [t1, t2] = video.alignmentFix;
-            if (!fixDuration) { fixDuration = t2 - t1; }
-            const ymx = fixDuration / (t2 - t1) * (video.timestampEnd - video.timestampStart);
-            const x = -ymx * (t1 - video.timestampStart) / (video.timestampEnd - video.timestampStart);
-            const y = x + ymx;
-            video.timestampStart = x;
-            video.timestampEnd = y;
-        }
-    }
-    for (const sensor of metadata.sensors) {
-        if (sensor.alignmentFix) {
-            const [t1, t2] = sensor.alignmentFix;
-            if (!fixDuration) { fixDuration = t2 - t1; }
-            const ymx = fixDuration / (t2 - t1) * (sensor.timestampEnd - sensor.timestampStart);
-            const x = -ymx * (t1 - sensor.timestampStart) / (sensor.timestampEnd - sensor.timestampStart);
-            const y = x + ymx;
-            sensor.timestampStart = x;
-            sensor.timestampEnd = y;
-        }
-    }
-
-    metadata.sensors.forEach(s => {
-        const sensor = loadSensorTimeSeriesFromFile(path_module.join(path_module.dirname(metadataPath), s.path));
-        sensor.name = s.name;
-        if (s.timestampStart !== undefined) { sensor.timestampStart = s.timestampStart; }
-        if (s.timestampEnd !== undefined) { sensor.timestampEnd = s.timestampEnd; }
-        dataset.addSensor(sensor);
-    });
-
-    const checkCallback = () => {
-        if (nTasksCompleted === nTasks) {
-            // Resolve name and start/end for the dataset.
-            dataset.name = metadata.name;
-
-            dataset.timestampStart = d3.max(dataset.timeSeries, x => x.timestampStart);
-            dataset.timestampEnd = d3.min(dataset.timeSeries, x => x.timestampEnd);
-            // Call the callback.
-            callback(dataset);
-        }
-    };
-
-    metadata.videos.forEach(s => {
-        nTasks += 1;
-        loadVideoTimeSeriesFromFile(path_module.join(path_module.dirname(metadataPath), s.path), video => {
-            video.name = s.name;
-            if (s.timestampStart !== undefined) { video.timestampStart = s.timestampStart; }
-            if (s.timestampEnd !== undefined) { video.timestampEnd = s.timestampEnd; }
-            dataset.addVideo(video);
-            nTasksCompleted += 1;
-            checkCallback();
-        });
-    });
-
-    checkCallback();
-}
